@@ -37,7 +37,9 @@ class GluPSD(PSD):
         self.AN_Po_Ratio = 23.2917 # ratio of open probabilities for AMPA and NMDAR's at peak currents
         self.AMPA_Max_Po = 0.44727
         self.NMDARatio = 0.0
-        
+        self.pre_sec = pre_sec
+        self.post_sec = post_sec
+        self.terminal = terminal
         self.pre_cell = cells.cell_from_section(pre_sec)
         self.post_cell = cells.cell_from_section(post_sec)
 
@@ -57,8 +59,7 @@ class GluPSD(PSD):
         
         # and then make a set of postsynaptic receptor mechanisms
         #        print 'PSDTYPE: ', psdtype
-        (psd, psdn, par, parn) = template_iGluR_PSD(post_sec, nReceptors=n_rzones,
-                                                    nmda_ratio=nmda_ratio)
+        (psd, psdn, par, parn) = self.template_iGluR_PSD(nmda_ratio=nmda_ratio)
         
         # Connect terminal to psd (or cleft)
         for k in range(0, n_rzones):
@@ -107,7 +108,7 @@ class GluPSD(PSD):
         self.kAMPA = kAMPA
 
 
-    def template_iGluR_PSD(sec, nReceptors=1, debug=False, cellname=None, message=None, nmda_ratio=1):
+    def template_iGluR_PSD(self, debug=False, cellname=None, message=None, nmda_ratio=1):
         """
         Create an ionotropic Glutamate receptor "PSD"
         Each PSD has receptors for each active zone, which must be matched (connected) to presynaptic
@@ -127,6 +128,9 @@ class GluPSD(PSD):
             parn: NMDA ratio
         Side Effecdts: None
         """
+        nReceptors = self.terminal.n_rzones
+        sec = self.post_sec
+        
         psd = []
         psdn = []
         sec.push()
