@@ -10,7 +10,8 @@ import faulthandler
 import sys
 import numpy as np
 from neuron import h
-import pyqtgraph.multiprocess as mproc
+#import pyqtgraph.multiprocess as mproc
+from multiprocessing import Pool
 import pyqtgraph as pg
 import pylibrary.pyqtgraphPlotHelpers as pgh
 import nrnlibrary.util.pynrnutilities as PU
@@ -60,7 +61,7 @@ class SGCInputTestPL(Protocol):
         self.Fs = 100e3
         self.f0 = 4000.  # stimulus frequency
         self.cf = self.f0  # fiber cf location (frequency)
-        self.dBSPL = 60
+        self.dBSPL = 60.
         self.sr = [2]  # list of sr group per convergent input
         self.nconverge = 1
         self.depFlag = False  # depressing or not depressing synapses
@@ -69,11 +70,19 @@ class SGCInputTestPL(Protocol):
         self.cf = cf
         self.f0 = cf
 
+    def setdB(self, dB):
+        self.dBSPL = dB
+
     def info(self):
         return{'Fs': self.Fs, 'F0': self.f0, 'CF': self.cf, 'SPL': self.dBSPL, 'sr': self.sr, 'nconverge': self.nconverge}
 
-
-    def run_one(self, temp=34.0, dt=0.025, seed=5759820):
+    def run_one(self, pars={'CF': 4000., 'dB': 60, 'temp': 34.0,
+                            'dt': 0.025, 'seed': 5759820}):
+        self.setCF(pars['CF'])
+        self.setdB(pars['dB'])
+        temp = pars['temp']
+        dt = pars['dt']
+        seed = pars['seed']
         postCell = cells.Bushy.create()
         preCell = [None]*self.nconverge
         synapse = [None]*self.nconverge
@@ -109,9 +118,9 @@ class SGCInputTestPL(Protocol):
         h.run()
         for i in range(self.nconverge):
             self.pre_spk[i] = self.pre_cell[i]._spiketrain
-        print 'vm: ', self.res['vm']
+#        print 'vm: ', self.res['vm']
         self.post_spk = PU.findspikes(np.array(self.res['t']), np.array(self.res['vm']), -30.)
-        print 'bu spk: ', self.post_spk
+#        print 'bu spk: ', self.post_spk
 
 
 
@@ -122,7 +131,6 @@ class SGCInputTestPL(Protocol):
             return self.computeVS(self.post_spk, text_ident=text_ident)
 
     def computeVS(self, spikes, text_ident='??'):
-        print spikes
         if len(spikes) == 0:
             return {'r': 0., 'ph': 0., 'd': 0., 'n': 0, 'p': 1.0, 'R': 0.}
         phasewin = [self.pip_start[0] + 0.25*self.pip_duration, self.pip_start[0] + self.pip_duration]
@@ -175,28 +183,56 @@ class SGCInputTestPL(Protocol):
 
         self.win.show()
 
+def run_one(pars):
+    s = SGCInputTestPL()
+    s.setCF(pars['CF'])
+    s.setdB(pars['dB'])
+    s.run_one(pars)
+    result = {'AN_VS': s.get_VS('AN'),
+                                 'post_VS': s.get_VS('post'),
+                                 'pars': s.info(),
+                                 't': np.array(s.res['t']),
+                                 'vm': np.array(s.res['vm']),
+                                 'post_spk': s.post_spk,
+                                 'pre_spk': s.pre_spk,
+                                  }
+    return result
+
 def run_multifreq():
     #cflist = np.logspace(np.log10(200), np.log10(6000), 5)
     cflist = [200, 333, 500., 750., 1000., 1500., 2000., 2500., 3000., 5000.]
+    nCFs = len(cflist)
     nWorkers = 2
 
-    TASKS = [s for s in range(len(cflist))]
-    results = [None]*len(TASKS)
-    sgc_post = [None]*len(TASKS)
-    with mproc.Parallelize(enumerate(TASKS), results=results, workers=nWorkers) as tasker:
-        for i, x in tasker:
-            sgc_post[i] = SGCInputTestPL()
-            print i
-            sgc_post[i].setCF(cflist[i])
-            sgc_post[i].run_one(seed=57598*i)
-            tasker.results[i] = {'AN_VS': sgc_post[i].get_VS('AN'),
-                                 'post_VS': sgc_post[i].get_VS('post'),
-                                 'pars': sgc_post[i].info(),
-                                 't': np.array(sgc_post[i].res['t']),
-                                 'vm': np.array(sgc_post[i].res['vm']),
-                                 'post_spk': sgc_post[i].post_spk,
-                                 'pre_spk': sgc_post[i].pre_spk,
-                                 }
+    nWorkers = 2
+    pars = [None]*nCFs
+    for i in range(nCFs):
+        pars[i] = {'CF': cflist[i], 'dB': 60., 'i': i, 'temp': 34.0,
+                    'dt': 0.025, 'seed': 5759820*i}
+    pool = Pool(processes = nWorkers)
+    results = pool.map(run_one, (pars[i] for i in range(nCFs)))
+
+    #results = [p.get() for p in res]  # from async...
+    pool.close()
+    pool.join()
+
+    # TASKS = [s for s in range(len(cflist))]
+    # results = [None]*len(TASKS)
+    # sgc_post = [None]*len(TASKS)
+    # with mproc.Parallelize(enumerate(TASKS), results=results, workers=nWorkers) as tasker:
+    #     for i, x in tasker:
+    #         sgc_post[i] = SGCInputTestPL()
+    #         print i
+    #         sgc_post[i].setCF(cflist[i])
+    #         sgc_post[i].run_one(seed=57598*i)
+    #         tasker.results[i] = {'AN_VS': sgc_post[i].get_VS('AN'),
+    #                              'post_VS': sgc_post[i].get_VS('post'),
+    #                              'pars': sgc_post[i].info(),
+    #                              't': np.array(sgc_post[i].res['t']),
+    #                              'vm': np.array(sgc_post[i].res['vm']),
+    #                              'post_spk': sgc_post[i].post_spk,
+    #                              'pre_spk': sgc_post[i].pre_spk,
+    #                              }
     return(results)
 
 
@@ -226,7 +262,7 @@ if single:
     u.show()
 
 else:
-    showdata = False
+    showdata = True
     if not showdata:
 
         results = run_multifreq()
