@@ -218,24 +218,28 @@ def show_vs(results):
     win.show()
     return win
 
-# u = SGCInputTestPL()
-# u.run_one()
-# u.show()
+single=False
 
-showdata = True
-if not showdata:
-
-    results = run_multifreq()
-    show_vs(results)
-    rf = open('Phase-Runs.p', 'w')
-    cPickle.dump(results, rf)
-    rf.close()
+if single:
+    u = SGCInputTestPL()
+    u.run_one()
+    u.show()
 
 else:
-    rf = open('Phase-Runs.p', 'r')
-    results = cPickle.load(rf)
-    rf.close()
-    w=show_vs(results)
+    showdata = False
+    if not showdata:
+
+        results = run_multifreq()
+        show_vs(results)
+        rf = open('Phase-Runs.p', 'w')
+        cPickle.dump(results, rf)
+        rf.close()
+
+    else:
+        rf = open('Phase-Runs.p', 'r')
+        results = cPickle.load(rf)
+        rf.close()
+        w=show_vs(results)
 
 
 if sys.flags.interactive == 0:
