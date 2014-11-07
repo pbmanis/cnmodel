@@ -62,8 +62,8 @@ class SGCInputTestPL(Protocol):
         self.f0 = 4000.  # stimulus frequency
         self.cf = self.f0  # fiber cf location (frequency)
         self.dBSPL = 60.
-        self.sr = [2]  # list of sr group per convergent input
-        self.nconverge = 1
+        self.sr = [1, 2, 2, 3]  # list of sr group per convergent input
+        self.nconverge = 4
         self.depFlag = False  # depressing or not depressing synapses
 
     def setCF(self, cf):
