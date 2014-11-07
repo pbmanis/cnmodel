@@ -200,23 +200,19 @@ def run_one(pars):
 
 def run_multifreq():
     #cflist = np.logspace(np.log10(200), np.log10(6000), 5)
-    cflist = [200, 333., 500.] #, 1000., 1200., 1500., 2000.,
-              #2500., 3000.,4000., 5000.]
+    cflist = [200, 333., 500., 1000., 1200., 1500., 2000.,
+              2500., 3000.,4000., 5000.]
     nCFs = len(cflist)
 
-    nWorkers = 3
+    nWorkers = 6
     pars = [None]*nCFs
     for i in range(nCFs):
         pars[i] = {'CF': cflist[i], 'dB': 60., 'i': i, 'temp': 34.0,
-                    'dt': 0.025, 'seed': 5759820*i}
+                    'dt': 0.025, 'seed': 57598201*i}
     pool = multiprocessing.Pool(processes = nWorkers)
-    print 'nCFs: ', nCFs
-    print len(pars)
-    for p in pars:
-        print p
-    res = pool.apply_async(run_one, (pars[j] for j in range(nCFs)))
+    results = pool.map(run_one, (pars[j] for j in range(nCFs)))
 
-    results = [p.get() for p in res]  # from async...
+    #results = [p.get() for p in res]  # from async...
     pool.close()
     pool.join()
 
