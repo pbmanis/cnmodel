@@ -266,6 +266,9 @@ def vector_strength(spikes, freq):
         ph: the circularized spike train over period of the stimulus freq, freq, in radians
         d: the "dispersion" computed according to Ashida et al., 2010, etc.
     """
+    if len(spikes) == 0:
+        return{'r': 0., 'n': 0, 'R': 0., 'p': 1., 'ph': 0., 'd': 0.}
+
     per = 1e3/freq # convert from Hz to period in msec
     ph = 2*np.pi*np.fmod(spikes, per)/(per) # convert to radians within a cycle
     c = np.sum(np.cos(ph))**2

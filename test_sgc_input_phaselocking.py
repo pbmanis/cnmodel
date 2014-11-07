@@ -24,7 +24,7 @@ class SGCInputTestPL(Protocol):
         self.stim = sound.TonePip(rate=self.Fs, duration=self.run_duration, f0=self.f0, dbspl=60,
                                   ramp_duration=2.5e-3, pip_duration=self.pip_duration,
                                   pip_start=self.pip_start)
-        
+
         preCell.set_sound_stim(self.stim, seed=seed)
         
         self['vm'] = postCell.soma(0.5)._ref_v
