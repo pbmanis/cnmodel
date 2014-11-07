@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from neuron import h
 #import pyqtgraph.multiprocess as mproc
-from multiprocessing import Pool
+import multiprocessing
 import pyqtgraph as pg
 import pylibrary.pyqtgraphPlotHelpers as pgh
 import nrnlibrary.util.pynrnutilities as PU
@@ -137,8 +137,8 @@ class SGCInputTestPL(Protocol):
         spkin = spikes[np.where(spikes > phasewin[0]*1e3)]
         spikesinwin = spkin[np.where(spkin <= phasewin[1]*1e3)]
         vs = PU.vector_strength(spikesinwin, self.f0)
-        print ('{:s} Vector Strength: {:7.3f}, d={:.2f} (us) Rayleigh: {:7.3f}  p = {:.3e}  n = {:d}'
-              .format(text_ident, vs['r'], vs['d']*1e6, vs['R'], vs['p'], vs['n']))
+        print ('{:4s} [cf={:.1f}] Hz Vector Strength: {:7.3f}, d={:.2f} (us) Rayleigh: {:7.3f}  p = {:.3e}  n = {:d}'
+              .format(text_ident, self.cf, vs['r'], vs['d']*1e6, vs['R'], vs['p'], vs['n']))
         return vs
 
     def show(self):
@@ -200,19 +200,23 @@ def run_one(pars):
 
 def run_multifreq():
     #cflist = np.logspace(np.log10(200), np.log10(6000), 5)
-    cflist = [200, 333, 500., 750., 1000., 1500., 2000., 2500., 3000., 5000.]
+    cflist = [200, 333., 500.] #, 1000., 1200., 1500., 2000.,
+              #2500., 3000.,4000., 5000.]
     nCFs = len(cflist)
-    nWorkers = 2
 
-    nWorkers = 2
+    nWorkers = 3
     pars = [None]*nCFs
     for i in range(nCFs):
         pars[i] = {'CF': cflist[i], 'dB': 60., 'i': i, 'temp': 34.0,
                     'dt': 0.025, 'seed': 5759820*i}
-    pool = Pool(processes = nWorkers)
-    results = pool.map(run_one, (pars[i] for i in range(nCFs)))
+    pool = multiprocessing.Pool(processes = nWorkers)
+    print 'nCFs: ', nCFs
+    print len(pars)
+    for p in pars:
+        print p
+    res = pool.apply_async(run_one, (pars[j] for j in range(nCFs)))
 
-    #results = [p.get() for p in res]  # from async...
+    results = [p.get() for p in res]  # from async...
     pool.close()
     pool.join()
 
@@ -255,27 +259,25 @@ def show_vs(results):
     return win
 
 single=False
+showdata = True
+dorun = True
 
 if single:
     u = SGCInputTestPL()
     u.run_one()
     u.show()
 
-else:
-    showdata = True
-    if not showdata:
+if dorun:
+    results = run_multifreq()
+    rf = open('Phase-Runs.p', 'w')
+    cPickle.dump(results, rf)
+    rf.close()
 
-        results = run_multifreq()
-        show_vs(results)
-        rf = open('Phase-Runs.p', 'w')
-        cPickle.dump(results, rf)
-        rf.close()
-
-    else:
-        rf = open('Phase-Runs.p', 'r')
-        results = cPickle.load(rf)
-        rf.close()
-        w=show_vs(results)
+if showdata:
+    rf = open('Phase-Runs.p', 'r')
+    results = cPickle.load(rf)
+    rf.close()
+    w=show_vs(results)
 
 
 if sys.flags.interactive == 0:
