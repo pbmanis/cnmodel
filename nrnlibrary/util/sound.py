@@ -19,6 +19,8 @@ class Sound(object):
     def __init__(self, duration, rate=100e3, **kwds):
         self.opts = {'rate': rate, 'duration': duration}
         self.opts.update(kwds)
+        for k in self.opts:
+            setattr(self, k, self.opts[k])
         self._time = None
         self._sound = None
 
@@ -72,11 +74,11 @@ class Sound(object):
         """
         raise NotImplementedError()
 
-    def __getattr__(self, name):
-        if name in self.opts:
-            return self.opts[name]
-        else:
-            return object.__getattr__(self, name)
+    # def __getattr__(self, name):
+    #     if name in self.opts:
+    #         return self.opts[name]
+    #     else:
+    #         return object.__getattr__(self, name)
 
 
 class TonePip(Sound):

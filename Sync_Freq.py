@@ -10,6 +10,7 @@ Attempts to uses multiprocessing to take advantage of the processors in a given 
 import faulthandler
 import sys
 import numpy as np
+from neuron import h
 #import pyqtgraph.multiprocess as mproc
 import multiprocessing
 import pyqtgraph as pg
@@ -79,12 +80,17 @@ class SGCInputTestPL(Protocol):
     def info(self):
         return{'Fs': self.Fs, 'F0': self.f0, 'CF': self.cf, 'SPL': self.dBSPL, 'sr': self.sr, 'nconverge': self.nconverge}
 
+    def getPars(self):
+        return({'CF': self.cf, 'dB': self.dBSPL, 'temp': 34.0,
+                            'dt': 0.025, 'seed': 5759820, 'SRs': self.sr})
+
     def run_one(self, pars={'CF': 4000., 'dB': 60, 'temp': 34.0,
-                            'dt': 0.025, 'seed': 5759820, 'SRs': ['l']}):
-        from neuron import h
+                            'dt': 0.025, 'seed': 5759820, 'SRs': {'l': 1, 'm': 2, 'h': 1}}):
         self.setCF(pars['CF'])
         self.setdB(pars['dB'])
-        srmap = {'l': 1, 'm': 2, 'h': 3}
+        self.setSR(pars['SRs'])
+        self.nconverge = len(pars['SRs'])
+        srmap = {'h': 1, 'm': 2, 'l': 3}
         temp = pars['temp']
         dt = pars['dt']
         seed = pars['seed']
@@ -92,7 +98,8 @@ class SGCInputTestPL(Protocol):
         preCell = [None]*self.nconverge
         synapse = [None]*self.nconverge
         for i in range(self.nconverge):
-            preCell[i] = cells.DummySGC(cf=self.cf, sr=srmap(self.sr[i]))
+            print 'making sgc of type: ', self.sr[i], srmap[self.sr[i]]
+            preCell[i] = cells.DummySGC(cf=self.cf, sr=srmap[self.sr[i]])
             synapse[i] = preCell[i].connect(postCell)
         self.pre_cell = preCell
         self.post_cell = postCell
@@ -125,8 +132,7 @@ class SGCInputTestPL(Protocol):
             self.pre_spk[i] = self.pre_cell[i]._spiketrain
 #        print 'vm: ', self.res['vm']
         self.post_spk = PU.findspikes(np.array(self.res['t']), np.array(self.res['vm']), -30.)
-#        print 'bu spk: ', self.post_spk
-
+#        print 'bu spk: ', self.post_s
 
 
     def get_VS(self, text_ident):
@@ -202,8 +208,20 @@ def run_oneparset(pars):
                                  'vm': np.array(s.res['vm']),
                                  'post_spk': s.post_spk,
                                  'pre_spk': s.pre_spk,
+                                 'stim': s.stim,
                                   }
     return result
+
+def computeVS(self, spikes, text_ident='??'):
+    if len(spikes) == 0:
+        return {'r': 0., 'ph': 0., 'd': 0., 'n': 0, 'p': 1.0, 'R': 0.}
+    phasewin = [self.pip_start[0] + 0.25*self.pip_duration, self.pip_start[0] + self.pip_duration]
+    spkin = spikes[np.where(spikes > phasewin[0]*1e3)]
+    spikesinwin = spkin[np.where(spkin <= phasewin[1]*1e3)]
+    vs = PU.vector_strength(spikesinwin, self.f0)
+    print ('{:4s} [cf={:.1f}] Hz Vector Strength: {:7.3f}, d={:.2f} (us) Rayleigh: {:7.3f}  p = {:.3e}  n = {:d}'
+          .format(text_ident, self.cf, vs['r'], vs['d']*1e6, vs['R'], vs['p'], vs['n']))
+    return vs
 
 def run_multifreq(srlist):
     #cflist = np.logspace(np.log10(200), np.log10(6000), 5)
@@ -242,9 +260,9 @@ def run_multifreq(srlist):
     #                              }
     return(results)
 
-def show_vs(results):
+def show_vs(results, title=''):
     print 'show_vs'
-    win = pgh.figure(title='testing')
+    win = pgh.figure(title=title)
     layout = pgh.LayoutMaker(cols=1,rows=2, win=win, labelEdges=True, ticks='talbot')
     p1 = layout.getPlot(0)
     p2 = layout.getPlot(1)
@@ -257,7 +275,7 @@ def show_vs(results):
 
     vs_pre = [x['AN_VS']['r'] for x in results]
     vs_post = [x['post_VS']['r'] for x in results]
-    pp = pg.PlotDataItem(fl, vs_pre, pen=pg.mkPen('g'), symbol='o', symbolPen=pg.mkPen('g'), symbolBrush=pg.mkBrush('g'))
+    pp = pg.PlotDataItem(fl, vs_pre, pen=pg.mkPen('k'), symbol='o', symbolPen=pg.mkPen('k'), symbolBrush=pg.mkBrush('k'))
     p1.addItem(pp)
     ps = pg.PlotDataItem(fl, vs_post, pen = pg.mkPen('r'), symbol='s', symbolPen=pg.mkPen('r'), symbolBrush=pg.mkBrush('r'))
     p1.addItem(ps)
@@ -274,9 +292,53 @@ def show_vs(results):
     pgh.show()
     return win
 
+def show_traces(result):
+
+    win = pg.GraphicsWindow()
+    Fs = result['pars']['Fs']
+    p1 = win.addPlot(title='stim', row=0, col=0)
+
+    p1.plot(result['stim'].time * 1000, result['stim'].sound)
+    p1.setXLink(p1)
+
+    p2 = win.addPlot(title='AN spikes', row=1, col=0)
+    vt = pg.VTickGroup(result['pre_spk'][0])
+    p2.addItem(vt)
+    p2.setXLink(p1)
+
+    p3 = win.addPlot(title='Bushy Spikes', row=2, col=0)
+    bspk = PU.findspikes(result['t'], result['vm'], -30.)
+    bspktick = pg.VTickGroup(bspk)
+    p3.addItem(bspktick)
+    p3.setXLink(p1)
+
+    p4 = win.addPlot(title='Bushy Vm', row=3, col=0)
+    p4.plot(result['t'], result['vm'])
+    p4.setXLink(p1)
+
+    # p5 = self.win.addPlot(title='xmtr', row=0, col=1)
+    # for i in range(30):
+    #     p5.plot(result['t'], self.res['xmtr%d'%i], pen=(i, 15))
+    # p5.setXLink(p1)
+
+    p6 = win.addPlot(title='AN phase', row=1, col=1)
+    vs = computeVS(result['pre_spk'][0], 'AN')
+    (hist, binedges) = np.histogram(vs['ph'])
+    curve = p6.plot(binedges, hist, stepMode=True, fillBrush=(100, 100, 255, 150), fillLevel=0)
+    p6.setXRange(0., 2*np.pi)
+
+    p7 = win.addPlot(title='Bushy phase', row=2, col=1)
+    vs = computeVS(bspk, 'BU')
+    (hist, binedges) = np.histogram(vs['ph'])
+    curve = p7.plot(binedges, hist, stepMode=True, fillBrush=(100, 100, 255, 150), fillLevel=0)
+    p7.setXRange(0., 2*np.pi)
+    p7.setXLink(p6)
+
+    win.show()
+
 
 if __name__ == '__main__':
-    single = True
+    single = False
     showdata = True
     dorun = False
 
@@ -290,7 +352,7 @@ if __name__ == '__main__':
     if single:
         u = SGCInputTestPL()
         u.setSR(srlist)
-        u.run_one()
+        u.run_one(pars=u.getPars())
         u.show()
 
     if dorun:
@@ -303,11 +365,11 @@ if __name__ == '__main__':
         rf = open(filename, 'r')
         results = cPickle.load(rf)
         rf.close()
-        w=show_vs(results)
+        w=show_vs(results, filename)
+        show_traces(results[0])
 
 
-    #if sys.flags.interactive == 0:
-    #    pg.QtGui.QApplication.exec_()
+
 
 
 
