@@ -6,10 +6,10 @@ Attempts to uses multiprocessing to take advantage of the processors in a given 
 
 """
 
+
 import faulthandler
 import sys
 import numpy as np
-from neuron import h
 #import pyqtgraph.multiprocess as mproc
 import multiprocessing
 import pyqtgraph as pg
@@ -62,9 +62,12 @@ class SGCInputTestPL(Protocol):
         self.f0 = 4000.  # stimulus frequency
         self.cf = self.f0  # fiber cf location (frequency)
         self.dBSPL = 60.
-        self.sr = [1, 2, 2, 3]  # list of sr group per convergent input
-        self.nconverge = 4
+        self.sr = ['l']  # list of sr group per convergent input
+        self.nconverge = len(self.sr)
         self.depFlag = False  # depressing or not depressing synapses
+
+    def setSR(self, sr):
+        self.sr = sr
 
     def setCF(self, cf):
         self.cf = cf
@@ -77,9 +80,11 @@ class SGCInputTestPL(Protocol):
         return{'Fs': self.Fs, 'F0': self.f0, 'CF': self.cf, 'SPL': self.dBSPL, 'sr': self.sr, 'nconverge': self.nconverge}
 
     def run_one(self, pars={'CF': 4000., 'dB': 60, 'temp': 34.0,
-                            'dt': 0.025, 'seed': 5759820}):
+                            'dt': 0.025, 'seed': 5759820, 'SRs': ['l']}):
+        from neuron import h
         self.setCF(pars['CF'])
         self.setdB(pars['dB'])
+        srmap = {'l': 1, 'm': 2, 'h': 3}
         temp = pars['temp']
         dt = pars['dt']
         seed = pars['seed']
@@ -87,7 +92,7 @@ class SGCInputTestPL(Protocol):
         preCell = [None]*self.nconverge
         synapse = [None]*self.nconverge
         for i in range(self.nconverge):
-            preCell[i] = cells.DummySGC(cf=self.cf, sr=self.sr[i])
+            preCell[i] = cells.DummySGC(cf=self.cf, sr=srmap(self.sr[i]))
             synapse[i] = preCell[i].connect(postCell)
         self.pre_cell = preCell
         self.post_cell = postCell
@@ -183,10 +188,12 @@ class SGCInputTestPL(Protocol):
 
         self.win.show()
 
-def run_one(pars):
+
+def run_oneparset(pars):
     s = SGCInputTestPL()
     s.setCF(pars['CF'])
     s.setdB(pars['dB'])
+    s.setSR(pars['SRs'])
     s.run_one(pars)
     result = {'AN_VS': s.get_VS('AN'),
                                  'post_VS': s.get_VS('post'),
@@ -198,7 +205,7 @@ def run_one(pars):
                                   }
     return result
 
-def run_multifreq():
+def run_multifreq(srlist):
     #cflist = np.logspace(np.log10(200), np.log10(6000), 5)
     cflist = [200, 333., 500., 1000., 1200., 1500., 2000.,
               2500., 3000.,4000., 5000.]
@@ -208,9 +215,9 @@ def run_multifreq():
     pars = [None]*nCFs
     for i in range(nCFs):
         pars[i] = {'CF': cflist[i], 'dB': 60., 'i': i, 'temp': 34.0,
-                    'dt': 0.025, 'seed': 57598201*i}
+                    'dt': 0.025, 'seed': 57598201*i, 'SRs': srlist}
     pool = multiprocessing.Pool(processes = nWorkers)
-    results = pool.map(run_one, (pars[j] for j in range(nCFs)))
+    results = pool.map(run_oneparset, (pars[j] for j in range(nCFs)))
 
     #results = [p.get() for p in res]  # from async...
     pool.close()
@@ -235,49 +242,72 @@ def run_multifreq():
     #                              }
     return(results)
 
-
 def show_vs(results):
-    win = pg.GraphicsWindow()
-    p1 = win.addPlot(title='VS', row=0, col=0)
+    print 'show_vs'
+    win = pgh.figure(title='testing')
+    layout = pgh.LayoutMaker(cols=1,rows=2, win=win, labelEdges=True, ticks='talbot')
+    p1 = layout.getPlot(0)
+    p2 = layout.getPlot(1)
+    layout.title(0, 'VS')
+    layout.title(1, 'd')
+    #talbotTicks(layout.getPlot(1))
+    #layout.columnAutoScale(col=3, axis='left')
     # reassemble results
-    fl = [x['pars']['F0'] for x in results]
+    fl = [x['pars']['F0']*1e-3 for x in results]
 
     vs_pre = [x['AN_VS']['r'] for x in results]
     vs_post = [x['post_VS']['r'] for x in results]
-    # fl = [500, 1000, 2000]
-    # vs_pre=[0.8, 0.7, 0.6]
-    # vs_post = [0.75, 0.5, 0.2]
     pp = pg.PlotDataItem(fl, vs_pre, pen=pg.mkPen('g'), symbol='o', symbolPen=pg.mkPen('g'), symbolBrush=pg.mkBrush('g'))
     p1.addItem(pp)
     ps = pg.PlotDataItem(fl, vs_post, pen = pg.mkPen('r'), symbol='s', symbolPen=pg.mkPen('r'), symbolBrush=pg.mkBrush('r'))
     p1.addItem(ps)
-    win.show()
+    p1.setLogMode(x=True)
+    pgh.labelAxes(p1, 'F (Hz)', 'Vector Strength')
+    d_pre = [x['AN_VS']['d']*1e6 for x in results]
+    d_post = [x['post_VS']['d']*1e6 for x in results]
+    pp = pg.PlotDataItem(fl, d_pre, pen=pg.mkPen('g'), symbol='o', symbolPen=pg.mkPen('g'), symbolBrush=pg.mkBrush('g'))
+    p2.addItem(pp)
+    ps = pg.PlotDataItem(fl, d_post, pen = pg.mkPen('r'), symbol='s', symbolPen=pg.mkPen('r'), symbolBrush=pg.mkBrush('r'))
+    p2.addItem(ps)
+    pgh.labelAxes(p2, 'F (Hz)', 'Dispersion (uS)')
+    p2.setLogMode(x=True)
+    pgh.show()
     return win
 
-single=False
-showdata = True
-dorun = True
 
-if single:
-    u = SGCInputTestPL()
-    u.run_one()
-    u.show()
+if __name__ == '__main__':
+    single = True
+    showdata = True
+    dorun = False
 
-if dorun:
-    results = run_multifreq()
-    rf = open('Phase-Runs.p', 'w')
-    cPickle.dump(results, rf)
-    rf.close()
+    species = 'guineapig'
+    celltype = 'bushy'
+    srlist = ['l', 'm', 'm', 'h']
 
-if showdata:
-    rf = open('Phase-Runs.p', 'r')
-    results = cPickle.load(rf)
-    rf.close()
-    w=show_vs(results)
+    convergence_pattern='LS%03dMS%03dHS%03d' % (srlist.count('l'), srlist.count('m'), srlist.count('h'))
+    filename = 'Phase-Runs_%s_%s_%s.p' % (species, celltype, convergence_pattern )
+
+    if single:
+        u = SGCInputTestPL()
+        u.setSR(srlist)
+        u.run_one()
+        u.show()
+
+    if dorun:
+        results = run_multifreq(srlist)
+        rf = open(filename, 'w')
+        cPickle.dump(results, rf)
+        rf.close()
+
+    if showdata:
+        rf = open(filename, 'r')
+        results = cPickle.load(rf)
+        rf.close()
+        w=show_vs(results)
 
 
-if sys.flags.interactive == 0:
-    pg.QtGui.QApplication.exec_()
+    #if sys.flags.interactive == 0:
+    #    pg.QtGui.QApplication.exec_()
 
 
 
