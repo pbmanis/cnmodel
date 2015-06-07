@@ -28,6 +28,7 @@ class Mechanism(object):
         self.parameters = parameters
 
     def insert_into(self, section):
+        print 'insert: ', self.name
         section.insert(self.name)
         for name, value in self.parameters.items():
             for segment in section:
