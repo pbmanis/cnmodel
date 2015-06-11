@@ -16,7 +16,7 @@ class Bushy(Cell):
         if model == 'RM03':
             return BushyRothman(**kwds)
         else:
-            raise ValueError ('DStellate type %s is unknown', type)
+            raise ValueError ('Bushy type %s is unknown' % model)
 
     def make_psd(self, terminal, **kwds):
         from .. import cells
@@ -66,14 +66,18 @@ class BushyRothman(Bushy):
 
         self.mechanisms = ['klt', 'kht', 'ihvcn', 'leak', nach]
         for mech in self.mechanisms:
-            soma.insert(mech)
+            try:
+                soma.insert(mech)
+            except ValueError:
+                print 'failed to insert mech: ', mech
+        print self.get_mechs(soma)
         soma.ena = self.e_na
         soma.ek = self.e_k
         soma().ihvcn.eh = self.e_h
         soma().leak.erev = self.e_leak
         self.add_section(soma, 'soma')
         self.species_scaling(silent=True, species=species, type=type)  # set the default type II cell parameters
-        self.get_mechs(soma)
+        print self.get_mechs(soma)
         self.cell_initialize(vrange=self.vrange)
         if debug:
             print "<< bushy: JSR bushy cell model created >>"

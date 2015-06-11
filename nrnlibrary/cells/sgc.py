@@ -41,9 +41,13 @@ class SGC(Cell):
         #
         # set parameters according to the target cell type
         #
-        
         if isinstance(post_cell, cells.Bushy):
             nzones, delay = 100, 0
+        elif isinstance(post_cell, cells.Generic):
+            if 'nzones' in kwds.keys():  # allow respecification
+                nzones, delay = kwds['nzones'], kwds['delay']
+            else:
+                nzones, delay = 1, 0
         elif isinstance(post_cell, cells.TStellate):
             nzones, delay = 1, 0
         elif isinstance(post_cell, cells.DStellate):
