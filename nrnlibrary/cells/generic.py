@@ -60,7 +60,7 @@ class GenericCell(Generic):
                        'na': nach, 'species': species, 'type': type, 'ttx': ttx, 'name': 'Generic'}
         self.i_test_range=(-0.5, 0.5, 0.05)
         self.spike_threshold = -40
-        self.vrange = [-70., -57.]  # set a default vrange for searching for rmp
+        self.vrange = [-85., -50.]  # set a default vrange for searching for rmp
 
         if soma is None:
             soma = h.Section(name="Generic_Soma_%x" % id(self))  # one compartment of about 29000 um2
