@@ -26,7 +26,6 @@ def get_spiketrain(cf, sr, stim, seed, **kwds):
     keydata = dict(cf=cf, sr=sr, stim=stim.key(), seed=seed, **kwds)
     key = make_key(**keydata)
     data = None
-    
     # Load data from cache if possible
     if key in index and "--ignore-an-cache" not in sys.argv:
         data_file = index[key]['file']
@@ -76,9 +75,11 @@ def cache_index():
     if _index is None:
         if not os.path.isdir(_cache_path):
             os.mkdir(_cache_path)
-            
         if os.path.isfile(_index_file):
-            _index = pickle.load(open(_index_file, 'rb'))
+            try:  # pickle can fail to load the _index_file - getting errors on key '\n'
+                _index = pickle.load(open(_index_file, 'rb'))
+            except:
+                _index = {'_cache_version': 0.} # reset cache version and force regeneratoin
             if _index['_cache_version'] != _cache_version:
                 i = 0
                 while True:
@@ -88,6 +89,7 @@ def cache_index():
                 os.rename(_cache_path, old_cache)
                 print ("Cache version is too old; starting new cache. "
                        "(old cache is stored at %s)" % old_cache)
+                os.mkdir(_cache_path) # need to create diretloy again
                 return cache_index()
         else:
             _index = {'_cache_version': _cache_version}
@@ -124,7 +126,6 @@ def generate_spiketrain(cf, sr, stim, seed, **kwds):
     for k in ['pin', 'CF', 'fiberType', 'noiseType']:
         if k in kwds:
             raise TypeError("Argument '%s' is not allowed here." % k)
-    
     ihc_kwds = dict(pin=stim.sound, CF=cf, nrep=1, tdres=stim.dt, 
                     reptime=stim.duration*2, cohc=1, cihc=1, species=1)
     syn_kwds = dict(CF=cf, nrep=1, tdres=stim.dt, fiberType=sr, noiseType=1, implnt=0)
