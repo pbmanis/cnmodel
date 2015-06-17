@@ -22,7 +22,7 @@ class Cell(object):
         # dictionary of all sections associated with this cell
         self.all_sections = {}
         # the following section types (parts) are known to us:
-        for k in ['soma', 'maindend', 'secdend', 'internode', 'initialsegment', 'axonnode', 'axon']:
+        for k in ['soma', 'dendrite', 'main_dendrite', 'secondary_dendrite', 'axon_hillock', 'internode', 'initial_segment', 'axon_node', 'axon']:
             self.all_sections[k] = []  # initialize to an empty list
         
         # Record synaptic inputs and projections
@@ -55,6 +55,22 @@ class Cell(object):
         # Resting potential for this cell, determined by calling
         # self.find_i0()
         self.vm0 = None
+
+    def load_morphology(self, swc_data):
+        """Create sections as defined in *swc_data*, which must be an SWC 
+        instance (from util.swc).
+        
+        Sections are automatically added if their type matches one of the keys
+        in self.all_sections.
+        
+        The return values are the same as for SWC.create_sections().
+        """
+        sec_ids, sec_types = swc_data.create_sections()
+        for typ, secs in sec_types.items():
+            if typ in self.all_sections:
+                for sec in secs:
+                    self.add_section(sec, typ)
+        return sec_ids, sec_types
 
     def add_section(self, sec, sec_type):
         """
