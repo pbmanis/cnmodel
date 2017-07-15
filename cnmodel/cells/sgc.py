@@ -92,10 +92,8 @@ class DummySGC(SGC):
             currently use the Zilany et al. model, but the simulator can
             be run though a Python-interface direcltly to the Matlab code
             as publicy available, (simulator='matlab'), or can be run through
-            Rudieki's Python interface to the simulator's C code 
-            (simulator='cochlea'). Requires installation of the modified
-            versions of cochlea and thorns from github.com/pbmanis/cochlea and
-            github.com/pbmanis/thorns.
+            Rudnicki's Python interface to the simulator's C code 
+            (simulator='cochlea').
         
         """
         SGC.__init__(self, cf, sr)
