@@ -1,3 +1,9 @@
+NOTE
+====
+
+This is the last branch of the Python2.7 compatible version of CNModel. For new projects, use the Python3 branch, which is set as the new default. 
+
+
 About CNModel
 =============
 
