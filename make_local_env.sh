@@ -18,7 +18,7 @@ source $ENVNAME/bin/activate
 # with the same version as we have provided
 nrnivmodl cnmodel/mechanisms
 
-# these has to be done separately as the compilation depends on what happens above
+# these have to be done separately as the compilation depends on what happens above
 pip3 install -e git+https://github.com/pbmanis/cochlea-1.git@c2e8c9612481ebe397ba0e7762b8f2772500388d#egg=cochlea
 rm -rf cochleae
 pip3 install -e git+https://github.com/pbmanis/neuronvis.git@Python3#egg=neuronvis
