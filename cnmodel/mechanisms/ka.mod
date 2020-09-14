@@ -1,4 +1,4 @@
-TITLE klt.mod  The low threshold conductance of cochlear nucleus neurons
+TITLE ka.mod A transient K conductance from cochlear nucleus neurons
 
 COMMENT
 
@@ -14,7 +14,7 @@ neurons from adult guinea pig, under reasonably stringent voltage clamp conditio
  The measured current is sensitive to 4-aminopyridine. 
 Original implementation by Paul B. Manis, April (JHU) and Sept, (UNC)1999.
 
-File split implementaiton, April 1, 2004.
+File split implementation, April 1, 2004.
 
 Contact: pmanis@med.unc.edu
 
