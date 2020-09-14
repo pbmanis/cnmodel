@@ -22,8 +22,6 @@ setup(name='cnmodel',
       author_email='pmanis@med.unc.edu',
       license='MIT',
       packages=find_packages(include=['cnmodel*']),
-      install_requires=['matplotlib>=3.0', 'numpy>=1.1',
-          ],
       entry_points={
           'console_scripts': [
                'CNtoy_model=examples.toy_model:main',
