@@ -6,11 +6,12 @@ cnmodel can be installed in several ways.
 The most "closed" and reproducible way is to use the
 existing tools in python to create a virtual environment.
 
-    1. Do a standard installation of NEURON
+    1. Do a **standard** installation of NEURON Neuron 7.7.2 and 7.8.1 have been tested.
+       DO NOT do a "sudo pip install neuron".
 
     2. Create virtual environment:
 
-    (This scripts is in make_env.sh)
+        (This scripts is in make_env.sh)
 
         ENVNAME="cnmodel_venv"
         python3 -m venv $ENVNAME
@@ -41,9 +42,13 @@ existing tools in python to create a virtual environment.
 
         # note that you will need to activate the environment once this script exists.
     
-    3. in .zshrc, you can create a convenience alias to switch the environment and get into
+    3. In ~/.zshrc, you can create a convenience alias to switch the environment and get into
        the directory.
-   
-ALternate:
+      
+    4. Activate the virtual environment with "source cnmodel_venv/bin/activate".
+     
+
+  
+Alternate:
     Install using anaconda python, building all by hand.
     

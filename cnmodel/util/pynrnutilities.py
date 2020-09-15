@@ -468,13 +468,17 @@ def vector_strength(spikes, freq):
     
     per = 1e3/freq # convert from Hz to period in msec
     ph = 2*np.pi*np.fmod(spikes, per)/(per) # convert to radians within a cycle
-    c = np.sum(np.cos(ph))**2
-    s = np.sum(np.sin(ph))**2
-    vs = (1./len(ph))*np.sqrt(c+s)  # standard vector strength computation
+    sumcos = np.sum(np.cos(ph))
+    sumsin = np.sum(np.sin(ph))
+    mean_phase = np.arctan2(sumsin/sumcos)
+    sumc2 = sumcos**2
+    sums2 = sumsin**2
     n = len(spikes)
+    vs = (1./n)*np.sqrt(sumc2+sums2)  # standard vector strength computation
     R = n*vs  # Raleigh coefficient
     Rp = np.exp(-n*vs*vs)  # p value for n > 50 (see Ashida et al. 2010).
     d = np.sqrt(2.*(1-vs))/(2*np.pi*freq)
+    print('got it')
     return{'r': vs, 'n': n, 'R': R, 'p': Rp, 'ph': ph, 'd': d}
 
 def isi_cv2(splist, binwidth=1, t0=0, t1=300, tgrace=25):

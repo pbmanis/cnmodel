@@ -50,19 +50,25 @@ If you use this package, we would appreciate it if you cite our work in any publ
 
 Installation requirements
 -------------------------
+
+There are 2 ways to create a working setup for cnmodel: using a script, or by hand.
+
+Script: A bash/zsh script is provided (make_env.sh) now that should automatically create an environment in the cnmodel directory with the necessary packages, plus other packages that may be of some use. First, install Neuron using the standard install (not the pip install). Next, run the script. The script will create a virtual environment in cnmodel_venv, containing the necessary packages, should compile the neuron .mod files without error, and should build/compile cochlea, the Python interface to the Zilany et al., cochlea/auditory nerve model. 
+
+Manual:
 This package depends on the following:
 
 1. Python 3.6 or 3.7 with numpy (1.14.3 or later), scipy (1.1.0 or later), lmfit (0.9.11 or later), matplotlib (3.0.3), faulthandler, and pyqtgraph (0.11.0). The cochlea module requires pandas as well. 
    An Anaconda install with the appropriate scientific packages works well::
        
-       conda install python=3.6 pyqt pyqtgraph matplotlib numpy scipy pandas pytest cython
+       conda install python=3.7 pyqt pyqtgraph matplotlib numpy scipy pandas pytest cython
        pip install resampy
        pip install lmfit
        pip install cochlea
        
        or:
        
-       conda create --name py3mpl3 python=3.6 pyqt pyqtgraph matplotlib=3 numpy scipy pandas pytest cython
+       conda create --name py3mpl3 python=3.7 pyqt pyqtgraph matplotlib=3 numpy scipy pandas pytest cython
        pip install resampy
        pip install lmfit
        pip install cochlea
@@ -70,10 +76,11 @@ This package depends on the following:
       
        (Note that under MacOSX, python 3.7 is usable, including with Matlab R2019a; the Windows version of Matlab R2018b is restricted
            to python 3.6)
+       This will create a minimal installation.
+           
 
-
-2. A Python-linked version of NEURON (www.neuron.yale.edu). The code has been tested with NEURON 7.5 and 7.6. We recommend
-getting the most recent version of NEURON and recompiling the .mod files in the mechanisms directory.
+2. A Python-linked version of NEURON (www.neuron.yale.edu). The code has been tested with NEURON 7.5, 7.6, 7.72 and 7.8.1. For older versions of NEURON (7.5, 7.6)
+getting the most recent version of NEURON and recompiling the .mod files in the mechanisms directory. For the newer versions, you should be able to do a "standard install". DO not do pip install.
 
 3. A C compiler (gcc). Needed for compilation of mechanisms for NEURON.
 
@@ -133,8 +140,7 @@ Windows Notes:
 Testing
 -------
 
-Make sure you are in the cnmodel directory, and that you have selected the right environment in Anaconda (in 
-my case, this is usually an environment called py3mpl3 - python 3 with matplotlib 3).
+Make sure you are in the cnmodel directory, and that you have selected the right environment in Anaconda or have activated the virtual environment for a pip install.
 
 After the code is installed, enter the cnmodel directory and compile the NEURON mod (you might have already done this if you are following the instructions above)::
 
