@@ -36,10 +36,10 @@ PyOpenGL==3.1.5
 vtk==8.1.2
 
 # to support montager in ephys package
-Shapely==1.7.0
-imreg_dft>=2.0
-descartes
-mahotas
+# Shapely==1.7.0
+# imreg_dft>=2.0
+# descartes
+# mahotas
 
 # required for 3d display in pyqtgraph
 PyOpenGL==3.1.5
@@ -52,8 +52,4 @@ vtk==8.1.2
 -e git+https://github.com/pbmanis/ephys.git#egg=ephys
 
 # to support montager in ephys package
-Shapely==1.7.0
-imreg_dft>=2.0
-descartes
-mahotas
--e git+https://github.com/pbmanis/montager.git@578ba75af12bb2321e377451f35921977656041a#egg=montage
+-e # git+https://github.com/pbmanis/montager.git@578ba75af12bb2321e377451f35921977656041a#egg=montage
