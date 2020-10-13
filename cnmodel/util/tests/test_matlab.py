@@ -9,6 +9,9 @@ except:
 
 def test_matlab():
     global proc
+    if not MATLAB_FOUND:
+        pytest.skip("MATLAB unavailable")
+         
     try:
         # proc = MatlabProcess()
         proc = matlab.engine.start_matlab()
