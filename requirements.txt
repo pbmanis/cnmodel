@@ -8,6 +8,7 @@ isort==5.0.2
 mypy==0.782
 jupyterlab
 pyperclip
+pytest==4.5.0
 
 # cnmodel (and vcnmodel) requirements
 Cython==0.29.17
@@ -22,7 +23,6 @@ numba==0.43.1
 numpy==1.17.3
 psutil==5.6.7
 pyparsing==2.4.0
-pytest==4.5.0
 resampy==0.2.1
 scipy==1.3.0
 pyqt5==5.12.3
@@ -49,7 +49,7 @@ vtk==8.1.2
 
 -e git+https://github.com/pbmanis/pyqtgraph.git@bb41d95843b6c38850d4132b19cbf40bbbf8491e#egg=pyqtgraph
 -e git+https://github.com/pbmanis/pylibrary.git@355d257f2654b915706586612e3606660fc314be#egg=pylibrary
--e git+https://github.com/pbmanis/ephys.git#egg=ephys
-
-# to support montager in ephys package
--e # git+https://github.com/pbmanis/montager.git@578ba75af12bb2321e377451f35921977656041a#egg=montage
+# -e git+https://github.com/pbmanis/ephys.git#egg=ephys
+#
+# # to support montager in ephys package
+# -e # #git+https://github.com/pbmanis/montager.git@578ba75af12bb2321e377451f3592197765#6041a#egg=montage

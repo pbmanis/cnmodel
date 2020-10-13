@@ -15,6 +15,9 @@ This version of cnmodel runs under Python3.6 or Python3.7, using Neuron 7.6. New
 
 The code base has been modified for Python 3. Functionally, the main internal change is that the parameters for the cells are (almost) completely removed to the data tables. All tests currently pass, but in a few cases are very close but not identical to the original Python 2.7 version (aka branch "master-Python27"). The source of one set of discrepancies has been traced to an error in a .mod file (a variable was declared in both the RANGE and GLOBAL lists).
 
+10 October 2020
+
+Clean up some of the requirements, installation via a shell script (Unix, Mac OSX). Still working on a Windows installation.
 
 About CNModel
 =============
@@ -53,78 +56,8 @@ Installation requirements
 
 There are 2 ways to create a working setup for cnmodel: using a script, or by hand.
 
-Script: A bash/zsh script is provided (make_env.sh) now that should automatically create an environment in the cnmodel directory with the necessary packages, plus other packages that may be of some use. First, install Neuron using the standard install (not the pip install). Next, run the script. The script will create a virtual environment in cnmodel_venv, containing the necessary packages, should compile the neuron .mod files without error, and should build/compile cochlea, the Python interface to the Zilany et al., cochlea/auditory nerve model. 
+Script: A bash/zsh script is provided (make_env.sh) now that should automatically create an environment in the cnmodel directory with the necessary packages, plus other packages that may be of some use. See INSTALL.md in the top directory for full instructions.
 
-Manual:
-This package depends on the following:
-
-1. Python 3.6 or 3.7 with numpy (1.14.3 or later), scipy (1.1.0 or later), lmfit (0.9.11 or later), matplotlib (3.0.3), faulthandler, and pyqtgraph (0.11.0). The cochlea module requires pandas as well. 
-   An Anaconda install with the appropriate scientific packages works well::
-       
-       conda install python=3.7 pyqt pyqtgraph matplotlib numpy scipy pandas pytest cython
-       pip install resampy
-       pip install lmfit
-       pip install cochlea
-       
-       or:
-       
-       conda create --name py3mpl3 python=3.7 pyqt pyqtgraph matplotlib=3 numpy scipy pandas pytest cython
-       pip install resampy
-       pip install lmfit
-       pip install cochlea
-       
-      
-       (Note that under MacOSX, python 3.7 is usable, including with Matlab R2019a; the Windows version of Matlab R2018b is restricted
-           to python 3.6)
-       This will create a minimal installation.
-           
-
-2. A Python-linked version of NEURON (www.neuron.yale.edu). The code has been tested with NEURON 7.5, 7.6, 7.72 and 7.8.1. For older versions of NEURON (7.5, 7.6)
-getting the most recent version of NEURON and recompiling the .mod files in the mechanisms directory. For the newer versions, you should be able to do a "standard install". DO not do pip install.
-
-3. A C compiler (gcc). Needed for compilation of mechanisms for NEURON.
-
-4. The Zilany et al (JASA 2014) auditory periphery model.
-
-This can be provided one of two ways:
-    
-   * The Python-based cochlea model by Rudnicki and Hemmert at https://github.com/mrkrd/cochlea. 
-     This is probably best installed via pip per the instructions on the PyPi site: ``pip install cochlea``.
-   * The original MATLAB-based Zilany model; requires MATLAB 2011 or later. A C compiler will also
-     be needed to build this model. The model should be placed in the directory 
-     ``cnmodel/cnmodel/an_model/model``, with the following components: ANmodel.m, complex.c, complex.h, 
-     complex.hpp, ffGn.m, fituaudiogram2.m, mexANmodel.m, model_IHC.c, model_Synapse.c, 
-     and the THRESHOLD_ALL_* files. When cnmodel attempts to access this code the first time, 
-     it will perform the necessary compilation.
-   
-5. neuronvis (optional) available at https://github.com/campagnola/neuronvis or (a newer version) https://github.com/pbmanis/neuronvis).
-   This provides 3D visualization for morphology, and is independent of cnmodel. neuronvis will require: mayavi, matplotlib, and pyqtgraph.
-
-Once CNModel has been downloaded, go to the directory, and make sure that you are using the right branch ("Python3")::
-        
-        $ cd cnmodel
-        $ git branch           # the active branch will have "*" next to it
-        $ git checkout python3 #(if necessary)
-
-After the code is installed, enter the cnmodel directory and compile the NEURON mod files::
-
-        $ nrnivmodl cnmodel/mechanisms
-
-This will create a directory ("x86_64" or "special") in the top cnmodel directory with the compiled mechanisms.
-
-    Under Windows 10, use::
-
-         $ mknrndll cnmodel\mechanisms
-
-to do the same thing. 
-
-    Finally, go into the cnmodel directory and run::
-    
-        python setup.py develop
-        or:
-        python setup.py install
-
-We prefer the "develop" method, as it allows you to change the code in the cnmodel directory if necessary, without re-running the setup command.
 
 
 Windows Notes:

@@ -1,18 +1,19 @@
-ENVNAME="cnmodel_venv"
-python3.7 -m venv $ENVNAME
-source $ENVNAME/bin/activate
-pip install --upgrade pip  # be sure pip is up to date in the new env.
-pip install wheel  # seems to be missing (note singular)
-pip install cython
+set ENVNAME="cnmodel_venv"
+set cnpath=%cd%
+python3 -m venv $ENVNAME
+C:/%cnpath%/%ENVNAME%/Scripts/activate.bat
+python3 -m pip install --upgrade pip  # be sure pip is up to date in the new env.
+pip3 install wheel  # seems to be missing (note singular)
+pip3 install cython
 # # if requirements.txt is not present, create:
 # # pip install pipreqs
 # # pipreqs
 #
 # #Then:
 #
-pip install -r requirements.txt
-source $ENVNAME/bin/activate
-
+pip3 install -r requirements.txt
+#source $ENVNAME/bin/activate
+C:/%cnpath%/%ENVNAME%/Scripts/activate.bat
 # build the mechanisms
 # this may equire a separate install of the standard NEURON package
 # with the same version as we have provided
@@ -27,5 +28,5 @@ nrnivmodl cnmodel/mechanisms
 pip3 install -e git+https://github.com/pbmanis/cochlea-1.git@c2e8c9612481ebe397ba0e7762b8f2772500388d#egg=cochlea
 rm -rf cochleae
 pip3 install -e git+https://github.com/pbmanis/neuronvis.git@Python3#egg=neuronvis
-source $ENVNAME/bin/activate
-python setup.py develop
+C:/%cnpath%/%ENVNAME%/Scripts/activate.bat
+python3 setup.py develop
