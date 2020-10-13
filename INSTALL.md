@@ -1,11 +1,12 @@
-Install of cnmodel 
+Installing cnmodel 
 =================
+
 
 _cnmodel_ can be installed in several ways. 
 
 Methods A and B apply to **OSX/Unix systems** (not Windows).
 
-##A
+##OSX/Unix
 
 A bash/csh/zsh shell script can handle the installation
 
@@ -16,18 +17,40 @@ A bash/csh/zsh shell script can handle the installation
      Then in the cnmodel directory:
      "source $ENVNAME/bin/activate"
      (or "source cnmodel_venv/bin/activate")
-     
-##B
 
-    Manually, creating an environment. This is essentially the
-    steps from above, 
-    1 Install Python 3.7.9 (the latest of the 3.7 series). The installation
-    will FAIL with python 3.8 at this time 10/2020).
+## Windows
+
+A Windows batch file is provded that will perform the installation.
+
+     In the directory where you cloned cnmodel, there is a batch file:
+     make_env.bat
+     This should complete without error, and at the end it runs the tests
+     Then in the cnmodel directory, make the environment the active one:
+         "cnmodel_venv\Scripts\activate.bat"
+     To exit the environment:
+         "cnmodel_venv\Scripts\deactivate.bat"
+
+Windows Notes:
+--------------
+
+1. For more detailed information on setup in a Windows environment for (*Python 2.7*, see the file Windows_setup.md. Thanks to Laurel Carney for prompting the generation of this set of instructions, and for identifying issues on Windows. A similar setup should work for Python 3.6+.
+
+2. Manually compile the mex files for the Zilany et al model. In Matlab, go to the an_model/models folder, and use mexANmodel.m to compile the files. Then, add the an_model/model folder to the Matlab path, so that it can find the files when needed.
+
+3. Under Windows, it may be best to use the standard Windows command terminal rather than the "bash" terminal provided by NEURON, at least to run the Python scripts.
+
+
+##Manual
+
+You can also install manually, essentially recreating the
+steps from above. This may be of use if there is a problem.
+1 Install Python 3.7.9 (the latest of the 3.7 series). The installation
+will FAIL with python 3.8 at this time 10/2020).
      
-    1 Do a **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested.
-       DO NOT do a "sudo pip install neuron".
+- Do a **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested.
+- DO NOT do a "sudo pip install neuron".
      
-    3 Create virtual environment:
+- Create the virtual environment:
 
         (This script is in make_env.sh)
 
@@ -63,35 +86,38 @@ A bash/csh/zsh shell script can handle the installation
         # note that you will need to activate the environment once this script exists.
 
 
-For either of A or B, you can create a convenience alias to switch the environment and get into the directory.
+## Convenience Functions
+Under Unix systems (OSX)For either of A or B, you can create a convenience alias to switch the environment and get into the directory.
 
-    Add the following lines to your .zshrc:
+Add the following lines to your .zshrc:
     
-        # clean deactivation - no message if there is no deactivate
-        # command, otherwise, just do it.
-        deact() {
-            if [ "$(command -v deactivate)" ]; then
-                deactivate
-            fi
-        }
-        alias cn="deact; cd ~/whereyouputthemodel/cnmodel; source cnmodel_venv/bin/activate"
+    # clean deactivation - no message if there is no deactivate
+    # command, otherwise, just do it.
+    deact() {
+        if [ "$(command -v deactivate)" ]; then
+            deactivate
+        fi
+    }
+    alias cn="deact; cd ~/where_you_put_the_model/cnmodel; source cnmodel_venv/bin/activate"
         
-    This deactivates the current environment you are in (should leave you in a base or no environment),
-    then puts you into cnmodel's environment, ready to run.
+This deactivates the current environment you are in (should leave you in a base or no environment), then puts you into cnmodel's environment, ready to run.
         
 
 
         
-##C 
+##Anaconda Python
 
-**Alternate (Windows or OSX/Unix)**
+**Using Anaconda Python is a suitable alternate approach (Windows or OSX/Unix)**
 
 Install using anaconda python, creating a distinct environment and building
-     all by hand. Check the requirements.txt file for what needs to be included. 
+     all by hand. Check the requirements.txt file for what needs to be included. You may want to 
 First, install Neuron using the standard install (not the pip install). Next, run the script. The script will create a virtual environment in cnmodel_venv, containing the necessary packages, should compile the neuron .mod files without error, and should build/compile cochlea, the Python interface to the Zilany et al., cochlea/auditory nerve model. 
 
-Manual:
-This package depends on the following:
+
+
+## Minimalist:
+
+This package depends on the following (2018/2019):
 
 1. Python 3.6 or 3.7 with numpy (1.14.3 or later), scipy (1.1.0 or later), lmfit (0.9.11 or later), matplotlib (3.0.3), faulthandler, and pyqtgraph (0.11.0). The cochlea module requires pandas as well. 
    An Anaconda install with the appropriate scientific packages works well::
@@ -107,8 +133,7 @@ This package depends on the following:
        pip install resampy
        pip install lmfit
        pip install cochlea
-       
-      
+
        (Note that under MacOSX, python 3.7 is usable, including with Matlab R2019a; the Windows version of Matlab R2018b is restricted
            to python 3.6)
        This will create a minimal installation.
@@ -135,25 +160,25 @@ This can be provided one of two ways:
 5. neuronvis (optional) available at https://github.com/campagnola/neuronvis or (a newer version) https://github.com/pbmanis/neuronvis).
    This provides 3D visualization for morphology, and is independent of cnmodel. neuronvis will require: mayavi, matplotlib, and pyqtgraph.
 
-Once CNModel has been downloaded, go to the directory, and make sure that you are using the right branch ("Python3")::
+6. Once CNModel has been downloaded, go to the directory, and make sure that you are using the right branch ("Python3")::
         
         $ cd cnmodel
         $ git branch           # the active branch will have "*" next to it
         $ git checkout python3 #(if necessary)
 
-After the code is installed, enter the cnmodel directory and compile the NEURON mod files::
+7. After the code is installed, enter the cnmodel directory and compile the NEURON mod files::
 
         $ nrnivmodl cnmodel/mechanisms
 
-This will create a directory ("x86_64" or "special") in the top cnmodel directory with the compiled mechanisms.
+8. This will create a directory ("x86_64" or "special") in the top cnmodel directory with the compiled mechanisms.
 
     Under Windows 10, use::
 
-         $ mknrndll cnmodel\mechanisms
+         $ mknrndll cnmodel\mechanisms (or, in newer versions, nrnivmodl instead of mknrndll)
 
-to do the same thing. 
+         to do the same thing. 
 
-    Finally, go into the cnmodel directory and run::
+9. Finally, go into the cnmodel directory and run::
     
         python setup.py develop
         or:
@@ -166,6 +191,7 @@ Once installed, always run the test script
 ==========================================
 
     python test.py 
-    to confirm that the installation is correct and working. 
+
+to confirm that the installation is correct and working. 
     If matlab is not installed and connecte to Python (see Matlab instructions), then you will get one error.
 

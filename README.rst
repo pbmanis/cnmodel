@@ -4,10 +4,16 @@ There are 2 branches in this public repository for CNModel.
 
 The "master" branch is the original branch that goes with Manis and Campagnola, Hear. Res. 2018. This is a Python 2.7 branch.
 
-The "python3" branch is new (June, 2019). It has been tested with Python 3.6 and 3.7.3. Please read the notes on that branch for information on differences and new functionality. It has now been set as the default branch.
+The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.7.9. Please read the notes on that branch for information on differences and new functionality. This is now the default branch.
 
 Changes
 =======
+
+10 October 2020
+
+Clean up some of the requirements, installation via a shell script (Unix, Mac OSX). Posted a working installer (using a Windows batch file) under Windows 10.
+Works with Python 3.7.9 and Neuron 7.8.1. No new features have been added.
+
 
 01 May 2019, 04 June 2019
 
@@ -15,9 +21,7 @@ This version of cnmodel runs under Python3.6 or Python3.7, using Neuron 7.6. New
 
 The code base has been modified for Python 3. Functionally, the main internal change is that the parameters for the cells are (almost) completely removed to the data tables. All tests currently pass, but in a few cases are very close but not identical to the original Python 2.7 version (aka branch "master-Python27"). The source of one set of discrepancies has been traced to an error in a .mod file (a variable was declared in both the RANGE and GLOBAL lists).
 
-10 October 2020
 
-Clean up some of the requirements, installation via a shell script (Unix, Mac OSX). Still working on a Windows installation.
 
 About CNModel
 =============
@@ -53,21 +57,8 @@ If you use this package, we would appreciate it if you cite our work in any publ
 
 Installation requirements
 -------------------------
+Please see the file INSTALL.md for detailed installation requirements for both Windows and Mac OSX or Unix.
 
-There are 2 ways to create a working setup for cnmodel: using a script, or by hand.
-
-Script: A bash/zsh script is provided (make_env.sh) now that should automatically create an environment in the cnmodel directory with the necessary packages, plus other packages that may be of some use. See INSTALL.md in the top directory for full instructions.
-
-
-
-Windows Notes:
---------------
-
-1. For more detailed information on setup in a Windows environment for Python 2.7, see the file Windows_setup.md. Thanks to Laurel Carney for prompting the generation of this set of instructions, and for identifying issues on Windows. A similar setup should work for Python 3.6+.
-
-2. Manually compile the mex files for the Zilany et al model. In Matlab, go to the an_model/models folder, and use mexANmodel.m to compile the files. Then, add the an_model/model folder to the Matlab path, so that it can find the files when needed.
-
-3. Under Windows, it may be best to use the standard Windows command terminal rather than the "bash" terminal provided by NEURON, at least to run the Python scripts.
 
 
 Testing
