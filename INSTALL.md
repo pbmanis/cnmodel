@@ -8,7 +8,27 @@ We recommend using one of the first two approaches.
 
 ## MacOS/Unix
 
-A bash/csh/zsh shell script can handle the installation.
+Requirements outside of the Python environment:
+
+0. A recent version of Python (we use 3.7.9 as of this writing). It should be available as "python3.7" from the command line.
+
+1. XCode with command line tools installed, or gcc compiler. Some of the programs require a C compiler.
+
+2. A resource file for the bash, csh or zsh shell environments. If the one for your environment does not exist, you will need to make it. These files are
+    .bash_rc, .cshrc, or .zshrc.
+    
+    a. Check your active environment (at the terminal): "ps -p $$"
+    
+    b. ls ~/.bash_rc, .cshrc or .zshrc (corresponding to the shell listed under
+    the "CMD" column in the outupt of the command in a.
+    
+    c. If the file is not present (and only if it is not present), then "touch ~/.zshrc" (for example) to create an empty file. This is necessary for the next step.
+
+3. A **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested. **DO NOT** do a "sudo pip install neuron".
+
+
+After these are installed, a bash/csh/zsh shell script should be able to handle the remainder of the installation.
+
 In the directory where you cloned cnmodel, there is a script.
 
      ./make_env.sh
@@ -21,6 +41,15 @@ Then in the cnmodel directory:
      (or "source cnmodel_venv/bin/activate")
 
 ## Windows
+
+### Preparation
+
+0. A recent version of Python (we use 3.7.9 as of this writing). It should be available as "python3.7" from the command line.
+
+1. Install NEURON for Windows using the instructions on the NEURON web site.
+
+3. Install a C compiler (MSVC, gcc). MSVC is available from the Microsoft site for free. gcc is the Gnu compiler and can be obtained from that site.
+
 
 A Windows batch file is provded that will perform the installation. In the directory where you cloned cnmodel, there is a batch file:
 
@@ -40,7 +69,7 @@ Windows Notes:
 
 1. For more detailed information on setup in a Windows environment for (*Python 2.7 only), see the file Windows_setup.md. Thanks to Laurel Carney for prompting the generation of this set of instructions, and for identifying issues on Windows. A similar setup should work for Python 3.6+. Note that the Windows batch file now provided *should* complete the installation.
 
-2. Manually compile the mex files for the Zilany et al model. In Matlab, go to the an_model/models folder, and use mexANmodel.m to compile the files. Then, add the an_model/model folder to the Matlab path, so that it can find the files when needed.
+2. If you will use the MATLAB code for the auditory nerve model, manually compile the mex files for the Zilany et al model. In Matlab, go to the an_model/models folder, and use mexANmodel.m to compile the files. Then, add the an_model/model folder to the Matlab path, so that it can find the files when needed.
 
 3. Under Windows, it may be best to use the standard Windows command terminal rather than the "bash" terminal provided by NEURON, at least to run the Python scripts.
 
