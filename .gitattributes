@@ -1,3 +1,4 @@
 # .gitattributes file for cnmodel
-*.mod linguist-language=NMODL
+*.mod linguist-vendored=false 
+#language=C(name: "C NEURON NMODL", color: #0000ff)
 *.m linguist-language=MATLAB
