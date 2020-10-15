@@ -1,58 +1,60 @@
 Installing cnmodel 
-=================
+==================
+
+_cnmodel_ can be installed in several ways. Below are instructions for MacOS/Unix, Windows using virtual environments. There are additional instructions for setting up an Anaconda environment (no longer recommended) and for manual installations.
+
+We recommend using one of the first two approaches.
 
 
-_cnmodel_ can be installed in several ways. 
+## MacOS/Unix
 
-Methods A and B apply to **OSX/Unix systems** (not Windows).
+A bash/csh/zsh shell script can handle the installation.
+In the directory where you cloned cnmodel, there is a script.
 
-##OSX/Unix
-
-A bash/csh/zsh shell script can handle the installation
-
-     In the directory where you cloned cnmodel, there is a script.
      ./make_env.sh
-     This should complete without error. Check the output for any text
-     that is red. The output is long, so look carefully. 
-     Then in the cnmodel directory:
+
+This should complete without error. Check the output for any text
+that is red. The output is long, so look carefully. 
+Then in the cnmodel directory:
+
      "source $ENVNAME/bin/activate"
      (or "source cnmodel_venv/bin/activate")
 
 ## Windows
 
-A Windows batch file is provded that will perform the installation.
+A Windows batch file is provded that will perform the installation. In the directory where you cloned cnmodel, there is a batch file:
 
-     In the directory where you cloned cnmodel, there is a batch file:
      make_env.bat
-     This should complete without error, and at the end it runs the tests
-     Then in the cnmodel directory, make the environment the active one:
+
+This should complete without error, and at the end it runs the tests
+Then in the cnmodel directory, make the environment the active one:
+
          "cnmodel_venv\Scripts\activate.bat"
-     To exit the environment:
+
+To exit the environment:
+
          "cnmodel_venv\Scripts\deactivate.bat"
 
 Windows Notes:
 --------------
 
-1. For more detailed information on setup in a Windows environment for (*Python 2.7*, see the file Windows_setup.md. Thanks to Laurel Carney for prompting the generation of this set of instructions, and for identifying issues on Windows. A similar setup should work for Python 3.6+.
+1. For more detailed information on setup in a Windows environment for (*Python 2.7 only), see the file Windows_setup.md. Thanks to Laurel Carney for prompting the generation of this set of instructions, and for identifying issues on Windows. A similar setup should work for Python 3.6+. Note that the Windows batch file now provided *should* complete the installation.
 
 2. Manually compile the mex files for the Zilany et al model. In Matlab, go to the an_model/models folder, and use mexANmodel.m to compile the files. Then, add the an_model/model folder to the Matlab path, so that it can find the files when needed.
 
 3. Under Windows, it may be best to use the standard Windows command terminal rather than the "bash" terminal provided by NEURON, at least to run the Python scripts.
 
-
-##Manual
+## Manual
 
 You can also install manually, essentially recreating the
-steps from above. This may be of use if there is a problem.
-1 Install Python 3.7.9 (the latest of the 3.7 series). The installation
-will FAIL with python 3.8 at this time 10/2020).
-     
-- Do a **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested.
-- DO NOT do a "sudo pip install neuron".
-     
-- Create the virtual environment:
+steps from above. This may useful when troubleshoooting problems with installation.
 
-        (This script is in make_env.sh)
+1. Install Python 3.7.9 (the latest of the 3.7 series). The installation
+may fail with Python 3.8 at this time (10/2020).
+     
+- Do a **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested. **DO NOT** do a "sudo pip install neuron".
+
+- Create the virtual environment (this follows the script in make_env.sh or make_env.bat). These instructions are for MacOS/UNIX. See the .bat file for Windows commands.
 
         ENVNAME="cnmodel_venv"
         python3.7 -m venv $ENVNAME
@@ -83,13 +85,13 @@ will FAIL with python 3.8 at this time 10/2020).
         source $ENVNAME/bin/activate
         python setup.py develop
 
-        # note that you will need to activate the environment once this script exists.
+     Note: You will need to activate the environment once this script exists.
 
 
 ## Convenience Functions
-Under Unix systems (OSX)For either of A or B, you can create a convenience alias to switch the environment and get into the directory.
+Under MacOS/Unix systems you can create a convenience alias to switch the environment and get into the directory.
 
-Add the following lines to your .zshrc:
+Add the following lines to your .bash_profile, .bash_rc, .csh or .zshrc:
     
     # clean deactivation - no message if there is no deactivate
     # command, otherwise, just do it.
@@ -100,19 +102,26 @@ Add the following lines to your .zshrc:
     }
     alias cn="deact; cd ~/where_you_put_the_model/cnmodel; source cnmodel_venv/bin/activate"
         
-This deactivates the current environment you are in (should leave you in a base or no environment), then puts you into cnmodel's environment, ready to run.
-        
+This deactivates the current environment you are in and should leave you in a base or no environment. It then puts you into cnmodel's environment, ready to run.
 
+## Anaconda Python
 
-        
-##Anaconda Python
+**Using Anaconda Python is a suitable alternate approach (Windows or MacOS/Unix)** 
 
-**Using Anaconda Python is a suitable alternate approach (Windows or OSX/Unix)**
+>Although this installation will probably work, we have encountered issues with the Anaconda version resolution system, and find that rebuilding the environments is often slow. Using the standard Python virtual environment approach above is generally faster, and better controlled. This is especially important when attempting to create resuable and reproducible models, as the dependencies on particular library versions (and combinations) are explicitely controlled.
 
-Install using anaconda python, creating a distinct environment and building
-     all by hand. Check the requirements.txt file for what needs to be included. You may want to 
-First, install Neuron using the standard install (not the pip install). Next, run the script. The script will create a virtual environment in cnmodel_venv, containing the necessary packages, should compile the neuron .mod files without error, and should build/compile cochlea, the Python interface to the Zilany et al., cochlea/auditory nerve model. 
+1. Install Anaconda Python if it is not already present.
+2. Create and activate a specific environment for *cnmodel*. 
+2. Install Neuron using the standard install (not the pip install).
+3. Check the requirements.txt file for what needs to be included. There is also be a requirements.yml file in the repository, but this is not actively maintained.
+4. You will then need to manually add other packages (from the git repository for pbmanis/pylibrary, pbmanis/ephys, pbmanis/pyqtgraph-1) to the environment. 
+5. Compile the neuron .mod files while in the cnmodel directory: 
 
+        nrnivmodl cnmodel/mechanisms
+    
+6. Download and compile cochlea, the Python interface to the Zilany et al., cohlea/auditory nerve model. You may need to use the version in the github repository pbmanis/cochlea-1. 
+
+> Note: The repositories pyqtgraph-1 and cochlea-1 are minimially modified versions of the the original repositories
 
 
 ## Minimalist:
@@ -187,11 +196,12 @@ This can be provided one of two ways:
 We prefer the "develop" method, as it allows you to change the code in the cnmodel directory if necessary, without re-running the setup command.
 
 
-Once installed, always run the test script
-==========================================
+# Once installed, always run the test script
 
     python test.py 
 
-to confirm that the installation is correct and working. 
-    If matlab is not installed and connecte to Python (see Matlab instructions), then you will get one error.
+This confirms that the installation is correct and that the code is generating the expected output for many parts of the package. 
+
+>If MATLAB is not installed and connected to Python (see MATLAB instructions), then you will get a warning. As noted, MATLAB is not required and you may use the cochlea (or cochlea-1) package instead. The choice of which one to use can be made at runtime.
+
 
