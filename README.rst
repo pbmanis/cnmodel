@@ -9,9 +9,9 @@ The "python3" branch is new (June, 2019). It has been tested with Python 3.6 and
 Changes
 =======
 
-01 May 2019, 04 June 2019
+01 May 2019, 04 June 2019, 14 Sept 2020
 
-This version of cnmodel runs under Python3.6 or Python3.7, using Neuron 7.6. New features include a method for changing the data tables on the fly without editing the original tables, and a tool for fitting Exp2Syn "simple" PSCs to the multisite PSC data (or, potentially, to experimental data) to get parameters for the synapse description table.
+This version of cnmodel runs under  Python3.7, using Neuron 7.6-7.8.1. New features include a method for changing the data tables on the fly without editing the original tables, and a tool for fitting Exp2Syn "simple" PSCs to the multisite PSC data (or, potentially, to experimental data) to get parameters for the synapse description table.
 
 The code base has been modified for Python 3. Functionally, the main internal change is that the parameters for the cells are (almost) completely removed to the data tables. All tests currently pass, but in a few cases are very close but not identical to the original Python 2.7 version (aka branch "master-Python27"). The source of one set of discrepancies has been traced to an error in a .mod file (a variable was declared in both the RANGE and GLOBAL lists).
 
