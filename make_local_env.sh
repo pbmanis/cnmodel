@@ -3,9 +3,11 @@
 # in the main env (outside this local env)
 ENVNAME="cnmodel_venv"
 python3.7 -m venv $ENVNAME
+
 source $ENVNAME/bin/activate
-pip3 install --upgrade pip  # be sure pip is up to date in the new env.
-pip3 install wheel  # seems to be missing (note singular)
+
+pip install --upgrade pip  # be sure pip is up to date in the new env.
+pip install wheel  # seems to be missing (note singular)
 pip install cython
 #pip3 install --no-deps neuron==7.8.1  # must do this outside requirements
 
@@ -21,6 +23,7 @@ source $ENVNAME/bin/activate
 # build the mechanisms
 # this may equire a separate install of the standard NEURON package
 # with the same version as we have provided
+
 nrnivmodl cnmodel/mechanisms
 
 # these have to be done separately as the compilation depends on what happens above

@@ -16,6 +16,11 @@ source $ENVNAME/bin/activate
 # build the mechanisms
 # this may equire a separate install of the standard NEURON package
 # with the same version as we have provided
+
+# when first building, it might be a good idea send the nrnivmodl output to files; 
+# Otherwise it can ba harder to find errors in the rest of the installation
+#nrnivmodl cnmodel/mechanisms 1> nrnmodbuild.log 2>nrnmoderror.log
+
 nrnivmodl cnmodel/mechanisms
 
 # these have to be done separately as the compilation depends on what happens above
