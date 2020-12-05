@@ -244,7 +244,7 @@ class StochasticTerminal(Terminal):
         
         Parameters
         ----------
-        \**params : dict
+        **params : dict
             dictionary of parameters to set on the release mechanism.
         
         """
@@ -324,7 +324,7 @@ class StochasticTerminal(Terminal):
             self.bushy_ipsc_average()
             return
 
-        if select is 1: # 30aug08f
+        if select == 1: # 30aug08f
 #            print ("using 30aug08f ipsc")
             self.relsite.F = 0.221818
             self.relsite.k0 = 0.003636364
@@ -339,7 +339,7 @@ class StochasticTerminal(Terminal):
             self.relsite.dF = 2.931578
             self.relsite.glu = 1.000000
 
-        if select is 2: #30aug08h
+        if select == 2: #30aug08h
 #            print ("using 30aug08H ipsc")
             self.relsite.F = 0.239404
             self.relsite.k0 = 3.636364 / 1000.
@@ -354,7 +354,7 @@ class StochasticTerminal(Terminal):
             self.relsite.dF = 0.725512
             self.relsite.glu = 1.000000
 
-        if select is 3:
+        if select == 3:
 #            print ("using IPSC#3 ")
             self.relsite.F = 0.29594
             self.relsite.k0 = 0.44388 / 1000.0

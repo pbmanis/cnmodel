@@ -211,7 +211,7 @@ def get_sections(h):
 
     """
     secnames = {}
-    resec = re.compile('(\w+)\[(\d*)\]')
+    resec = re.compile(r'(\w+)\[(\d*)\]')
     for sec in h.allsec():
         g = resec.match(sec.name())
         if g.group(1) not in secnames.keys():
@@ -283,13 +283,13 @@ def syns(alpha=0.1, rate=10, delay=0, dur=50, amp=1.0, dt=0.020, N=1, mindur = 1
             if t > delay+dur:
                 done = True
                 continue
-            if nsp is 0:
+            if nsp == 0:
                 sptime = t
                 nsp = nsp+1
             else:
                 sptime = np.append(sptime, t)
                 nsp = nsp+1
-        if j is 0:
+        if j == 0:
             wavej = np.zeros(len(tvec))
         for i in range(0,len(sptime)):
             st = int(sptime[i]/dt)
@@ -302,7 +302,7 @@ def syns(alpha=0.1, rate=10, delay=0, dur=50, amp=1.0, dt=0.020, N=1, mindur = 1
                 w = np.append(w, np.zeros(npts-len(w)))
             if len(w) > npts:
                 w = w[0:npts]
-            if j is 0:
+            if j == 0:
                 wave = w
             else:
                 wave = wave + w
@@ -371,7 +371,7 @@ def an_syn(alpha=0.1, spont=10, driven=100, delay=50, dur=100, post = 20,
                 if spont <= 0.0:
                     t = trace_end
                     continue
-                if qe is 0: # have not calculated the new qe at end of stimulus
+                if qe == 0: # have not calculated the new qe at end of stimulus
                     rise = 1.0 - np.exp(-(stim_end-ton)/trise)
                     ra = rr*np.exp(-(stim_end-ton)/taur)
                     rs = rst*np.exp(-(stim_end-ton)/taust)
@@ -386,14 +386,14 @@ def an_syn(alpha=0.1, spont=10, driven=100, delay=50, dur=100, post = 20,
                 done = True
                 continue
             # now add the spike time to the list
-            if nsp is 0:
+            if nsp == 0:
                 sptime = t
                 nsp = nsp+1
             else:
                 sptime = np.append(sptime, t)
                 nsp = nsp+1
         # end of for loop on i
-        if j is 0:
+        if j == 0:
             wavej = np.zeros(len(tvec))
         for i in range(0,len(sptime)):
             st = int(sptime[i]/dt)

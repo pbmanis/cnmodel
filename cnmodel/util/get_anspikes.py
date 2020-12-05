@@ -302,7 +302,7 @@ class ManageANSpikes():
         #print P.mode
         fs=os.listdir(self.datadir+datablock)
         s_sn = "SN%03d" % (P.s2m)
-        fntemplate = '(\S+)_%s_%s_%s_%s.mat' % (s_sn, P.mode, signal, P.SR)
+        fntemplate = r'(\S+)_%s_%s_%s_%s.mat' % (s_sn, P.mode, signal, P.SR)
         p = re.compile(fntemplate)
         fl = [re.match(p, file) for file in fs]
         fl = [f.group(0) for f in fl if f != None] # returns list of files matching...

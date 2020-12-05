@@ -1,7 +1,8 @@
 ENVNAME="cnmodel_venv"
-python3.7 -m venv $ENVNAME
+python3.9 -m venv $ENVNAME
 source $ENVNAME/bin/activate
-pip install --upgrade pip  # be sure pip is up to date in the new env.
+
+pip3 install --upgrade pip  # be sure pip is up to date in the new env.
 pip3 install wheel  # seems to be missing (note singular)
 pip3 install cython
 # # if requirements.txt is not present, create:

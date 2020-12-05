@@ -9,7 +9,7 @@ mypy==0.782
 
 jupyterlab
 pyperclip
-pytest==4.5.0
+pytest>=6
 
 # cnmodel (and vcnmodel) requirements
 # Note that neuron should be installed OUTSIDE of this, and beforehand, but 
@@ -24,14 +24,14 @@ numba  # ==0.51.  # 0.43.1
 numpy==1.19.2
 pyparsing==2.4.0
 resampy==0.2.1
-scipy==1.5.2
-pyqt5==5.12.3
-pyqt5-sip==4.19.18
+scipy==1.5.4
+pyqt5==5.13.1
+pyqt5-sip==4.19.19
 seaborn==0.10.1
 toml==0.10.0
 xlrd>=1.0.0
 # required for 3d display in pyqtgraph
-PyOpenGL==3.1.5
+# PyOpenGL==3.1.5
 
 -e /Users/pbmanis/Desktop/Python/pyqtgraph
 -e /Users/pbmanis/Desktop/Python/pylibrary
