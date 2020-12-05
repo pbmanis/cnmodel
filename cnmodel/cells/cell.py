@@ -1275,7 +1275,7 @@ class Cell(object):
              areas. Otherwise, we only allow this to be called ONCE
              per cell
         """
-        print("Setting soma size from soma section(s) (morphology)")
+        #print("Setting soma size from soma section(s) (morphology)")
         self.somaarea = 0.
         for secname in self.all_sections:  # keys for names of section types
             s = self.all_sections[secname]  # get all the sections with that name

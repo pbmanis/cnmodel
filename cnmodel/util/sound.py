@@ -148,8 +148,13 @@ class TonePip(Sound):
                 raise TypeError("Missing required argument '%s'" % k)
         if kwds['pip_duration'] < kwds['ramp_duration'] * 2:
             raise ValueError("pip_duration must be greater than (2 * ramp_duration).")
-        if kwds['f0'] > kwds['rate'] * 0.5:
-            raise ValueError("f0 must be less than (0.5 * rate).")
+        if isinstance(kwds['f0'], list):
+            for f in kwds['f0']:
+                if f > kwds['rate'] * 0.5:
+                    raise ValueError("All f0s must be less than (0.5 * rate).")
+        else:
+            if kwds['f0'] > kwds['rate'] * 0.5:
+                raise ValueError("f0 must be less than (0.5 * rate).")
         Sound.__init__(self, **kwds)
         
     def generate(self):
@@ -409,7 +414,7 @@ def pa_to_dbspl(pa, ref=20e-6):
     """ Convert Pascals (rms) to dBSPL. By default, the reference pressure is
     20 uPa.
     """
-    return 20 * np.log10(pa / ref)
+    return 20. * np.log10(pa / ref)
 
 
 def dbspl_to_pa(dbspl, ref=20e-6):
@@ -1022,9 +1027,16 @@ def piptone(t, rt, Fs, F0, dBSPL, pip_dur, pip_start):
 
     """
     # make pip template
+    if isinstance(F0, float):
+        F0 = [F0]
     pip_pts = int(pip_dur * Fs) + 1
     pip_t = np.linspace(0, pip_dur, pip_pts)
-    pip = np.sqrt(2) * dbspl_to_pa(dBSPL) * np.sin(2*np.pi*F0*pip_t)  # unramped stimulus
+    for i in range(len(F0)):
+        if i == 0:
+            pip = np.sqrt(2) * dbspl_to_pa(dBSPL) * np.sin(2*np.pi*F0[i]*pip_t)  # unramped stimulus
+        else:
+            pip += np.sqrt(2) * dbspl_to_pa(dBSPL) * np.sin(2*np.pi*F0[i]*pip_t)  # unramped stimulus
+            
 
     # add ramp
     ramp_pts = int(rt * Fs) + 1
