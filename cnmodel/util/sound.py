@@ -1031,6 +1031,8 @@ def piptone(t, rt, Fs, F0, dBSPL, pip_dur, pip_start):
         F0 = [F0]
     pip_pts = int(pip_dur * Fs) + 1
     pip_t = np.linspace(0, pip_dur, pip_pts)
+    if isinstance(F0, int) or isinstance(F0, float):
+        F0 = [F0]
     for i in range(len(F0)):
         if i == 0:
             pip = np.sqrt(2) * dbspl_to_pa(dBSPL) * np.sin(2*np.pi*F0[i]*pip_t)  # unramped stimulus
