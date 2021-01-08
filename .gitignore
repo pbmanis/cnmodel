@@ -1,5 +1,9 @@
 *.p
 Figure*
+longleaf.txt
+cnmodel/an_model/cache/
+cnmodel/an_model/cache.old*
+
 .cache
 .pytest_cache
 build/
