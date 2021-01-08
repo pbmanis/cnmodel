@@ -10,7 +10,7 @@ We recommend using one of the first two approaches.
 
 Requirements outside of the Python environment:
 
-0. A recent version of Python (we use 3.7.9 as of this writing). It should be available as "python3.7" from the command line.
+0. A recent version of Python (we use 3.7.9 as of this writing). It should be available as "python3.7" from the command line. Python 3.8 also works.
 
 1. XCode with command line tools installed, or gcc compiler. Some of the programs require a C compiler.
 
@@ -24,7 +24,9 @@ Requirements outside of the Python environment:
     
     c. If the file is not present (and only if it is not present), then "touch ~/.zshrc" (for example) to create an empty file. This is necessary for the next step.
 
-3. A **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested. **DO NOT** do a "sudo pip install neuron".
+3. A **standard** installation of NEURON. Neuron 7.7.2 and 7.8.1 have been tested. **DO NOT** do a "sudo pip install neuron".  
+
+4. For Big Sur, you should use NEURON 7.8.2 alpha or later. This solves a problem with NEURON finding "libreadline". Likewise, you should make sure to install matplotlib==3.3 instead of earlier versions, to avoid a segmentation fault when showing plots. The requirements.txt file has been updated to reflect this change.
 
 
 After these are installed, a bash/csh/zsh shell script should be able to handle the remainder of the installation.
@@ -231,6 +233,7 @@ We prefer the "develop" method, as it allows you to change the code in the cnmod
 
 This confirms that the installation is correct and that the code is generating the expected output for many parts of the package. 
 
->If MATLAB is not installed and connected to Python (see MATLAB instructions), then you will get a warning. As noted, MATLAB is not required and you may use the cochlea (or cochlea-1) package instead. The choice of which one to use can be made at runtime.
+>If MATLAB is not installed and connected to Python (see MATLAB instructions), then you will get a warning or a note that the connection to MATLAB was not tested. As noted, MATLAB is not required and you may use the cochlea (or cochlea-1) package instead, which is a Python wrapper around the Zilany code. The choice of which one to use can be made at runtime. When using MATLAB, a new instance of MATLAB is launched for every invocation of the auditory nerve model. This consumes signifacnt system resources, especially if you are invoking parallel processing. Using "cochlea" to access the Zilany et al. model is more efficient and generally faster.
+
 
 
