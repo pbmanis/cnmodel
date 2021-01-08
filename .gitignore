@@ -5,18 +5,23 @@
 *.dat
 cache
 i386
+*.p
+*.log
+
 # specific directories and files:
-cnmodel_venv  # virutal environment
+cnmodel_venv/  # virutal environment
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64
 cochleae
+dask-worker-space/
 examples/*.pdf
 examples/*.p
 x86_64
 cnmodel/an_model
 doc/build
-build
+doc/html
+build/
 dist/
 cnmodel.egg*
 .cache*
