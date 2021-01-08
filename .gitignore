@@ -3,7 +3,7 @@ Figure*
 longleaf.txt
 cnmodel/an_model/cache/
 cnmodel/an_model/cache.old*
-
+cnmodel.egg-info/
 .cache
 .pytest_cache
 build/
