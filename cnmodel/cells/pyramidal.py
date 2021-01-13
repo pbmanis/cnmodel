@@ -15,12 +15,12 @@ class Pyramidal(Cell):
     
     @classmethod
     def create(cls, model='POK', **kwds):
-        if model == 'POK':
+        if model == 'POK': 
             return PyramidalKanold(**kwds)
         if model == 'Ceballos':
             return PyramidalCeballos(**kwds)
         else:
-            raise ValueError ('Pyramidal model %s is unknown', model)
+            raise ValueError ("Pyramidal model '%s' is unknown", model)
 
     def make_psd(self, terminal, psd_type, **kwds):
         """
@@ -352,15 +352,13 @@ class PyramidalCeballos(Pyramidal, Cell):
         
         """
         super(PyramidalCeballos, self).__init__()
-        if modelType == None or modelType == 'I':
-            modelName = 'Ceballos'
-            modelType = 'pyramidal'
-            dataset = 'Ceballos_channels'
-            temp = 34.
 
+        dataset = 'Ceballos_channels'
+        temp = 34.
+        if modelType in ['quiet', 'active']:
+            modelName = 'Ceballos'
         else:
             raise ValueError(f"Species {species:s} and modeltype {modelType:s} not recognized for {self.celltype:s} cells")
-
         self.status = {self.somaname: True, 'axon': False, 'dendrites': False, 'pumps': False,
                        'na': nach, 'species': species, 'modelType': modelType, 'modelName': modelName, 'ttx': ttx, 'name': 'Pyramidal',
                        'morphology': morphology, 'decorator': decorator, 'temperature': None,
@@ -377,12 +375,12 @@ class PyramidalCeballos(Pyramidal, Cell):
 
         # decorate the morphology with ion channels
         if decorator is None:   # basic model, only on the soma
-            self.mechanisms = ['napyr', 'nappyr', 'kdpyr', 'kif', 'kis', 'kcnq', 'kir', 'ihpyr', 'leak']
+            self.mechanisms = ['napyr', 'nappyr', 'kdpyr', 'kif', 'kis', 'kcnq', 'kir', 'ihpyrlc', 'leak']
             for mech in self.mechanisms:
                 try:
                     self.soma.insert(mech)
-                except ValueError:
-                    print('WARNING: Mechanism %s not found' % mech)
+                except:
+                    raise ValueError('WARNING: Mechanism %s not found' % mech)
             self.soma().kif.kif_ivh = -89.6
             self.species_scaling(silent=True)  # set the default type I-c  cell parameters
         else:  # decorate according to a defined set of rules on all cell compartments
@@ -401,7 +399,7 @@ class PyramidalCeballos(Pyramidal, Cell):
         pars = Params(cap=cellcap, natype=chtype)
         for g in ['soma_napyr_gbar', 'soma_nappyr_gbar', 
                   'soma_kdpyr_gbar', 'soma_kif_gbar', 'soma_kis_gbar',
-                  'soma_kcnq_gbar', 'soma_kir_gbar', 'soma_ihpyr_gbar', 
+                  'soma_kcnq_gbar', 'soma_kir_gbar', 'soma_ihpyrlc_gbar', 
                   'soma_leak_gbar',
                   'soma_e_h','soma_leak_erev', 'soma_e_k', 'soma_e_na']:
             pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
@@ -434,7 +432,7 @@ class PyramidalCeballos(Pyramidal, Cell):
 
         soma = self.soma
         if self.status['species'] in ['rat', 'mouse']:
-            if self.status['modelType'] not in ['pyramidal']:  # canonical K&M2001 model cell
+            if self.status['modelType'] not in ['quiet', 'active']:  # canonical K&M2001 model cell
                 raise ValueError(f"\nModel type {self.status['modelType']:s} is not implemented for mouse {self.celltype.title():s} cells")
             
             self._valid_temperatures = (34.,)
@@ -451,13 +449,14 @@ class PyramidalCeballos(Pyramidal, Cell):
             soma().kcnq.gbar = nstomho(self.pars.soma_kcnq_gbar, self.somaarea) # does not exist in canonical model.
             # soma().kpksk.gbar = nstomho(self.pars.soma_kpksk_gbar, self.somaarea) # does not exist in canonical model.
             soma().kir.gbar = nstomho(self.pars.soma_kir_gbar, self.somaarea)
-            soma().ihpyr.gbar = nstomho(self.pars.soma_ihpyr_gbar, self.somaarea)
+            soma().ihpyrlc.gbar = nstomho(self.pars.soma_ihpyrlc_gbar, self.somaarea)
 #            soma().ihpyr_adj.q10 = 3.0  # no temp scaling to sta
             soma().leak.gbar = nstomho(self.pars.soma_leak_gbar, self.somaarea)
             soma().leak.erev = self.pars.soma_leak_erev
             soma().ena = self.pars.soma_e_na
             soma().ek = self.pars.soma_e_k
-            soma().ihpyr.eh = self.pars.soma_e_h
+            soma().ihpyrlc.eh = self.pars.soma_e_h
+            
 
         else:
             raise ValueError(f"Species {self.status['species']:s} or species-type {self.status['modelType']:s} is not recognized for T-stellate cells")

@@ -456,9 +456,12 @@ class IVCurve(Protocol):
             print("{0:<15s}: {1:s}".format("vmask", repr(vmask.astype(int))))
             print("{0:<15s}: {1:s} ".format("imask", repr(imask.astype(int))))
             print("{0:<15s}: {1:s}".format("spikemask", repr(smask.astype(int))))
-            raise Exception(
-                "Not enough traces to do linear regression (see info above)."
-            )
+            slope = np.nan
+            intercept = np.nan
+            tau = np.nan
+            fit_data = []
+            ret = {"slope": slope, "intercept": intercept, "tau": tau, "fits": fit_data}
+            return ret, None
 
         # Use these to measure input resistance by linear regression.
         reg = scipy.stats.linregress(Icmd[mask], Vss[mask])
@@ -545,7 +548,7 @@ class IVCurve(Protocol):
         if return_fits:
             return ret, fits
         else:
-            return ret
+            return ret, []
 
     def show(self, cell=None, rmponly=False):
         """
@@ -640,6 +643,9 @@ class IVCurve(Protocol):
         rmtau, fits = self.input_resistance_tau(return_fits=True)
         s = rmtau["slope"]
         i = rmtau["intercept"]
+        # print(s)
+        if fits is None:
+            return
         # tau1 = rmtau['fits']['tau1'].mean()
         # tau2 = rmtau['fits']['tau2'].mean()
         # print ("\nMembrane resistance (chord): {0:0.1f} MOhm  Taum1: {1:0.2f}  Taum2: {2:0.2f}".format(s, tau1, tau2))
