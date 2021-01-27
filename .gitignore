@@ -9,7 +9,7 @@ i386
 *.log
 
 # specific directories and files:
-cnmodel_venv/  # virutal environment
+cnmodel_venv/*  # virutal environment
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64

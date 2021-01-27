@@ -9,6 +9,7 @@ mypy==0.782
 jupyterlab
 pyperclip
 pytest==4.5.0
+sphinx>=3.4
 
 # cnmodel (and vcnmodel) requirements
 Cython==0.29.17
