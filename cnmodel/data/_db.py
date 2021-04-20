@@ -155,11 +155,14 @@ def add_table_data(name, row_key, col_key, data, **kwds):
         table.append(line)
     
     #print desc 
-    #print table
+    # for t in table:
+    #     print(t)
     
     # parse remaining lines as sources
     sources = parse_sources(lines)
-    #print sources
+    
+    # for s in sources:  # just print report
+    #     print(s, sources[s])
     
     #
     # parse table
