@@ -2,13 +2,17 @@ A Note About the Branches
 =========================
 There are 2 branches in this public repository for CNModel.
 
-The "master" branch is the original branch that goes with Manis and Campagnola, Hear. Res. 2018. This is a Python 2.7 branch.
+The "main" branch is the original branch that goes with Manis and Campagnola, Hear. Res. 2018. This is a Python 2.7 branch.
 
 The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.7.9. Please read the notes on that branch for information on differences and new functionality. This is now the default branch.
 
 Changes
 =======
+8 January 2020
 
+Added notes to the installation regarding OSX Big Sur. If you are running cnmodel under Big Sur, you will need to use NEURON 7.8.2 (alpha), at least, and matplotlib > 3.3. These versions address changes necessary for cnmodel to function under Big Sur.
+
+The current branch has been renamed the "main" branch.
 
 10 October 2020
 

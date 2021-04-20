@@ -339,34 +339,36 @@ This table describes the ion channel densities and voltage shifts for mouse DCN 
 from Ceballos et al., 2016
 
 ------------------------------------------------------------------------------------------------------------------------------------------
-                          pyramidal   
-                                   
-soma_napyr_gbar           1005.0 [1]
-soma_nappyr_gbar          1.257
-soma_cap_pcabar           0.     [3]
-soma_kdpyr_gbar           251.3  [1]
-soma_kcnq_gbar            0.     [3]
-soma_kpksk_gbar           0.     [3]
-soma_kir_gbar             6.283  [3]
-soma_kif_gbar             150.0  [1]
-soma_kis_gbar             60.0   [1]
-soma_ihpyr_gbar           6.79   [1]
-soma_leak_gbar            1.885  [1]
-soma_leak_erev            -51.3  [1]
-soma_e_na                 50.    [1]
-soma_e_k                  -81.5  [1]
-soma_e_h                  -43.0  [1]
-soma_natype               napyr
-soma_Cap                  15.2   [1]
+                          quiet             active   
+                                                     
+soma_napyr_gbar           80.0   [1]        80.0   [1]
+soma_nappyr_gbar          0.10   [1]        0.10   [1]
+soma_cap_pcabar           0.     [3]        0.     [3]
+soma_kdpyr_gbar           20.0   [1]        20.0   [1]
+soma_kcnq_gbar            0.     [3]        0.     [3]
+soma_kpksk_gbar           0.     [3]        0.     [3]
+soma_kir_gbar             1.0    [3]        0.5    [3]
+soma_kif_gbar             0.0    [1]        0.0    [1]
+soma_kis_gbar             0.0    [1]        0.0    [1]
+soma_ihpyr_gbar           0.00   [1]        0.00   [1]
+soma_ihpyrlc_gbar         0.54   [1]        0.54   [1]
+soma_leak_gbar            0.150  [1]        0.150  [1]
+soma_leak_erev            -51.32 [1]        -51.32 [1]
+soma_e_na                 50.    [1]        50.    [1]
+soma_e_k                  -81.5  [1]        -81.5  [1]
+soma_e_h                  -43.0  [1]        -43.0  [1]
+soma_ihpyrlc_e_h          -43.0  [1]        -43.0  [1]
+soma_natype               napyr             napyr
+soma_Cap                  12.0   [1]        12.0   [1]
+units                     mmho/cm2          mmho/cm2  
 ------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] Kanold and Manis, 1999, 2001, 2005 and Ceballos, 2016
+[1] Ceballos, 2016, Leao et al., 2012
+    Some channels are taken from Kanold and Manis 2005.
     Age P11-14, Temperature=32C
-    Units are nS.
-    Default cap is 15.2 pF, for 22 um dia cell
+    Units are now in mmho/cm2.
+    Default cap is 12 pF, for 20 um dia cell
     Conversions calculated from Leao et al., 2012 and Ceballos, et al. 2016
-[2] Adjustable q10 added for fitting
-    soma_ihpyr_adj_q10        1.0    [2]      (removed for testing)
 
 [3] for implementing the additional channels from Li et al., and Leao et al. Default remains
     original model set to 0; also see Ceballo et al. 2016.

@@ -14,6 +14,8 @@ latency analyses.
 
 import argparse
 import os, sys
+import numpy as np
+
 from neuron import h
 import pyqtgraph as pg
 import cnmodel
@@ -42,6 +44,7 @@ ccivrange = {'mouse':
                  'octopus': {'pulse': [(-1.0, 1.0, 0.05)]},
                  'sgc': {'pulse': [(-0.3, 0.6, 0.02)]},
                  'cartwheel': {'pulse': [(-0.5, 0.5, 0.05)]},
+                 'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]},
                  'pyramidalceballos': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]}, #, 'prepulse': [(-0.25, -0.25, 0.25)]},
                  'tuberculoventral': {'pulse': [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]}
              },
@@ -192,12 +195,13 @@ class Tests():
         # DCN pyramidal cell tests
         #
         elif args.celltype == 'pyramidal':
-            cell = cells.Pyramidal.create(modelType=args.type, model='POK', 
+            cell = cells.Pyramidal.create(model='POK', modelType=args.type, 
                 ttx=args.ttx, debug=debugFlag)
 
         elif args.celltype == 'pyramidalceballos':
             cell = cells.Pyramidal.create(modelType=args.type, model='Ceballos',
                 ttx=args.ttx, debug=debugFlag)
+            cell.vm0 = -65.0 # cell may not have a stable state, so force rmp
 
         #
         # DCN tuberculoventral cell tests
@@ -244,8 +248,12 @@ class Tests():
         """
         self.cell.set_temperature(float(args.temp))
         print(self.cell.status)
+        print(self.cell.vm0)
         durations = eval(args.durations)
-        V0 = self.cell.find_i0(showinfo=True)
+        if self.cell.vm0 is None:
+            V0 = self.cell.find_i0(showinfo=True)
+        else:
+            V0 = self.cell.vm0
 #        self.cell.cell_initialize()
         print('Currents at nominal Vrest= %.2f I = 0: I = %g ' % (V0, self.cell.i_currents(V=V0)))
         self.cell.print_mechs(self.cell.soma)
@@ -257,7 +265,10 @@ class Tests():
             self.iv.run(ccivrange[args.species][args.celltype], self.cell, durs=durations, 
                    sites=sites, reppulse=ptype, temp=float(args.temp))
             ret = self.iv.input_resistance_tau()
-            print('    From IV: Rin = {:7.1f}  Tau = {:7.1f}  Vm = {:7.1f}'.format(ret['slope'], ret['tau'], ret['intercept']))
+            ret = ret[0]
+            print(ret)
+            if not np.isnan(ret['slope']):
+                print('    From IV: Rin = {:7.1f}  Tau = {:7.1f}  Vm = {:7.1f}'.format(ret['slope'], ret['tau'], ret['intercept']))
             self.iv.show(cell=self.cell)
 
         elif args.rmp is True:

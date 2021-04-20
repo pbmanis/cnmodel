@@ -6,10 +6,11 @@ black==19.10b0
 Pint==0.14
 isort==5.0.2
 mypy==0.782
-
 jupyterlab
 pyperclip
 pytest>=6
+sphinx>=3.4
+
 
 # cnmodel (and vcnmodel) requirements
 # Note that neuron should be installed OUTSIDE of this, and beforehand, but 
@@ -17,7 +18,7 @@ pytest>=6
 dill==0.3.1.1
 lmfit==0.9.13
 llvmlite==0.32.1  # required for numba version to avoid "TypeError: create_target_machine() got an unexpected keyword argument 'jitdebug'"
-matplotlib==3.2.0
+matplotlib==3.3.0  # needed to avoid crash on Big Sur
 matplotlib-scalebar==0.5.1
 nose==1.3.7
 numba  # ==0.51.  # 0.43.1

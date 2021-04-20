@@ -629,6 +629,7 @@ class Cell(object):
                 "nacncoop",
                 "napyr",
                 "nap",
+                "nappyr"
                 "nabu",
             ]:
                 erev = eval("section().ena")
@@ -636,7 +637,7 @@ class Cell(object):
                 erev = eval("section().ek")
             if m in ["kis", "kif", "kdpyr", "kcnq", "kir"]:
                 erev = eval("section().ek")
-            if m in ["hcno", "ihvcn", "hcnobo", "ihpyr", "ihpyr_adj"]:
+            if m in ["hcno", "ihvcn", "hcnobo", "ihpyr", "ihpyr_adj", "iphyrlc"]:
                 erev = eval("section()." + m + ".eh")
             print(f"{m:>12s} : {gx:7.3e} mho/cm2  {erev:>5.1f} mV")
             # print('{0:>12s} : <no gbar> '.format(m))
@@ -1062,6 +1063,8 @@ class Cell(object):
             self.ix["ihpyr_adj"] = self.soma().ihpyr_adj.gh * (
                 V - self.soma().ihpyr_adj.eh
             )
+        if "ihpyrlc" in self.mechanisms:
+            self.ix["ihpyrlc"] = self.soma().ihpyrlc.gh * (V - self.soma().ihpyrlc.eh)
         if "hcno" in self.mechanisms:
             raise ValueError("HCNO is not supported - use hcnobo instead")
             # self.ix['hcno'] = self.soma().hcno.gh*(V - self.soma().hcno.eh)
@@ -1185,6 +1188,7 @@ class Cell(object):
             "kif": "gkif",
             "kis": "gkis",
             "ihpyr": "gh",
+            "ihpyrlc": "gh",
             "ihpyr_adj": "gh",
             "kcnq": "gk",
             "kir": "gk",
