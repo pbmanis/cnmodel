@@ -9,7 +9,7 @@ provenance documentation.
 """
 
 
-from ._db import get, get_source, add_table_data, report_changes, setval
+from ._db import get, get_source, add_table_data, report_changes, setval, print_table
 
 
 from . import connectivity
