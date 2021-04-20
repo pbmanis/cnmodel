@@ -191,7 +191,7 @@ ih_eh            -43    [1]     -43    [1]     -43    [1]    -43    [2]    -43  
 
 """)
 
-add_table_data('XM13nacncooop_channels_compartments', row_key='parameter', col_key='compartment', 
+add_table_data('XM13nacncoop_channels_compartments', row_key='parameter', col_key='compartment', 
                species='mouse', model_type='II', data=u"""
 
 !!!!!!!!!!!! USAGE OF THIS TABLE SHOULD BE CONSIDERED EXPERIMENTAL !!!!!!!!!!!!!!
