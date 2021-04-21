@@ -165,7 +165,7 @@ class IVCurve(Protocol):
             self.p_dur = stim['dur']
             self.p_end = self.p_start + self.p_dur + 10.
         elif stimdict is not None:
-            print('stimdict: ', stimdict)
+            # print('stimdict: ', stimdict)
             stim = stimdict
             stim["dt"] = self.dt
         elif "prepulse" in ivrange.keys():
@@ -396,7 +396,7 @@ class IVCurve(Protocol):
         ).mean()
         return rvm
 
-    def input_resistance_tau(self, vmin=-10.0, imax=0, return_fits=False):
+    def input_resistance_tau(self, vmin=-10.0, imax=0):
         """
         Estimate resting input resistance and time constant.
         
@@ -425,6 +425,7 @@ class IVCurve(Protocol):
         spikes.
         
         """
+        self.fits = None
         Vss = self.steady_vm()
         vmin += self.rest_vm()
         Icmd = self.current_cmd
@@ -461,7 +462,7 @@ class IVCurve(Protocol):
             tau = np.nan
             fit_data = []
             ret = {"slope": slope, "intercept": intercept, "tau": tau, "fits": fit_data}
-            return ret, None
+            return ret
 
         # Use these to measure input resistance by linear regression.
         reg = scipy.stats.linregress(Icmd[mask], Vss[mask])
@@ -544,11 +545,8 @@ class IVCurve(Protocol):
             tau = 0.0
             fit_data = []
         ret = {"slope": slope, "intercept": intercept, "tau": tau, "fits": fit_data}
-
-        if return_fits:
-            return ret, fits
-        else:
-            return ret, []
+        self.fits = fits
+        return ret
 
     def show(self, cell=None, rmponly=False):
         """
@@ -640,12 +638,12 @@ class IVCurve(Protocol):
         FIplot.plot(x=Icmd, y=[len(s) for s in spikes], symbol="o", symbolSize=4.0)
 
         # Print Rm, Vrest
-        rmtau, fits = self.input_resistance_tau(return_fits=True)
+        rmtau = self.input_resistance_tau()
+        if self.fits is None:
+            return
         s = rmtau["slope"]
         i = rmtau["intercept"]
         # print(s)
-        if fits is None:
-            return
         # tau1 = rmtau['fits']['tau1'].mean()
         # tau2 = rmtau['fits']['tau2'].mean()
         # print ("\nMembrane resistance (chord): {0:0.1f} MOhm  Taum1: {1:0.2f}  Taum2: {2:0.2f}".format(s, tau1, tau2))
