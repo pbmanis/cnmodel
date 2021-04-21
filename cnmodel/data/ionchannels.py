@@ -211,7 +211,7 @@ ihvcn_gbar         0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1
 leak_gbar          1.0 [1]        0.25 [1]             0.25e-3 [1]        1.0 [1]           1.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]       
 leak_erev          -65. [1]       -65. [1]             -65. [1]           -65. [1]          -65. [1]    -65. [1]    -65. [1]         -65. [1]           -65. [1]      
 nacncoop_vshift    0.0  [1]       0.0  [1]             0.0 [1]            0.0  [1]          0.0  [1]    0.0 [1]     0.0 [1]          0.0 [1]            0.0 [1]       
-na_type            nacncoop       nacncoop             nacncoop           nacncoop          nacncoop    nacncoop    nacncoop            nacncoop              nacncoop
+na_type            nacncoop       nacncoop             nacncoop           nacncoop          nacncoop    nacncoop    nacncoop         nacncoop           nacncoop
 ih_type            ihvcn          ihvcn                ihvcn              ihvcn             ihvcn       ihvcn       ihvcn            ihvcn              ihvcn                            
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
