@@ -148,10 +148,13 @@ class MatlabProcess(object):
         Transfer an object from MATLAB to Python.
         """
         assert isinstance(name, str)
-        tmp = tempfile.mktemp(suffix='.mat')
+        with tempfile.NamedTemporaryFile("w", suffix=".mat") as tmp.name:
+            pass
+        
+        # tmp = tempfile.mktemp(suffix='.mat')
         out = self("save('%s', '%s', '-v7')" % (tmp, name))
-        objs = scipy.io.loadmat(tmp)
-        os.remove(tmp)
+        objs = scipy.io.loadmat(tmp.name)
+        os.remove(tmp.name)
         return objs[name]
 
     def _set(self, **kwds):
@@ -159,10 +162,12 @@ class MatlabProcess(object):
         Transfer an object from Python to MATLAB and assign it to the given
         variable name.
         """
-        tmp = tempfile.mktemp(suffix='.mat')
-        scipy.io.savemat(tmp, kwds)
-        self("load('%s')" % tmp)
-        os.remove(tmp)
+        with tempfile.NamedTemporaryFile("w", suffix=".mat") as tmp.name:
+            pass
+        # tmp = tempfile.mktemp(suffix='.mat')
+        scipy.io.savemat(tmp.name, kwds)
+        self("load('%s')" % tmp.name)
+        os.remove(tmp.name)
                 
     def _get_via_pipe(self, name):
         """
