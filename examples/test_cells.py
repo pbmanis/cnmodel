@@ -265,8 +265,6 @@ class Tests():
             self.iv.run(ccivrange[args.species][args.celltype], self.cell, durs=durations, 
                    sites=sites, reppulse=ptype, temp=float(args.temp))
             ret = self.iv.input_resistance_tau()
-            ret = ret[0]
-            print(ret)
             if not np.isnan(ret['slope']):
                 print('    From IV: Rin = {:7.1f}  Tau = {:7.1f}  Vm = {:7.1f}'.format(ret['slope'], ret['tau'], ret['intercept']))
             self.iv.show(cell=self.cell)

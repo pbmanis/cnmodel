@@ -355,6 +355,7 @@ class PyramidalCeballos(Pyramidal, Cell):
 
         dataset = 'Ceballos_channels'
         temp = 34.
+        print(modelType, modelName)
         if modelType in ['quiet', 'active']:
             modelName = 'Ceballos'
         else:

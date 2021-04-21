@@ -61,9 +61,14 @@ def test_pyramidal():
     cell = cells.Pyramidal.create(species='rat', model='POK', modelType='I')
     CellTester('pyramidal_rat_I', cell)
 
-def test_pyramidal_ceballos():
+def test_pyramidal_ceballos_quiet():
     reset(raiseError=False)
-    cell = cells.PyramidalCeballos.create(species='mouse', model='Ceballos', modelType='I')
+    cell = cells.PyramidalCeballos.create(species='mouse', model='Ceballos', modelType='quiet')
+    CellTester('pyramidal_mouse_I', cell)
+
+def test_pyramidal_ceballos_active():
+    reset(raiseError=False)
+    cell = cells.PyramidalCeballos.create(species='mouse', model='Ceballos', modelType='active')
     CellTester('pyramidal_mouse_I', cell)
     
 def test_tuberculoventral():
@@ -126,6 +131,9 @@ class CellTester(UserTester):
         finally:
             if hasattr(self, 'iv') and hasattr(self.iv, 'win'):
                 self.iv.win.hide()
+ 
+if __name__ == "__main__":
+    test_pyramidal_ceballos_active()
     
 
 #def result_file(key):
