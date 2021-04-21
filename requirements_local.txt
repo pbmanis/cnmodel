@@ -16,7 +16,7 @@ sphinx>=3.4
 # Note that neuron should be installed OUTSIDE of this, and beforehand, but 
 
 dill==0.3.1.1
-lmfit==0.9.13
+lmfit==1.0.2
 llvmlite==0.32.1  # required for numba version to avoid "TypeError: create_target_machine() got an unexpected keyword argument 'jitdebug'"
 matplotlib==3.3.0  # needed to avoid crash on Big Sur
 matplotlib-scalebar==0.5.1

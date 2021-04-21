@@ -68,6 +68,9 @@ class UserTester(object):
         elif isinstance(info, list):
             for i in range(len(info)):
                 self.compare_results(key, info[i], expect[i])
+        elif isinstance(info, tuple):
+            for i in range(len(info)):
+                self.compare_results(key, info[i], expect[i])
         elif isinstance(info, np.ndarray):
             assert info.shape == expect.shape
             if len(info) == 0:
@@ -108,6 +111,7 @@ class UserTester(object):
                 else:
                     self.args[0].print_all_mechs()
             assert np.allclose(info, expect, rtol=self.rtol)
+
         else:
             try:
                 assert info == expect
