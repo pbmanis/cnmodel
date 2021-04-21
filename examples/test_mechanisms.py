@@ -98,9 +98,8 @@ tdurs = {
 }
 
 known = list(tdurs.keys())  # all the "known files"
-modfiles = Path("../cnmodel/mechanisms").glob("*.mod")
+modfiles = list(Path("x86_64").glob("*.mod"))
 modfiles = sorted([mf.stem for mf in modfiles])
-
 # remap maps from known name to modfile name
 remap = {
     "nav11": "inav11",
@@ -120,7 +119,8 @@ for k in known:
         availmech.append(remap[k])
     else:
         notavail.append(k)
-
+print("avail: ", availmech)
+print("not availmedh: ", notavail)
 
 class ChannelKinetics:
     def __init__(self, args, export=False):
