@@ -88,9 +88,11 @@ def model_ihc(pin, CF, nrep=1, tdres=1e-5, reptime=1, cohc=1, cihc=1, species=1,
     assert reptime >= pin.size * tdres
     # convert all args to double, as required by model_IHC
     # fastest way seems to be through savemat and ml load
-    fh = tempfile.mktemp(suffix='.mat')
-    scipy.io.savemat(fh, {'A': pin})
-    pin = ml.load(fh)['A']
+    with tempfile.NamedTemporaryFile("w", suffix=".mat") as fh:
+        pass
+    # fh = tempfile.mktemp(suffix='.mat')
+    scipy.io.savemat(fh.name, {'A': pin})
+    pin = ml.load(fh.name)['A']
 
     args = [pin]
     for arg in (CF, nrep, tdres, reptime, cohc, cihc, species):
