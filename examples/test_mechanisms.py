@@ -70,36 +70,45 @@ nottestablemechs = [
 
 tdurs = {
     "CaPCalyx": [20.0, 10.0],
+    "default": [200, 20],
+    "hcno": [1000.0, 200.0],
+    "hcno_bo": [1000.0, 200.0],
+    "ichanWT2005": [10.0, 5.0],
+    "ihpkj": [1000.0, 200.0],
+    "ihpyr": [1000.0, 200.0],
+    "ihpyr_adj": [1000.0, 200.0],
+    "ihpyrlc": [1000.0, 200.0],
+    "ihsgc_apical": [1000.0, 200.0],
+    "ihsgc_basalmiddle": [1000.0, 200.0],
+    "ihvcn": [1000.0, 200.0],
     "inav11": [10.0, 5.0],
     "jsrnaf": [10.0, 5.0],
-    "ichanWT2005": [10.0, 5.0],
+    "ka": [25.0, 5.0],
+    "kcnq": [200, 20],
+    "kdpyr": [200.0, 20.0],
+    "kht": [200.0, 20.0],
+    "kif": [100.0, 100.0],
+    "kir": [100.0, 10.0],
+    "kis": [100.0, 10.0],
+    "klt": [200.0, 20.0],
+    "na6stbushy": [10.0, 5.0],
+    "na8st": [10.0, 5.0],
     "nacn": [10.0, 5.0],
     "nacncoop": [10.0, 5.0],
-    "nabu": [10.0, 5.0],
     "nacsh": [10.0, 5.0],
-    "kht": [200.0, 20.0],
-    "klt": [200.0, 20.0],
-    "ka": [25.0, 5.0],
-    "hcno": [1000.0, 200.0],
-    "ih": [1000.0, 200.0],
-    "ihvcn": [1000.0, 200.0],
-    "hcno_bo": [1000.0, 200.0],
-    "ihsgc_basalmiddle": [1000.0, 200.0],
-    "ihsgc_apical": [1000.0, 200.0],
-    "kif": [100.0, 100.0],
-    "kis": [100.0, 10.0],
-    "napyr": [10, 5.0],
-    "ihpyr": [1000.0, 200.0],
-    "kdpyr": [200.0, 20.0],
-    "kcnq": [200, 20],
     "nap": [200.0, 100.0],
     "nappyr": [200.0, 100.0],
-    "default": [200, 20],
+    "napyr": [10, 5.0],
+    "pkjlk": [100., 20.],
+    "rsg": [100., 20.],
+    
+    
 }
 
 known = list(tdurs.keys())  # all the "known files"
-modfiles = list(Path("x86_64").glob("*.mod"))
+modfiles = list(Path("X86_64").glob("*.o"))
 modfiles = sorted([mf.stem for mf in modfiles])
+print("modfiles: ", modfiles)
 # remap maps from known name to modfile name
 remap = {
     "nav11": "inav11",
@@ -119,7 +128,7 @@ for k in known:
         availmech.append(remap[k])
     else:
         notavail.append(k)
-print("avail: ", availmech)
+print("avail: ", sorted(availmech))
 print("not availmedh: ", notavail)
 
 class ChannelKinetics:
