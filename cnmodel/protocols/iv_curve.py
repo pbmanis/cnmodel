@@ -657,7 +657,7 @@ class IVCurve(Protocol):
         IVplot.addItem(line, ignoreBounds=True)
 
         # plot exponential fits
-        for fit in fits:
+        for fit in self.fits:
             t = np.linspace(self.p_start, self.p_end, 1000)
             y = fit.eval(x=t)
             Vplot.plot(
