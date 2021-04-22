@@ -194,7 +194,9 @@ class PyramidalKanold(Pyramidal, Cell):
             field='soma_Cap')
         chtype = data.get(dataset, species=species, model_type=modelType,
             field='soma_natype')
-        pars = Params(cap=cellcap, natype=chtype)
+        units = data.get(dataset, species=species, model_type=modelType,
+            field="units")
+        pars = Params(cap=cellcap, natype=chtype, units=units)
         for g in ['soma_napyr_gbar', 'soma_kdpyr_gbar', 'soma_kif_gbar', 'soma_kis_gbar',
                   'soma_ihpyr_gbar', 'soma_leak_gbar',
                   'soma_e_h','soma_leak_erev', 'soma_e_k', 'soma_e_na']:
@@ -225,9 +227,10 @@ class PyramidalKanold(Pyramidal, Cell):
         """
         assert self.scaled is False  # block double scaling!
         self.scaled = True
-
+            
         soma = self.soma
         if self.status['species'] in ['rat', 'mouse']:
+            print('for species: ', self.status['species'])
             if self.status['modelType'] not in ['pyramidal']:  # canonical K&M2001 model cell
                 raise ValueError(f"\nModel type {self.status['modelType']:s} is not implemented for mouse {self.celltype.title():s} cells")
             
@@ -237,17 +240,22 @@ class PyramidalKanold(Pyramidal, Cell):
             self.i_test_range = {'pulse': (-0.3, 0.401, 0.02)}
             self.vrange = [-75., -60.]
             self.set_soma_size_from_Cm(self.pars.cap)
-            soma().napyr.gbar = nstomho(self.pars.soma_napyr_gbar, self.somaarea)
-            # soma().nap.gbar = nstomho(self.pars.soma_nap_gbar, self.somaarea) # does not exist in canonical model
-            soma().kdpyr.gbar = nstomho(self.pars.soma_kdpyr_gbar, self.somaarea)
-            # soma().kcnq.gbar = nstomho(self.pars.soma_kcnq_gbar, self.somaarea) # does not exist in canonical model.
-            # soma().kpksk.gbar = nstomho(self.pars.soma_kpksk_gbar, self.somaarea) # does not exist in canonical model.
-            # soma().kir.gbar = nstomho(self.pars.soma_kir_gbar, self.somaarea)
-            soma().kif.gbar = nstomho(self.pars.soma_kif_gbar, self.somaarea)
-            soma().kis.gbar = nstomho(self.pars.soma_kis_gbar, self.somaarea)
-            soma().ihpyr.gbar = nstomho(self.pars.soma_ihpyr_gbar, self.somaarea)
+            print("pyr gbar napyr: ", self.pars.soma_napyr_gbar)
+            print("somaarea: ", self.somaarea)
+            soma().napyr.gbar = self.g_convert(self.pars.soma_napyr_gbar, self.pars.units, self.somaarea)
+            print("pyr gbar", soma().napyr.gbar)
+            # soma().nap.gbar = self.g_convert(self.pars.soma_nap_gbar, self.somaarea) # does not exist in canonical model
+            soma().kdpyr.gbar = self.g_convert(self.pars.soma_kdpyr_gbar, self.pars.units, self.somaarea)
+            # soma().kcnq.gbar = self.g_convert(self.pars.soma_kcnq_gbar, self.somaarea) # does not exist in canonical model.
+            # soma().kpksk.gbar = self.g_convert(self.pars.soma_kpksk_gbar, self.somaarea) # does not exist in canonical model.
+            # soma().kir.gbar = self.g_convert(self.pars.soma_kir_gbar, self.somaarea)
+            soma().kif.gbar = self.g_convert(self.pars.soma_kif_gbar, self.pars.units, self.somaarea)
+            soma().kis.gbar = self.g_convert(self.pars.soma_kis_gbar, self.pars.units, self.somaarea)
+            soma().ihpyr.gbar = self.g_convert(self.pars.soma_ihpyr_gbar, self.pars.units, self.somaarea)
 #            soma().ihpyr_adj.q10 = 3.0  # no temp scaling to sta
-            soma().leak.gbar = nstomho(self.pars.soma_leak_gbar, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.soma_leak_gbar, self.pars.units, self.somaarea)
+            
+            # Reversal potentials
             soma().leak.erev = self.pars.soma_leak_erev
             soma().ena = self.pars.soma_e_na
             soma().ek = self.pars.soma_e_k
@@ -368,7 +376,8 @@ class PyramidalCeballos(Pyramidal, Cell):
         self._valid_temperatures = (temp, )
         if self.status['temperature'] == None:
             self.status['temperature'] = temp
-
+        self.set_cm(1.0)  # original Ceballos model uses this value
+        
         soma = self.do_morphology(morphology)
 
         self.pars = self.get_cellpars(dataset, species=species, modelType=modelType)
@@ -397,7 +406,9 @@ class PyramidalCeballos(Pyramidal, Cell):
             field='soma_Cap')
         chtype = data.get(dataset, species=species, model_type=modelType,
             field='soma_natype')
-        pars = Params(cap=cellcap, natype=chtype)
+        units = data.get(dataset, species=species, model_type=modelType,
+            field='units')
+        pars = Params(cap=cellcap, natype=chtype, units=units)
         for g in ['soma_napyr_gbar', 'soma_nappyr_gbar', 
                   'soma_kdpyr_gbar', 'soma_kif_gbar', 'soma_kis_gbar',
                   'soma_kcnq_gbar', 'soma_kir_gbar', 'soma_ihpyrlc_gbar', 
@@ -442,22 +453,27 @@ class PyramidalCeballos(Pyramidal, Cell):
             self.i_test_range = {'pulse': (-0.3, 0.401, 0.02)}
             self.vrange = [-75., -55.]
             self.set_soma_size_from_Cm(self.pars.cap)
-            soma().napyr.gbar = nstomho(self.pars.soma_napyr_gbar, self.somaarea)
-            soma().nappyr.gbar = nstomho(self.pars.soma_nappyr_gbar, self.somaarea) # does not exist in canonical model
-            soma().kdpyr.gbar = nstomho(self.pars.soma_kdpyr_gbar, self.somaarea)
-            soma().kif.gbar = nstomho(self.pars.soma_kif_gbar, self.somaarea)
-            soma().kis.gbar = nstomho(self.pars.soma_kis_gbar, self.somaarea)
-            soma().kcnq.gbar = nstomho(self.pars.soma_kcnq_gbar, self.somaarea) # does not exist in canonical model.
-            # soma().kpksk.gbar = nstomho(self.pars.soma_kpksk_gbar, self.somaarea) # does not exist in canonical model.
-            soma().kir.gbar = nstomho(self.pars.soma_kir_gbar, self.somaarea)
-            soma().ihpyrlc.gbar = nstomho(self.pars.soma_ihpyrlc_gbar, self.somaarea)
+            soma().napyr.gbar = self.g_convert(self.pars.soma_napyr_gbar, self.pars.units, self.somaarea)
+            soma().nappyr.gbar = self.g_convert(self.pars.soma_nappyr_gbar, self.pars.units, self.somaarea) # does not exist in canonical model
+            soma().kdpyr.gbar = self.g_convert(self.pars.soma_kdpyr_gbar, self.pars.units, self.somaarea)
+            soma().kif.gbar = self.g_convert(self.pars.soma_kif_gbar, self.pars.units, self.somaarea)
+            soma().kis.gbar = self.g_convert(self.pars.soma_kis_gbar, self.pars.units, self.somaarea)
+            soma().kcnq.gbar = self.g_convert(self.pars.soma_kcnq_gbar, self.pars.units, self.somaarea) # does not exist in canonical model.
+            # soma().kpksk.gbar = self.g_convert(self.pars.soma_kpksk_gbar, self.somaarea) # does not exist in canonical model.
+            soma().kir.gbar = self.g_convert(self.pars.soma_kir_gbar,self.pars.units,  self.somaarea)
+            soma().ihpyrlc.gbar = self.g_convert(self.pars.soma_ihpyrlc_gbar, self.pars.units, self.somaarea)
 #            soma().ihpyr_adj.q10 = 3.0  # no temp scaling to sta
-            soma().leak.gbar = nstomho(self.pars.soma_leak_gbar, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.soma_leak_gbar,self.pars.units,  self.somaarea)
+          
+            # Reversal Potentials for various ions
             soma().leak.erev = self.pars.soma_leak_erev
             soma().ena = self.pars.soma_e_na
             soma().ek = self.pars.soma_e_k
             soma().ihpyrlc.eh = self.pars.soma_e_h
-            
+
+            print("pyr gbar napyr: ", self.pars.soma_napyr_gbar)
+            print("somaarea: ", self.somaarea)
+            print("pyr gbar", soma().napyr.gbar)            
 
         else:
             raise ValueError(f"Species {self.status['species']:s} or species-type {self.status['modelType']:s} is not recognized for T-stellate cells")
