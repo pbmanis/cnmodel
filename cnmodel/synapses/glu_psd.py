@@ -8,7 +8,7 @@ class GluPSD(PSD):
     """
     Glutamatergic PSD with ionotropic AMPA / NMDA receptors
 
-    This creates a set of postsynaptoc NMDA and AMPA receptors, one pair
+    This creates a set of postsynaptic NMDA and AMPA receptors, one pair
     per terminal release site. Receptors are connected to the XMTR range
     variable of the terminal release mechanisms.
     
