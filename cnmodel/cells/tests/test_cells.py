@@ -135,7 +135,7 @@ class CellTester(UserTester):
                 self.iv.win.hide()
  
 if __name__ == "__main__":
-    test_pyramidal_ceballos_active()
+    test_cartwheel()
     
 
 #def result_file(key):

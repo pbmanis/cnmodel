@@ -1,6 +1,5 @@
 from __future__ import print_function
 from neuron import h
-from ..util import nstomho
 from ..util import Params
 import numpy as np
 from .cell import Cell
@@ -9,13 +8,13 @@ from .. import data
 Original hoc code from RMmodel.hoc
 // including the "Octopus" cell:
 proc set_Type2o() {
-    gbar_na = nstomho(1000)
-    gbar_kht = nstomho(150)
-    gbar_klt = nstomho(600)
-    gbar_ka = nstomho(0)
-    gbar_ih = nstomho(0)
-    gbar_hcno = nstomho(40)
-    gbar_leak = nstomho(2)
+    gbar_na = self.g_convert(1000)
+    gbar_kht = self.g_convert(150)
+    gbar_klt = self.g_convert(600)
+    gbar_ka = self.g_convert(0)
+    gbar_ih = self.g_convert(0)
+    gbar_hcno = self.g_convert(40)
+    gbar_leak = self.g_convert(2)
     model = 6
     modelname = "Type IIo (Octopus)"
     vm0 = -66.67
@@ -242,11 +241,7 @@ class OctopusRothman(Octopus, Cell):
             Model type to get parameters from the table.
         
         """
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='na_type')
-        pars = Params(cap=cellcap, natype=chtype)
+        pars = self.get_initial_pars(dataset, species, modelType)
 
         if self.status['modelName'] == 'RM03':
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'ka_gbar', 'ih_gbar', 'leak_gbar', 'leak_erev', 'ih_eh', 'e_k', 'e_na']:
@@ -302,10 +297,10 @@ class OctopusRothman(Octopus, Cell):
                 sf = 3.03  # Q10 of 2, 22->38C. (p3106, R&M2003c)
                 # note that kinetics are scaled in the mod file.
             self.adjust_na_chans(soma, sf=sf)
-            soma().kht.gbar = sf*nstomho(150.0, self.somaarea)  # 6.1 mmho/cm2
-            soma().klt.gbar = sf*nstomho(1000.0, self.somaarea)  #  40.7 mmho/cm2  3195?
-            soma().ihvcn.gbar = sf*nstomho(30.0, self.somaarea)  # 7.6 mmho/cm2, cf. Bal and Oertel, Spencer et al. 25 u dia cell 40ns?
-            soma().leak.gbar = sf*nstomho(2.0, self.somaarea)
+            soma().kht.gbar = sf*self.g_convert(150.0, self.pars.units, self.somaarea)  # 6.1 mmho/cm2
+            soma().klt.gbar = sf*self.g_convert(1000.0, self.pars.units,self.somaarea)  #  40.7 mmho/cm2  3195?
+            soma().ihvcn.gbar = sf*self.g_convert(30.0, self.pars.units,self.somaarea)  # 7.6 mmho/cm2, cf. Bal and Oertel, Spencer et al. 25 u dia cell 40ns?
+            soma().leak.gbar = sf*self.g_convert(2.0, self.pars.units,self.somaarea)
             self.axonsf = 1.0
         elif self.status['species'] == 'mouse' and self.status['modelType'] =='II-o':
             self.i_test_range = {'pulse': (-4.0, 4.0, 0.2)}
@@ -315,10 +310,10 @@ class OctopusRothman(Octopus, Cell):
             if self.status['temperature'] is None:
                 self.set_temperature(34.)
             self.adjust_na_chans(soma, sf=1.0)
-            soma().kht.gbar = nstomho(150.0, self.somaarea)  # 6.1 mmho/cm2
-            soma().klt.gbar = nstomho(3196.0, self.somaarea)  #  40.7 mmho/cm2
-            soma().hcnobo.gbar = nstomho(40.0, self.somaarea)  # 7.6 mmho/cm2, cf. Bal and Oertel, Spencer et al. 25 u dia cell
-            soma().leak.gbar = nstomho(2.0, self.somaarea)
+            soma().kht.gbar = self.g_convert(150.0, self.pars.units, self.somaarea)  # 6.1 mmho/cm2
+            soma().klt.gbar = self.g_convert(3196.0, self.pars.units, self.somaarea)  #  40.7 mmho/cm2
+            soma().hcnobo.gbar = self.g_convert(40.0, self.pars.units, self.somaarea)  # 7.6 mmho/cm2, cf. Bal and Oertel, Spencer et al. 25 u dia cell
+            soma().leak.gbar = self.g_convert(2.0, self.pars.units,self.somaarea)
             self.axonsf = 1.0
         else:
             raise ValueError('Species "%s" or species-type "%s" is not recognized for octopus cells' %  (species, type))
@@ -558,10 +553,10 @@ class OctopusSpencer(Octopus, Cell):
                 self.set_temperature(34.)
             self.print_soma_info()
 #            self.adjust_na_chans(soma)
-            # soma().kht.gbar = 0.0061  # nstomho(150.0, self.somaarea)  # 6.1 mmho/cm2
-            # soma().klt.gbar = 0.0407  # nstomho(3196.0, self.somaarea)  #  40.7 mmho/cm2
-            # soma().hcnobo.gbar = 0.0076  #nstomho(40.0, self.somaarea)  # 7.6 mmho/cm2, cf. Bal and Oertel, Spencer et al. 25 u dia cell
-            # soma().leak.gbar = 0.0005  # nstomho(2.0, self.somaarea)
+            # soma().kht.gbar = 0.0061  # self.g_convert(150.0, self.somaarea)  # 6.1 mmho/cm2
+            # soma().klt.gbar = 0.0407  # self.g_convert(3196.0, self.somaarea)  #  40.7 mmho/cm2
+            # soma().hcnobo.gbar = 0.0076  #self.g_convert(40.0, self.somaarea)  # 7.6 mmho/cm2, cf. Bal and Oertel, Spencer et al. 25 u dia cell
+            # soma().leak.gbar = 0.0005  # self.g_convert(2.0, self.somaarea)
             self.axonsf = 1.0
         else:
             raise ValueError('Species "%s" or species-type "%s" is not recognized for octopus cells' %  (species, type))

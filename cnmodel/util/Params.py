@@ -56,7 +56,7 @@ class Params(object):
         print the parameter block created in Parameter Init
         """
         print("--------    Parameter Block    ----------")
-        for key in self.__dict__.keys():
+        for key in sorted(self.__dict__.keys()):
             print("%20s = " % (key), eval('self.%s' % key))
         print("-------- ---------------------- ----------")
 

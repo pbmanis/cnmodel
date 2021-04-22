@@ -1,6 +1,5 @@
 from __future__ import print_function
 from neuron import h
-from ..util import nstomho
 from ..util import Params
 import numpy as np
 from .cell import Cell
@@ -243,11 +242,7 @@ class SGC_TypeI(SGC):
             print("<< SGC: Spiral Ganglion Cell created >>")
 
     def get_cellpars(self, dataset, species='guineapig', modelType='sgc-a'):
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_na_type')
-        pars = Params(soma_Cap=cellcap, natype=chtype)
+        pars = self.get_initial_pars(dataset, species, modelType)
         for g in ['soma_na_gbar', 'soma_kht_gbar', 'soma_klt_gbar', 'soma_ihap_gbar', 'soma_ihbm_gbar',
                   'soma_ihap_eh', 'soma_ihbm_eh', 'soma_leak_gbar', 'soma_leak_erev', 
                   'soma_e_k', 'soma_e_na']:
@@ -299,19 +294,19 @@ class SGC_TypeI(SGC):
             if self.status['temperature'] is None:
                 self.set_temperature(22.)
                         
-        self.set_soma_size_from_Cm(self.pars.soma_Cap)
+        self.set_soma_size_from_Cm(self.pars.cap)
         self.adjust_na_chans(soma)
-        soma().kht.gbar = nstomho(self.pars.soma_kht_gbar, self.somaarea)
-        soma().klt.gbar = nstomho(self.pars.soma_klt_gbar, self.somaarea)
+        soma().kht.gbar = self.g_convert(self.pars.soma_kht_gbar, self.pars.units, self.somaarea)
+        soma().klt.gbar = self.g_convert(self.pars.soma_klt_gbar, self.pars.units, self.somaarea)
         if self.status['modelType'] == 'sgc-a':
-            soma().ihsgcApical.gbar = nstomho(self.pars.soma_ihap_gbar, self.somaarea)
+            soma().ihsgcApical.gbar = self.g_convert(self.pars.soma_ihap_gbar,self.pars.units,  self.somaarea)
             soma().ihsgcApical.eh = self.pars.soma_ihap_eh
         elif self.status['modelType'] == 'sgc-bm':
-            soma().ihsgcBasalMiddle.gbar = nstomho(self.pars.soma_ihbm_gbar,  self.somaarea)
+            soma().ihsgcBasalMiddle.gbar = self.g_convert(self.pars.soma_ihbm_gbar, self.pars.units, self.somaarea)
             soma().ihsgcBasalMiddle.eh = self.pars.soma_ihbm_eh
         else:
             raise ValueError('Ihsgc modelType %s not recognized for species %s' % (self.status['modelType'], self.status['species']))
-        soma().leak.gbar = nstomho(self.pars.soma_leak_gbar, self.somaarea)
+        soma().leak.gbar = self.g_convert(self.pars.soma_leak_gbar,self.pars.units,  self.somaarea)
         soma().leak.erev = self.pars.soma_leak_erev
 
         self.check_temperature()

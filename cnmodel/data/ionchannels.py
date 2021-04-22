@@ -321,7 +321,7 @@ soma_leak_erev            -62.0  [3]
 soma_e_na                 50.    [1]
 soma_e_k                  -81.5  [1]
 soma_e_h                  -43.0  [1]
-soma_natype               napyr
+na_type                   napyr
 soma_Cap                  12.0   [1]
 units                     nS
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -362,7 +362,7 @@ soma_e_na                 50.    [1]        50.    [1]
 soma_e_k                  -81.5  [1]        -81.5  [1]
 soma_e_h                  -43.0  [1]        -43.0  [1]
 soma_ihpyrlc_e_h          -43.0  [1]        -43.0  [1]
-soma_natype               napyr             napyr
+na_type                   napyr             napyr
 soma_Cap                  12.0   [1]        12.0   [1]
 units                     mmho/cm2          mmho/cm2  
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -406,14 +406,14 @@ soma_lkpkj_e       -65.0  [1]
 soma_e_ca          50.
 soma_na_type       narsg
 soma_pcabar        0.00015 [1]
-soma_Dia           18  
+soma_Dia           18.0
 units              nS
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
 [1] Channels from Khaliq, Gouwens and Raman, J. Neurosci. 2003
     Conductance levels modified. 
-
+    soma_Dia           36
 """)
 
 add_table_data('TV_channels', row_key='field', col_key='model_type', 
@@ -425,7 +425,7 @@ Ad-hoc model, based on the t-stellate cell model, but adjusted
 to match the data from Kuo and Trussell.
 
 -----------------------------------------------------------------------------------------------------------------------------------
-                     TVmouse   
+                     TVmouse
                               
 soma_nacncoop_gbar   5800.0   [2]      
 soma_kht_gbar        400.0    [1]
@@ -476,7 +476,7 @@ soma_na_type        jsrna [2]     jsrna [2]
 soma_Cap            12.0  [1]     12.0  [1]
 soma_e_k            -84   [1]     -84   [1]
 soma_e_na           50.   [1]     50.   [1]
-units               nS
+units               nS            nS
 
 -----------------------------------------------------------------------------------------------------------------------------------
 

@@ -269,13 +269,8 @@ class BushyRothman(Bushy):
             Model type to get parameters from the table.
         
         """
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')  # total somatic capacitance (point cells)
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='na_type')
-        units = data.get(dataset, species=species, model_type=modelType,
-            field="units")
-        pars = Params(cap=cellcap, natype=chtype, units=units)
+        pars = self.get_initial_pars(dataset, species, modelType)
+        
         if self.status['modelName'] == 'RM03':  # different models have different channel types
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ih_gbar', 'leak_gbar']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
@@ -284,10 +279,6 @@ class BushyRothman(Bushy):
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ihvcn_gbar', 'leak_gbar']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
                     field=g))
-        # elif self.status['modelName'] == 'XM13nacncoop':
- #            for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ihvcn_gbar', 'leak_gbar']:
- #                pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
- #                    field=g))
         elif self.status['modelName'] == 'mGBC':
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ihvcn_gbar', 'leak_gbar']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,

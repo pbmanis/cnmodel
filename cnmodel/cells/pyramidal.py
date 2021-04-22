@@ -1,6 +1,6 @@
 from __future__ import print_function
 from neuron import h
-from ..util import nstomho
+
 import numpy as np
 from .cell import Cell
 from ..util import Params
@@ -190,13 +190,8 @@ class PyramidalKanold(Pyramidal, Cell):
 
 
     def get_cellpars(self, dataset, species='guineapig', modelType='II'):
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_natype')
-        units = data.get(dataset, species=species, model_type=modelType,
-            field="units")
-        pars = Params(cap=cellcap, natype=chtype, units=units)
+        pars = self.get_initial_pars(dataset, species, modelType)
+
         for g in ['soma_napyr_gbar', 'soma_kdpyr_gbar', 'soma_kif_gbar', 'soma_kis_gbar',
                   'soma_ihpyr_gbar', 'soma_leak_gbar',
                   'soma_e_h','soma_leak_erev', 'soma_e_k', 'soma_e_na']:
@@ -240,10 +235,7 @@ class PyramidalKanold(Pyramidal, Cell):
             self.i_test_range = {'pulse': (-0.3, 0.401, 0.02)}
             self.vrange = [-75., -60.]
             self.set_soma_size_from_Cm(self.pars.cap)
-            print("pyr gbar napyr: ", self.pars.soma_napyr_gbar)
-            print("somaarea: ", self.somaarea)
             soma().napyr.gbar = self.g_convert(self.pars.soma_napyr_gbar, self.pars.units, self.somaarea)
-            print("pyr gbar", soma().napyr.gbar)
             # soma().nap.gbar = self.g_convert(self.pars.soma_nap_gbar, self.somaarea) # does not exist in canonical model
             soma().kdpyr.gbar = self.g_convert(self.pars.soma_kdpyr_gbar, self.pars.units, self.somaarea)
             # soma().kcnq.gbar = self.g_convert(self.pars.soma_kcnq_gbar, self.somaarea) # does not exist in canonical model.
@@ -402,13 +394,8 @@ class PyramidalCeballos(Pyramidal, Cell):
 
 
     def get_cellpars(self, dataset, species='mouse', modelType='I'):
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_natype')
-        units = data.get(dataset, species=species, model_type=modelType,
-            field='units')
-        pars = Params(cap=cellcap, natype=chtype, units=units)
+        pars = self.get_initial_pars(dataset, species, modelType)
+
         for g in ['soma_napyr_gbar', 'soma_nappyr_gbar', 
                   'soma_kdpyr_gbar', 'soma_kif_gbar', 'soma_kis_gbar',
                   'soma_kcnq_gbar', 'soma_kir_gbar', 'soma_ihpyrlc_gbar', 

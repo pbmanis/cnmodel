@@ -5,7 +5,6 @@ import numpy as np
 
 from .cell import Cell
 from .. import synapses
-from ..util import nstomho
 from ..util import Params
 from .. import data
 
@@ -198,11 +197,11 @@ class Tuberculoventral(Tuberculoventral):
 
         self.do_morphology(morphology)
         self.pars = self.get_cellpars(dataset, species=species, modelType=modelType)
-        self.status['na'] = self.pars.soma_natype
+        self.status['na'] = self.pars.natype
 
         # decorate the morphology with ion channels
         if decorator is None:   # basic model, only on the soma
-            self.mechanisms = ['kht', 'ka', 'ihvcn', 'leak', self.pars.soma_natype]
+            self.mechanisms = ['kht', 'ka', 'ihvcn', 'leak', self.pars.natype]
             for mech in self.mechanisms:
                 self.soma.insert(mech)
             self.species_scaling(silent=True)  # adjust the default parameters
@@ -215,12 +214,7 @@ class Tuberculoventral(Tuberculoventral):
 
     def get_cellpars(self, dataset, species='mouse', modelType='TVmouse'):
         assert modelType is not None
-        print('getcellpars: modelType: ', modelType)
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_na_type')
-        pars = Params(soma_cap=cellcap, soma_natype=chtype)
+        pars = self.get_initial_pars(dataset, species, modelType)
         for g in ['soma_nacncoop_gbar', 'soma_kht_gbar', 'soma_ka_gbar',
                   'soma_ihvcn_gbar', 'soma_ihvcn_eh',
                   'soma_leak_gbar', 'soma_leak_erev',
@@ -271,13 +265,13 @@ class Tuberculoventral(Tuberculoventral):
             if self.status['temperature'] is None:
                 self.set_temperature(34.)
 
-            self.set_soma_size_from_Cm(self.pars.soma_cap)
+            self.set_soma_size_from_Cm(self.pars.cap)
             self.adjust_na_chans(soma)
-            soma().kht.gbar = nstomho(self.pars.soma_kht_gbar, self.somaarea)
-            soma().ka.gbar = nstomho(self.pars.soma_ka_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.soma_ihvcn_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.soma_kht_gbar, self.pars.units, self.somaarea)
+            soma().ka.gbar = self.g_convert(self.pars.soma_ka_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.soma_ihvcn_gbar, self.pars.units, self.somaarea)
             soma().ihvcn.eh = self.pars.soma_ihvcn_eh
-            soma().leak.gbar = nstomho(self.pars.soma_leak_gbar, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.soma_leak_gbar, self.pars.units, self.somaarea)
             soma().leak.erev = self.pars.soma_leak_erev
             self.e_leak = self.pars.soma_leak_erev
             self.soma.ek = self.e_k = self.pars.soma_e_k

@@ -7,6 +7,7 @@ import neuron
 from neuron import h
 from ..util import nstomho, mho2ns
 from ..util import custom_init
+from ..util import Params
 from .. import synapses
 from .. import data
 from .. import morphology
@@ -776,11 +777,11 @@ class Cell(object):
         # if self.debug:
         if nach == "jsrna":  # sodium channel from Rothman Manis Young, 1993
             try:
-                soma().jsrna.gbar = nstomho(self.pars.jsrna_gbar, self.somaarea) * sf
+                soma().jsrna.gbar = self.g_convert(self.pars.jsrna_gbar, self.pars.units, self.somaarea) * sf
             except:
                 try:
                     soma().jsrna.gbar = (
-                        nstomho(self.pars.soma_na_gbar, self.somaarea) * sf
+                        self.g_convert(self.pars.soma_na_gbar, self.pars.units, self.somaarea) * sf
                     )
                 except:
                     raise ValueError("Failed to convert jsrna for soma...")
@@ -792,11 +793,11 @@ class Cell(object):
         elif nach in ["na", "nacn"]:  # sodium channel from Rothman and Manis, 2003
             # self.pars.show()
             try:
-                soma().na.gbar = nstomho(self.pars.na_gbar, self.somaarea) * sf
+                soma().na.gbar = self.g_convert(self.pars.na_gbar, self.pars.units, self.somaarea) * sf
                 nabar = soma().na.gbar
             except:
                 try:
-                    soma().nacn.gbar = nstomho(self.pars.nacn_gbar, self.somaarea) * sf
+                    soma().nacn.gbar = self.g_convert(self.pars.nacn_gbar, self.pars.units, self.somaarea) * sf
                     nabar = soma().nacn.gbar
                 except:
                     # print('nach: ', nach, '\n', dir(soma()))
@@ -807,7 +808,7 @@ class Cell(object):
                 print("Using na/nacn: gbar: ", nabar)
 
         elif nach == "nav11":  # sodium channel from Xie and Manis, 2013
-            soma().nav11.gbar = nstomho(self.pars.nav11_gbar, self.somaarea) * sf
+            soma().nav11.gbar = self.g_convert(self.pars.nav11_gbar, self.pars.units, self.somaarea) * sf
             soma.ena = 50  # self.e_na
             soma().nav11.vsna = 4.3
             if self.debug:
@@ -816,12 +817,12 @@ class Cell(object):
         elif nach == "nacncoop":  # coooperative sodium channel based on nacn
             try:
                 soma().nacncoop.gbar = (
-                    nstomho(self.pars.nancoop_gbar, self.somaarea) * sf
+                    self.g_convert(self.pars.nancoop_gbar, self.pars.units, self.somaarea) * sf
                 )
             except:
                 try:  # alternate naming...
                     soma().nacncoop.gbar = (
-                        nstomho(self.pars.soma_nacncoop_gbar, self.somaarea) * sf
+                        self.g_convert(self.pars.soma_nacncoop_gbar, self.pars.units, self.somaarea) * sf
                     )
                 except:
                     raise ValueError("Failed to convert nancoop for soma...")
@@ -835,7 +836,7 @@ class Cell(object):
         elif (
             nach == "nabu"
         ):  # sodium channel for bushy cells from Yang et al (Xu-Friedman lab)
-            soma().nabu.gbar = nstomho(self.pars.nabu_gbar, self.somaarea) * sf
+            soma().nabu.gbar = self.g_convert(self.pars.nabu_gbar, self.pars.units, self.somaarea) * sf
             soma().nabu.vshift = vshift
             soma.ena = 50  # self.e_na
             if self.debug:
@@ -845,6 +846,34 @@ class Cell(object):
             raise ValueError(
                 f"Sodium channel <{nach:s}> is not recognized for {self.celltype:s} cells"
             )
+
+    def get_initial_pars(self, dataset, species, modelType):
+        """
+        Get some basic information from the tables for each cell
+        Create an initia Params structure and return it.
+        Each cell needs to then find the values for its own channels.
+        Note: for the cell area to be correct, the specific capacitance
+        must be set before this call.
+        
+        """
+        try:  # require either capacitance or diameter - convert dia to cap
+            cellcap = data.get(dataset, species=species, model_type=modelType,
+            field='soma_Cap')
+        except:
+            celldia = data.get(dataset, species=species, model_type=modelType,
+            field='soma_Dia')
+            radius_um = 0.5*celldia*1e-4  # convert to cm
+            cellcap = 1e6*self.c_m*4.0*np.pi*(radius_um**2)
+        try: # sodium channel specification may vary
+            chtype = data.get(dataset, species=species, model_type=modelType,
+            field='na_type')
+        except:
+            chtype = data.get(dataset, species=species, model_type=modelType,
+            field='soma_na_type')
+        units = data.get(dataset, species=species, model_type=modelType,
+            field="units")
+        pars = Params(cap=cellcap, natype=chtype, units=units)
+        return pars
 
     def g_convert(self, g, units, refarea):
         """
@@ -1472,7 +1501,7 @@ class Cell(object):
             "nav11": 1500.0e-3,
             "nacsh": 45.0,
         }
-        # nstomho(6000.0, self.somaarea)
+        # self.g_convert(6000.0, self.somaarea)
         gnamax = gmaxes[natype]
         gnamin = 0.0 * gnamax
 
@@ -1491,10 +1520,10 @@ class Cell(object):
                 inseg.nacsh.gbar = gna
                 # inseg.nacsh.vShift = 0.
                 # inseg.nacsh.vShift_inact = 0.
-            inseg.klt.gbar = 0.2 * nstomho(20.0, self.somaarea)
-            inseg.kht.gbar = nstomho(150.0, self.somaarea)
-            inseg.ihvcn.gbar = 0.0 * nstomho(20.0, self.somaarea)
-            inseg.leak.gbar = nstomho(2.0, self.somaarea)
+            inseg.klt.gbar = 0.2 * self.g_convert(20.0, 'nS', self.somaarea)
+            inseg.kht.gbar = self.g_convert(150.0,  'nS',self.somaarea)
+            inseg.ihvcn.gbar = 0.0 * self.g_convert(20.0,  'nS',self.somaarea)
+            inseg.leak.gbar = self.g_convert(2.0,  'nS',self.somaarea)
             inseg.ena = self.e_na
             inseg.ek = self.e_k
             inseg.leak.erev = self.e_leak
@@ -1567,18 +1596,18 @@ class Cell(object):
         axnode.insert("kcnq")
         for ax in axnode:
             if natype == "nacn":
-                ax.nacn.gbar = 1500e-3  # 588e-3 # nstomho(400.0, somaarea)
+                ax.nacn.gbar = 1500e-3  # 588e-3 # self.g_convert(400.0, somaarea)
             if natype == "nav11":
-                ax.nav11.gbar = 3500e-3  # 588e-3 # nstomho(400.0, somaarea)
+                ax.nav11.gbar = 3500e-3  # 588e-3 # self.g_convert(400.0, somaarea)
             if natype == "nacsh":
-                ax.nacsh.gbar = 5000.0  # 588e-3 # nstomho(400.0, somaarea)
+                ax.nacsh.gbar = 5000.0  # 588e-3 # self.g_convert(400.0, somaarea)
             if natype == "nacncoop":
-                ax.nacncoop.gbar = 500e-3  # 588e-3 # nstomho(400.0, somaarea)
-            ax.kht.gbar = 0.0  # 20.e-3#nstomho(50.0, somaarea)
-            ax.klt.gbar = 80.0e-3  # 40.e-3 # nstomho(10.0, somaarea)
+                ax.nacncoop.gbar = 500e-3  # 588e-3 # self.g_convert(400.0, somaarea)
+            ax.kht.gbar = 0.0  # 20.e-3#self.g_convert(50.0, somaarea)
+            ax.klt.gbar = 80.0e-3  # 40.e-3 # self.g_convert(10.0, somaarea)
             ax.ihvcn.gbar = 0
             ax.kcnq.gbar = 100e-3
-            ax.leak.gbar = 1.75e-4  # nstomho(1.0, somaarea)
+            ax.leak.gbar = 1.75e-4  # self.g_convert(1.0, somaarea)
             ax.ena = v_sodium
             ax.ek = v_potassium
             ax.leak.erev = eleak
@@ -1607,9 +1636,9 @@ class Cell(object):
         # internode.insert('kht')
         internode.insert("leak")
         for inno in internode:
-            inno.leak.gbar = 1e-4  # nstomho(0.002, somaarea)
-            # inno.nacn.gbar = 0 # * nstomho(10.0, somaarea)
-            # inno.kht.gbar = 0 # * nstomho(150.0, somaarea)
+            inno.leak.gbar = 1e-4  # self.g_convert(0.002, somaarea)
+            # inno.nacn.gbar = 0 # * self.g_convert(10.0, somaarea)
+            # inno.kht.gbar = 0 # * self.g_convert(150.0, somaarea)
             # inno.ek = v_potassium
             # inno.ena = v_sodium
             inno.leak.erev = eleak

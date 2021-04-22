@@ -3,9 +3,6 @@ from neuron import h
 import numpy as np
 
 from .cell import Cell
-#from .. import synapses
-from ..util import nstomho
-from ..util import Params
 from .. import data
 
 __all__ = ['TStellate', 'TStellateRothman'] 
@@ -246,11 +243,7 @@ class TStellateRothman(TStellate):
             Model type to get parameters from the table.
         
         """
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='na_type')
-        pars = Params(cap=cellcap, natype=chtype)
+        pars = self.get_initial_pars(dataset, species, modelType)
 
         if self.status['modelName'] == 'RM03':
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'ka_gbar', 'ih_gbar', 'leak_gbar', 'leak_erev', 'ih_eh', 'e_k', 'e_na']:
@@ -260,10 +253,6 @@ class TStellateRothman(TStellate):
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'ka_gbar', 'ihvcn_gbar', 'leak_gbar', 'leak_erev', 'ih_eh', 'e_k', 'e_na']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
                     field=g))
-        # elif self.status['modelName'] == 'mGBC':
-        #     for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'ka_gbar', 'ihvcn_gbar', 'leak_gbar', 'leak_erev', 'ih_eh', 'e_k', 'e_na']:
-        #         pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
-        #             field=g))
         else:
             raise ValueError(f"get_cellpars: Model name {self.status['modelName']} is not yet implemented for cell type {self.celltype.title():s}")
             
@@ -315,11 +304,11 @@ class TStellateRothman(TStellate):
 
             self.set_soma_size_from_Cm(self.pars.cap)
             self.adjust_na_chans(soma, sf=1.0)
-            soma().kht.gbar = nstomho(self.pars.kht_gbar, self.somaarea)
-            soma().ka.gbar = nstomho(self.pars.ka_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.ihvcn_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().ka.gbar = self.g_convert(self.pars.ka_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ihvcn_gbar, self.pars.units, self.somaarea)
             soma().ihvcn.eh = self.pars.ih_eh # Rodrigues and Oertel, 2006
-            soma().leak.gbar = nstomho(self.pars.leak_gbar, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
             soma().leak.erev = self.pars.leak_erev
             self.e_k = self.pars.e_k
             self.e_na = self.pars.e_na
@@ -344,10 +333,10 @@ class TStellateRothman(TStellate):
                 # note that kinetics are scaled in the mod file.
             self.set_soma_size_from_Cm(self.pars.cap)
             self.adjust_na_chans(soma, sf=sf)
-            soma().kht.gbar = nstomho(self.pars.kht_gbar, self.somaarea)
-            soma().ka.gbar = nstomho(self.pars.ka_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.ih_gbar, self.somaarea)
-            soma().leak.gbar = nstomho(self.pars.leak_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().ka.gbar = self.g_convert(self.pars.ka_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ih_gbar, self.pars.units, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
             soma().leak.erev = self.pars.leak_erev
             self.axonsf = 0.5
 

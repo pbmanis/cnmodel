@@ -1,11 +1,8 @@
-from __future__ import print_function
+import numpy as np
 from neuron import h
 
 from .cell import Cell
-# from .. import synapses
-from ..util import nstomho
 from ..util import Params
-import numpy as np
 from .. import data
 
 __all__ = ['MSO']
@@ -176,11 +173,8 @@ class MSOPrincipal(MSO):
             print("   << Created cell >>")
 
     def get_cellpars(self, dataset, species='guineapig', modelType='principal'):
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_na_type')
-        pars = Params(cap=cellcap, natype=chtype)
+        pars = self.get_initial_pars(dataset, species, modelType)
+
         for g in ['soma_kht_gbar', 'soma_klt_gbar', 'soma_ih_gbar', 'soma_leak_gbar']:
             pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
             field=g))
@@ -216,7 +210,7 @@ class MSOPrincipal(MSO):
         soma = self.soma
             
         if self.status['species'] == 'guineapig':
-            print(f"Setting conductances for guinea pig {self.status['modelType']:s} MSO cell, based on Rothman and Manis, 2003 bushy cell")
+            # print(f"Setting conductances for guinea pig {self.status['modelType']:s} MSO cell, based on Rothman and Manis, 2003 bushy cell")
             self._valid_temperatures = (22., 38.)
             if self.status['temperature'] is None:
                 self.status['temperature'] = 22. 
@@ -229,10 +223,10 @@ class MSOPrincipal(MSO):
             self.set_soma_size_from_Cm(self.pars.cap)
 
             self.adjust_na_chans(soma, sf=sf)
-            soma().kht.gbar = nstomho(self.pars.soma_kht_gbar, self.somaarea)
-            soma().klt.gbar = nstomho(self.pars.soma_klt_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.soma_ih_gbar, self.somaarea)
-            soma().leak.gbar = nstomho(self.pars.soma_leak_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.soma_kht_gbar, self.pars.units, self.somaarea)
+            soma().klt.gbar = self.g_convert(self.pars.soma_klt_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.soma_ih_gbar, self.pars.units, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.soma_leak_gbar, self.pars.units, self.somaarea)
 
             self.axonsf = 0.57
             

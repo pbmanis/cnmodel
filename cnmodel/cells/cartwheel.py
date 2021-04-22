@@ -158,12 +158,12 @@ class CartwheelDefault(Cartwheel, Cell):
         soma = self.do_morphology(morphology)
 
         self.pars = self.get_cellpars(dataset, species=species, modelType=modelType)
-        self.status['na'] = self.pars.soma_natype
+        self.status['na'] = self.pars.natype
 
         # decorate the morphology with ion channels
         if decorator is None:   # basic model, only on the soma
             # v_potassium = -80       # potassium reversal potential
-            # v_sodium = 50           # sodium reversal potential
+            # v_sodium = 50           # somaodium reversal potential
 
             self.mechanisms = ['naRsg', 'bkpkj', 'hpkj', 'kpkj', 'kpkj2',
                                'kpkjslow', 'kpksk', 'lkpkj', 'cap']
@@ -180,13 +180,10 @@ class CartwheelDefault(Cartwheel, Cell):
             print( "<< Cartwheel: Modified version of Raman Purkinje cell model created >>")
 
     def get_cellpars(self, dataset, species='guineapig', modelType='II'):
-        somaDia = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Dia')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_na_type')
-        pcabar = data.get(dataset, species=species, model_type=modelType,
-            field='soma_pcabar')
-        pars = Params(soma_Dia=somaDia, soma_natype=chtype, soma_pcabar=pcabar)
+        pars = self.get_initial_pars(dataset, species, modelType)
+
+        pars.additem('soma_pcabar', data.get(dataset, species=species, model_type=modelType,
+            field='soma_pcabar'))
         for g in ['soma_narsg_gbar', 'soma_kpkj_gbar', 'soma_kpkj2_gbar', 'soma_kpkjslow_gbar',
                   'soma_kpksk_gbar', 'soma_lkpkj_gbar', 'soma_bkpkj_gbar', 'soma_hpkj_gbar',
                   'soma_hpkj_eh','soma_lkpkj_e', 'soma_e_k', 'soma_e_na', 'soma_e_ca',
@@ -220,9 +217,9 @@ class CartwheelDefault(Cartwheel, Cell):
         assert self.scaled is False  # block double scaling!
         self.scaled = True
         
-        if self.status['species'] is not 'mouse':
+        if self.status['species'] != 'mouse':
             raise ValueError ('Cartwheel,  species: only "mouse" is recognized')
-        if self.status['modelType'] is not 'cartwheel':
+        if self.status['modelType'] != 'cartwheel':
             raise ValueError ('Cartwheel modelType: only "I" is recognized, got %s', modelType)
         self._valid_temperatures = (34.,)
         if self.status['temperature'] is None:
@@ -232,7 +229,8 @@ class CartwheelDefault(Cartwheel, Cell):
        # self.spike_threshold = 0
         self.vrange = [-75., -52.]  # set a default vrange for searching for rmp
         
-        self.set_soma_size_from_Diam(self.pars.soma_Dia)
+        self.set_soma_size_from_Cm(self.pars.cap)
+         # self.set_soma_size_from_Diam(self.pars.soma_Dia)
         self.soma().bkpkj.gbar = nstomho(self.pars.soma_bkpkj_gbar, self.somaarea)
         self.soma().hpkj.gbar = nstomho(self.pars.soma_hpkj_gbar, self.somaarea)
         self.soma().kpkj.gbar = nstomho(self.pars.soma_kpkj_gbar, self.somaarea)

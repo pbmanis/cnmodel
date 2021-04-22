@@ -1,6 +1,5 @@
 from __future__ import print_function
 from neuron import h
-from ..util import nstomho
 from .cell import Cell
 from ..util import Params
 from .. import synapses
@@ -251,11 +250,7 @@ class DStellateRothman(DStellate):
             Model type to get parameters from the table.
         
         """
-        cellcap = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Cap')
-        chtype = data.get(dataset, species=species, model_type=modelType,
-            field='na_type')
-        pars = Params(cap=cellcap, natype=chtype)
+        pars = self.get_initial_pars(dataset, species, modelType)
 
         if self.status['modelName'] == 'RM03':
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ka_gbar', 'ih_gbar', 'leak_gbar', 'leak_erev', 'ih_eh', 'e_k', 'e_na']:
@@ -301,11 +296,11 @@ class DStellateRothman(DStellate):
             self.c_m = 0.9
             self.set_soma_size_from_Cm(self.pars.cap)
             self.adjust_na_chans(soma, sf=1.0)
-            soma().kht.gbar = nstomho(self.pars.kht_gbar, self.somaarea)
-            soma().klt.gbar = nstomho(self.pars.klt_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.ihvcn_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().klt.gbar = self.g_convert(self.pars.klt_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ihvcn_gbar, self.pars.units, self.somaarea)
             soma().ihvcn.eh = self.pars.ih_eh # Rodrigues and Oertel, 2006
-            soma().leak.gbar = nstomho(self.pars.leak_gbar, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
             soma().leak.erev = self.pars.leak_erev
             self.e_k = self.pars.e_k
             self.e_na = self.pars.e_na
@@ -328,11 +323,11 @@ class DStellateRothman(DStellate):
             self.vrange = [-75., -55.]
             self.set_soma_size_from_Cm(self.pars.cap)
             self.adjust_na_chans(soma, sf=sf)
-            soma().kht.gbar = nstomho(self.pars.kht_gbar, self.somaarea)
-            soma().klt.gbar = nstomho(self.pars.klt_gbar, self.somaarea)
-            #soma().ka.gbar = nstomho(self.pars.ka_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.ih_gbar, self.somaarea)
-            soma().leak.gbar = nstomho(self.pars.leak_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().klt.gbar = self.g_convert(self.pars.klt_gbar, self.pars.units, self.somaarea)
+            #soma().ka.gbar = self.g_convert(self.pars.ka_gbar, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ih_gbar, self.pars.units, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
             soma().leak.erev = self.pars.leak_erev
             self.axonsf = 0.5
 
@@ -511,27 +506,27 @@ class DStellateEager(DStellate):
             # use conductance levels from Cao et al.,  J. Neurophys., 2007.
             self.set_soma_size_from_Cm(25.0)
             self.adjust_na_chans(soma, gbar=800.)
-            soma().kht.gbar = nstomho(150.0, self.somaarea)
-            soma().klt.gbar = nstomho(20.0, self.somaarea)
-            soma().ihvcn.gbar = nstomho(2.0, self.somaarea)
+            soma().kht.gbar = self.g_convert(150.0, 'nS', self.somaarea)
+            soma().klt.gbar = self.g_convert(20.0, 'nS', self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(2.0, 'nS', self.somaarea)
             soma().ihvcn.eh = -43 # Rodrigues and Oertel, 2006
-            soma().leak.gbar = nstomho(2.0, self.somaarea)
+            soma().leak.gbar = self.g_convert(2.0, 'nS', self.somaarea)
             self.axonsf = 0.5
         elif species == 'guineapig' and modelType == 'I-II':  # values from R&M 2003, Type II-I
             self.set_soma_size_from_Diam(25.0)
             self.adjust_na_chans(soma, gbar=1000.*0.75)
-            soma().kht.gbar = 0.02  # nstomho(150.0, self.somaarea)
-            soma().klt.gbar = 0.005  #nstomho(20.0, self.somaarea)
-            soma().ihvcn.gbar = 0.0002  #nstomho(2.0, self.somaarea)
-            soma().leak.gbar = 0.0005  # nstomho(2.0, self.somaarea)
+            soma().kht.gbar = 0.02  # self.g_convert(150.0, 'nS', self.somaarea)
+            soma().klt.gbar = 0.005  #self.g_convert(20.0, 'nS', self.somaarea)
+            soma().ihvcn.gbar = 0.0002  #self.g_convert(2.0, 'nS', self.somaarea)
+            soma().leak.gbar = 0.0005  # self.g_convert(2.0,'nS',  self.somaarea)
             self.axonsf = 1.0
         elif species == 'cat' and modelType == 'I=II':  # a cat is a big guinea pig Type I
             self.set_soma_size_from_Cm(35.0)
             self.adjust_na_chans(soma)
-            soma().kht.gbar = nstomho(150.0, self.somaarea)
-            soma().klt.gbar = nstomho(20.0, self.somaarea)
-            soma().ihvcn.gbar = nstomho(2.0, self.somaarea)
-            soma().leak.gbar = nstomho(2.0, self.somaarea)
+            soma().kht.gbar = self.g_convert(150.0, 'nS', self.somaarea)
+            soma().klt.gbar = self.g_convert(20.0, 'nS', self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(2.0, 'nS', self.somaarea)
+            soma().leak.gbar = self.g_convert(2.0, 'nS', self.somaarea)
             self.axonsf = 1.0
         else:
             raise ValueError('Species %s or species-type %s is not recognized for D-StellateEager cells' %  (species, type))
@@ -563,7 +558,7 @@ class DStellateEager(DStellate):
         if self.status['ttx']:
             gnabar = 0.0
         else:
-            gnabar = nstomho(gbar, self.somaarea)
+            gnabar = self.g_convert(gbar, self.somaarea)
         nach = self.status['na']
         if nach == 'jsrna':
             soma().jsrna.gbar = gnabar
