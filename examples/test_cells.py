@@ -45,9 +45,9 @@ ccivrange = {'mouse':
                  'sgc': {'pulse': [(-0.3, 0.6, 0.02)]},
                  'cartwheel': {'pulse': [(-0.5, 0.5, 0.05)]},
                  'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]},
-                 'pyramidalceballos': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]}, #, 'prepulse': [(-0.25, -0.25, 0.25)]},
+                 'pyramidalceballos': {'pulse': [(-0.09, 0.00, 0.09), (0, 0.008, 0.008)]}, #, 'prepulse': [(-0.25, -0.25, 0.25)]},
                  'tuberculoventral': {'pulse': [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]}
-             },
+                },
 
             'guineapig':
             {'bushy': {'pulse': [(-1, 1.2, 0.05)]},
@@ -122,7 +122,6 @@ class Tests():
         if args.celltype == 'sgc':  # morphology is always "point" for SGCs
             cell = cells.SGC.create(debug=debugFlag, species=args.species,
                 nach=args.nav, ttx=args.ttx, modelType=args.type)
-
         #
         # Bushy tests
         #
@@ -247,8 +246,8 @@ class Tests():
         
         """
         self.cell.set_temperature(float(args.temp))
-        print(self.cell.status)
-        print(self.cell.vm0)
+        print("Cell status dictionary:\n", self.cell.status)
+        print("Resting potential: ", self.cell.vm0)
         durations = eval(args.durations)
         if self.cell.vm0 is None:
             V0 = self.cell.find_i0(showinfo=True)
@@ -303,7 +302,7 @@ def main():
     parser.add_argument('-p', action="store", dest="pulsetype", default="step",
         help=("Set CCIV pulse to step or repeated pulse"))
     parser.add_argument('-d', '--durations', action="store", dest="durations",
-        default='[10, 100, 20]',
+        default='[10, 100, 50]',
         help=("Set pulse durations in format '[10, 100, 20]' (as a string)"))
     clampgroup = parser.add_mutually_exclusive_group()
     clampgroup.add_argument('--vc', action='store_true',
