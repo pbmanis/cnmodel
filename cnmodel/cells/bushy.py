@@ -3,7 +3,6 @@ from neuron import h
 from collections import OrderedDict
 from .cell import Cell
 from .. import synapses
-from ..util import nstomho
 from ..util import Params
 import numpy as np
 from .. import data
@@ -274,8 +273,10 @@ class BushyRothman(Bushy):
             field='soma_Cap')  # total somatic capacitance (point cells)
         chtype = data.get(dataset, species=species, model_type=modelType,
             field='na_type')
-        pars = Params(cap=cellcap, natype=chtype)
-        if self.status['modelName'] == 'RM03':
+        units = data.get(dataset, species=species, model_type=modelType,
+            field="units")
+        pars = Params(cap=cellcap, natype=chtype, units=units)
+        if self.status['modelName'] == 'RM03':  # different models have different channel types
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ih_gbar', 'leak_gbar']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
                     field=g))
@@ -357,10 +358,10 @@ class BushyRothman(Bushy):
                 self.adjust_na_chans(soma, sf=1.0, vshift=self.pars.nabu_vshift)
             else:
                 self.adjust_na_chans(soma, sf=1.0)
-            soma().kht.gbar = nstomho(self.pars.kht_gbar, self.somaarea)
-            soma().klt.gbar = nstomho(self.pars.klt_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.ihvcn_gbar, self.somaarea)
-            soma().leak.gbar = nstomho(self.pars.leak_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().klt.gbar = self.g_convert(self.pars.klt_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ihvcn_gbar, self.pars.units, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
             self.axonsf = 0.57
             
         elif self.status['species'] == 'guineapig':
@@ -379,10 +380,10 @@ class BushyRothman(Bushy):
                 # note that kinetics are scaled in the mod file.
             self.set_soma_size_from_Cm(self.pars.cap)
             self.adjust_na_chans(soma, sf=sf)
-            soma().kht.gbar = nstomho(self.pars.kht_gbar, self.somaarea)
-            soma().klt.gbar = nstomho(self.pars.klt_gbar, self.somaarea)
-            soma().ihvcn.gbar = nstomho(self.pars.ih_gbar, self.somaarea)
-            soma().leak.gbar = nstomho(self.pars.leak_gbar, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().klt.gbar = self.g_convert(self.pars.klt_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ih_gbar, self.pars.units, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
             self.axonsf = 0.57
             
         else:
