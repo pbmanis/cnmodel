@@ -57,7 +57,7 @@ class Params(object):
         """
         print("--------    Parameter Block    ----------")
         for key in self.__dict__.keys():
-            print("%15s = " % (key), eval('self.%s' % key))
+            print("%20s = " % (key), eval('self.%s' % key))
         print("-------- ---------------------- ----------")
 
 
