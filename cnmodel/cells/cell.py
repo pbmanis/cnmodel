@@ -151,11 +151,22 @@ class Cell(object):
     #            self.decorate()  # call the decorator
 
     def set_cm(self, newcm):
-        # adjust Cm for different types of models.
-        # We usually use 0.9 uF/cm2, but some models
-        # (such as the Ceballos et al pyramidal cell model)
-        # use 1 uF/cm2. This allows us to set the Cm on a
-        # per-cell basis
+        """
+        adjust Cm for different types of models.
+        We usually use 0.9 uF/cm2, but some models
+        (such as the Ceballos et al pyramidal cell model)
+        use 1 uF/cm2. This allows us to set the Cm on a
+        per-cell basis
+        Parameters
+        ----------
+        new cm: float
+            new value
+        Return
+        ------
+        Nothing
+        
+        Sets:
+        """
         self.c_m = newcm
         
     def do_morphology(self, morphology):
@@ -927,11 +938,12 @@ class Cell(object):
         # first find the units of the conductance values
         units = 'nS' # default units
         for g in table["field"]:
-            if g == 'units':
+            if g == 'units':  # check for the units
                 x = data._db.get(
                     dataset, species=self.status["species"], model_type=modelType, field=g
                 )
-                if x in ['nS', 'mho/cm2', 'mmho/cm2']:
+                if x in ['S', 'mS', 'uS', 'nS', 'pS',
+                         'mho/cm2', 'mmho/cm2', 'umho/cm2', 'nmho/cm2']:
                     units = x
                 else:
                     raise ValueError('Data table units not recognized: ', x)
@@ -942,14 +954,12 @@ class Cell(object):
             )
             if not isinstance(x, float):
                 continue
-            if "_gbar" in g:
+            if "_gbar" in g:   # is this a channel area conductance or total conductance?
                 pars[g] = self.g_convert(x, units, refarea)
             else:
                 pars[g] = x  # just save the parameters
 
         self.channelMap = OrderedDict()
-        # print(chscale.keys())
-        # print(decorationmap)
         for c in chscale["compartment"]:
             self.channelMap[c] = {}
             for g in pars.keys():
