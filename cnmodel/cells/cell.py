@@ -1123,7 +1123,7 @@ class Cell(object):
         if "kpksk" in self.mechanisms:
             self.ix["kpksk"] = self.soma().kpksk.gk * (V - self.soma().ek)
         if "kir" in self.mechanisms:
-            self.ix["kir"] = self.soma().kir.gk * (V - self.soma().ek)
+            self.ix["kir"] = self.soma().kir.gkir * (V - self.soma().ekir)
         if "kis" in self.mechanisms:
             self.ix["kis"] = self.soma().kis.gkis * (V - self.soma().ek)
         if "kif" in self.mechanisms:
@@ -1265,7 +1265,7 @@ class Cell(object):
             "ihpyrlc": "gh",
             "ihpyr_adj": "gh",
             "kcnq": "gk",
-            "kir": "gk",
+            "kir": "gkir",
             # cartwheel cell specific:
             "bkpkj": "gbkpkj",
             "hpkj": "gh",
