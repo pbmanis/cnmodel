@@ -400,7 +400,7 @@ class PyramidalCeballos(Pyramidal, Cell):
                   'soma_kdpyr_gbar', 'soma_kif_gbar', 'soma_kis_gbar',
                   'soma_kcnq_gbar', 'soma_kir_gbar', 'soma_ihpyrlc_gbar', 
                   'soma_leak_gbar',
-                  'soma_e_h','soma_leak_erev', 'soma_e_k', 'soma_e_na']:
+                  'soma_e_h','soma_leak_erev', 'soma_e_k', 'soma_e_kir', 'soma_e_na']:
             pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
             field=g))
         if self.debug:
@@ -456,6 +456,7 @@ class PyramidalCeballos(Pyramidal, Cell):
             soma().leak.erev = self.pars.soma_leak_erev
             soma().ena = self.pars.soma_e_na
             soma().ek = self.pars.soma_e_k
+            soma().ekir = self.pars.soma_e_kir
             soma().ihpyrlc.eh = self.pars.soma_e_h
 
             print("pyr gbar napyr: ", self.pars.soma_napyr_gbar)
