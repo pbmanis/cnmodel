@@ -360,6 +360,7 @@ soma_leak_gbar            0.150  [1]        0.150  [1]
 soma_leak_erev            -51.32 [1]        -51.32 [1]
 soma_e_na                 50.    [1]        50.    [1]
 soma_e_k                  -81.5  [1]        -81.5  [1]
+soma_e_kir                -81.5  [1]        -81.5  [1]
 soma_e_h                  -43.0  [1]        -43.0  [1]
 soma_ihpyrlc_e_h          -43.0  [1]        -43.0  [1]
 na_type                   napyr             napyr
