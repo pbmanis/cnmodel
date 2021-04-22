@@ -12,90 +12,77 @@ ENDCOMMENT
  
  
 UNITS {
-        (mA) = (milliamp)
-        (mV) = (millivolt)
+    (mA) = (milliamp)
+    (mV) = (millivolt)
+    (nA) = (nanoamp)
 }
 
  
 NEURON {
+    THREADSAFE
     SUFFIX kir
-    USEION kir READ ek WRITE ik
-
-	RANGE gk, gbar 	: Persistent Na channels and KIR channels 
-	GLOBAL ntau, ninf	: time constants for Na channels and K channels 
-
+    USEION kir READ ekir WRITE ikir VALENCE 1
+	RANGE gkir, gbar, ikir 	: Kir channels 
+	GLOBAL ntau, ninf	: Kir channels 
 }
 
- 
+
 INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)}
  
 PARAMETER {
     v (mV)
-    celsius (degC)
     dt (ms)
-	ek (mV)
-    ena (mV)
-	ekir (mV)
     gbar = 0.0005 (mho/cm2)    <0,1e9>
-	ntau = 0.5 (ms) <0,100>
+    q10tau = 1.0
+    q10g = 1.0
 }
 
 
 STATE {
-    nir
+    n
 }
  
 ASSIGNED {
-    gk (mho/cm2)
-
-    ik (mA/cm2)
-
-    ninf 
+    celsius (degC)
+    ikir (mA/cm2)
+	ekir (mV)
+    gkir (mho/cm2)
+	ninf
+    ntau (ms)
+    qg()
+    q10 ()
 }
 
 
-LOCAL nexp
- 
-? currents
 BREAKPOINT {
     SOLVE states METHOD cnexp
 
-    gkir = gbar*nir
+    gkir = qg*gbar*n
 	ikir = gkir*(v - ekir)
 }
-? currents
-
-UNITSOFF 
- 
 
 INITIAL {
+    qg = q10g^((celsius-22)/10 (degC))
+	q10 = q10tau^((celsius - 32)/10 (degC))
+    ntau = 0.5 (ms)
 	rates(v)
-	nir = ninf_ir
+	n = ninf
 }
 
+UNITSOFF 
 
-? states
 DERIVATIVE states {  
     rates(v)
-    nir' = (ninf_ir - nir) / ntau_ir
+    n' = (ninf - n) / ntau
 }
- 
-LOCAL q10
 
-? rates
+
 PROCEDURE rates(v(mV)) {  :Computes rate and other constants at current v.
 	                      :Call once from HOC to initialize inf at resting v.
-	TABLE ninf DEPEND celsius FROM -200 TO 100 WITH 400
-
-UNITSOFF
-	q10 = 3^((celsius - 32)/10)
-
 	:"n" potassium activation system
-        ninf_ir = kird_m(v)
+    ninf = 1/(1+exp((v+85.48)/12.0)) 
+    ntau = ntau/q10
 }
 
-FUNCTION kird_m(x) { : KIR activation
-	kird_m = 1/(1+exp((x+85.48)/12)) 
-}
 
 UNITSON
