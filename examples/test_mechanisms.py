@@ -26,7 +26,7 @@ Available mechanisms::
         kis                  klt                 kpkj                kpkj2             kpkjslow
       kpksk                 leak                lkpkj                   na                naRsg
        nacn             nacncoop                  nap                napyr               inav11
-     nappyr                nacsh
+     nappyr                nacsh                  kir              ihpyrlc
 
 Note: only modfiles that implement voltage-dependent ion channel models make sense to run
 with this routine. the list "nottestablemechs" in the file defines mechanisms provided
@@ -60,7 +60,6 @@ nottestablemechs = [
     "extracellular",
     "fastpas",
     "k_ion",
-    "KIR",
     "hh",
     "na_ion",
     "narsg",
@@ -88,7 +87,7 @@ tdurs = {
     "kdpyr": [200.0, 20.0],
     "kht": [200.0, 20.0],
     "kif": [100.0, 100.0],
-    "kir": [100.0, 10.0],
+    "kir": [100.0, 100.0],
     "kis": [100.0, 10.0],
     "klt": [200.0, 20.0],
     "na6stbushy": [10.0, 5.0],
@@ -234,7 +233,7 @@ class ChannelKinetics:
             Vr = -43.0
         elif modfile.startswith("Ca") or modfile.startswith("ca"):
             Vr = +100.0
-        h.celsius = 37.0  # set the temperature.
+        h.celsius = 34.0  # set the temperature.
         self.vec = {}
         for var in ["time", "V", "IChan", "Vcmd"]:
             self.vec[var] = h.Vector()
@@ -268,7 +267,7 @@ class ChannelKinetics:
                 % (np.min(stimamp), np.max(stimamp), h.celsius)
             )
         )
-
+        print(tdelay, tstep)
         for i, V in enumerate(stimamp):
             self.vcPost.dur1 = tdelay
             self.vcPost.amp1 = clampV
@@ -408,6 +407,7 @@ class ChannelKinetics:
             self.ivss[0, i] = V
             self.ivmin[0, i] = V
             self.ivmax[0, i] = V
+
         # self.p2mh.plot(self.ivmax[0,:], np.array(self.ivmax[1,:]), symbol='t', symbolSize=4.0, pen=pg.mkPen(color_inact))
         if Vr > 0:
             fm = self.ivmin
