@@ -451,7 +451,7 @@ class PyramidalCeballos(Pyramidal, Cell):
             if self.status['temperature'] is None:
               self.set_temperature(34.)
             self.i_test_range = {'pulse': (-0.3, 0.401, 0.02)}
-            self.vrange = [-75., -55.]
+            self.vrange = [-75., -56.]  # tricky as there is a negative slope above about -58 mV - bistability
             self.set_soma_size_from_Cm(self.pars.cap)
             soma().napyr.gbar = self.g_convert(self.pars.soma_napyr_gbar, self.pars.units, self.somaarea)
             soma().nappyr.gbar = self.g_convert(self.pars.soma_nappyr_gbar, self.pars.units, self.somaarea) # does not exist in canonical model
