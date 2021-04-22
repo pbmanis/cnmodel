@@ -66,10 +66,12 @@ def test_pyramidal_ceballos_quiet():
     cell = cells.PyramidalCeballos.create(species='mouse', model='Ceballos', modelType='quiet')
     CellTester('pyramidal_mouse_I', cell)
 
-def test_pyramidal_ceballos_active():
-    reset(raiseError=False)
-    cell = cells.PyramidalCeballos.create(species='mouse', model='Ceballos', modelType='active')
-    CellTester('pyramidal_mouse_I', cell)
+# We should only test the quiet model - the active model differs by only one
+# conductance change, and has no RMP
+# def test_pyramidal_ceballos_active():
+#     reset(raiseError=False)
+#     cell = cells.PyramidalCeballos.create(species='mouse', model='Ceballos', modelType='active')
+#     CellTester('pyramidal_mouse_I', cell)
     
 def test_tuberculoventral():
     reset(raiseError=False)
