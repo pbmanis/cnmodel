@@ -435,7 +435,7 @@ class OctopusSpencer(Octopus, Cell):
         This routine defines channel density maps and distance map patterns
         for each type of compartment in the cell. The maps
         are used by the ChannelDecorator class (specifically, it's private
-        \_biophys function) to decorate the cell membrane.
+        _biophys function) to decorate the cell membrane.
         
         Parameters
         ----------
