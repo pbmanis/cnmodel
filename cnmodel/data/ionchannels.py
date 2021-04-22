@@ -320,6 +320,7 @@ soma_e_k                  -81.5  [1]
 soma_e_h                  -43.0  [1]
 soma_natype               napyr
 soma_Cap                  12.0   [1]
+units                     nS
 ------------------------------------------------------------------------------------------------------------------------------------------
 
 [1] Kanold and Manis, 1999, 2001, 2005
@@ -350,7 +351,7 @@ soma_kpksk_gbar           0.     [3]        0.     [3]
 soma_kir_gbar             1.0    [3]        0.5    [3]
 soma_kif_gbar             0.0    [1]        0.0    [1]
 soma_kis_gbar             0.0    [1]        0.0    [1]
-soma_ihpyr_gbar           0.00   [1]        0.00   [1]
+soma_ihpyr_gbar           0.0    [1]        0.0    [1]
 soma_ihpyrlc_gbar         0.54   [1]        0.54   [1]
 soma_leak_gbar            0.150  [1]        0.150  [1]
 soma_leak_erev            -51.32 [1]        -51.32 [1]

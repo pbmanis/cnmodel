@@ -150,6 +150,14 @@ class Cell(object):
 
     #            self.decorate()  # call the decorator
 
+    def set_cm(self, newcm):
+        # adjust Cm for different types of models.
+        # We usually use 0.9 uF/cm2, but some models
+        # (such as the Ceballos et al pyramidal cell model)
+        # use 1 uF/cm2. This allows us to set the Cm on a
+        # per-cell basis
+        self.c_m = newcm
+        
     def do_morphology(self, morphology):
         if morphology is None:
             """
@@ -552,7 +560,7 @@ class Cell(object):
         print("    Model Status:")
         print("-" * 24)
         for s in self.status.keys():
-            print("{0:>12s} : {1:<12s}".format(s, repr(self.status[s])))
+            print("{0:>20s} : {1:<12s}".format(s, repr(self.status[s])))
         print("-" * 32)
 
     def cell_initialize(self, showinfo=False, vrange=None, **kwargs):
@@ -827,6 +835,39 @@ class Cell(object):
                 f"Sodium channel <{nach:s}> is not recognized for {self.celltype:s} cells"
             )
 
+    def g_convert(self, g, units, refarea):
+        """
+        Convert from either S (ns, uS, mS or S), or
+        mho/cm2 (moh/cm2, mmho/cm2, umho/cm2)
+        to g in mmho/cm2
+        Note that if data is aleady in mho/cm2 format, the
+        area is ignored.
+        Errors in the units values result in an exception
+        """
+        # Units iwht p, n, u, m or S : scale by the default reference area
+        if units == 'pS':  
+            gbar = g*1e-12 / refarea
+        elif units == 'nS':  # scale by the default reference area
+            gbar = g*1e-9 / refarea
+        elif units == 'uS':
+            gbar = g*1e-3 / refarea
+        elif units == 'mS':
+            gbar = g*1e-3 / refarea
+        elif units == 'S':
+            gbar = g / refarea
+        # units with mho: no area consideration, just adjust for scale
+        elif units == 'mho/cm2':  # use the absolute value given
+            gbar = g
+        elif units == 'mmho/cm2': # use the value, but convert to mho
+            gbar = g*1e-3  # convert to mho
+        elif units == 'umho/cm2':
+            gbar = g*1e-6
+        elif units == 'nmho/cm2':  # really, who is going to use this?
+            gbar = g*1e-9
+        else:
+            raise ValueError(f"cells.g_convert: units of {units:s} are not recognized")
+        return gbar  
+    
     def channel_manager(self, modelName=None, modelType=None):
         r"""
         This routine defines channel density maps and distance map patterns
@@ -901,14 +942,8 @@ class Cell(object):
             )
             if not isinstance(x, float):
                 continue
-            print(x, refarea, g)
             if "_gbar" in g:
-                if units == 'nS':  # scale by the default reference area
-                    pars[g] = x / refarea
-                elif units == 'mho/cm2':  # use the absolute value given
-                    pars[g] = x
-                elif units == 'mmho/cm2': # use the value, but convert to mho
-                    pars[g] = x*1e-3  # convert to mho
+                pars[g] = self.g_convert(x, units, refarea)
             else:
                 pars[g] = x  # just save the parameters
 

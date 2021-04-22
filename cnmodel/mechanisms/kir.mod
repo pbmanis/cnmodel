@@ -19,7 +19,7 @@ UNITS {
  
 NEURON {
     SUFFIX kir
-    USEION k READ ek WRITE ik
+    USEION kir READ ek WRITE ik
 
 	RANGE gk, gbar 	: Persistent Na channels and KIR channels 
 	GLOBAL ntau, ninf	: time constants for Na channels and K channels 
@@ -60,8 +60,8 @@ LOCAL nexp
 BREAKPOINT {
     SOLVE states METHOD cnexp
 
-    gk = gbar*nir
-	ik = gk*(v - ek)
+    gkir = gbar*nir
+	ikir = gkir*(v - ekir)
 }
 ? currents
 
@@ -70,14 +70,14 @@ UNITSOFF
 
 INITIAL {
 	rates(v)
-	nir = ninf
+	nir = ninf_ir
 }
 
 
 ? states
 DERIVATIVE states {  
     rates(v)
-    nir' = (ninf - nir) / ntau
+    nir' = (ninf_ir - nir) / ntau_ir
 }
  
 LOCAL q10
@@ -91,7 +91,7 @@ UNITSOFF
 	q10 = 3^((celsius - 32)/10)
 
 	:"n" potassium activation system
-        ninf = kird_m(v)
+        ninf_ir = kird_m(v)
 }
 
 FUNCTION kird_m(x) { : KIR activation
