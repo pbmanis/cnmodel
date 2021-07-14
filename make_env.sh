@@ -1,10 +1,12 @@
 ENVNAME="cnmodel_venv"
-python3.9 -m venv $ENVNAME
+PYTHON="python3.8"
+$PYTHON -m venv $ENVNAME
 source $ENVNAME/bin/activate
 
 pip3 install --upgrade pip  # be sure pip is up to date in the new env.
 pip3 install wheel  # seems to be missing (note singular)
 pip3 install cython
+pip3 install neuron==7.8.1  # or the version you need
 # # if requirements.txt is not present, create:
 # # pip install pipreqs
 # # pipreqs
@@ -29,6 +31,6 @@ pip3 install -e git+https://github.com/pbmanis/cochlea-1.git@c2e8c9612481ebe397b
 rm -rf cochleae
 pip3 install -e git+https://github.com/pbmanis/neuronvis.git@Python3#egg=neuronvis
 source $ENVNAME/bin/activate
-python --version
-python setup.py develop
+$PYTHON --version
+$PYTHON setup.py develop
 

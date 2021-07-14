@@ -8,7 +8,7 @@ isort==5.0.2
 mypy==0.782
 jupyterlab
 pyperclip
-pytest==4.5.0
+pytest>=4.5.0
 sphinx>=3.4
 
 # cnmodel (and vcnmodel) requirements
@@ -20,12 +20,12 @@ matplotlib==3.3  # Needed to avoid crash on Big Sur - at least on some systems.
 matplotlib-scalebar==0.5.1
 nose==1.3.7
 
-numba==0.43.1
-numpy==1.19.2
+numpy>=1.17
+numba>=0.43.1
 psutil==5.6.7
 pyparsing==2.4.0
 resampy==0.2.1
-scipy==1.5.4
+scipy>=1.5
 pyqt5==5.12.3
 pyqt5-sip==4.19.18
 #seaborn==0.10.1
@@ -46,7 +46,7 @@ xlrd>=1.0.0
 # required for 3d display in pyqtgraph
 PyOpenGL==3.1.5
 # required for mayavi in neuronvis
-vtk==8.1.2
+vtk>=9.0
 
 -e git+https://github.com/pbmanis/pyqtgraph.git@bb41d95843b6c38850d4132b19cbf40bbbf8491e#egg=pyqtgraph
 -e git+https://github.com/pbmanis/pylibrary.git@355d257f2654b915706586612e3606660fc314be#egg=pylibrary
