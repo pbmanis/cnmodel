@@ -110,6 +110,7 @@ class Cell(object):
         self.c_m = 0.9  # specific membrane capacitance,  uf/cm^2
         self.R_a = 150  # axial resistivity of cytoplasm/axoplasm, ohm.cm
         self.e_leak = -65
+        self.area_method = "segment" # "pt3d"  # or "segment"  # these give different results
         # Recommended current (min, max, step) for testing this cell
         self.i_test_range = (
             -0.5,
@@ -428,9 +429,20 @@ class Cell(object):
         First (or only) section in the "soma" section group.
         """
         if isinstance(self.all_sections[self.somaname], list):
-            return self.all_sections[self.somaname][0]
+            if len(self.all_sections[self.somaname]) > 0:
+                self.primary_section = self.all_sections[self.somaname][0]
+            else:
+                self.primary_section = self.set_primary_section('Axon_Initial_Segment', section_number=0)
         else:
-            return self.all_sections[self.somaname]
+            self.primary_section = self.all_sections[self.somaname]
+        return self.primary_section
+
+    def set_primary_section(self, sectionname, section_number:int=0):
+        if isinstance(self.all_sections[sectionname], list):
+            self.primary_section = self.all_sections[sectionname][section_number]
+        else:
+            self.primary_section = self.all_sections[sectionname]
+        return self.primary_section
 
     def decorate(self):
         """
@@ -1288,10 +1300,23 @@ class Cell(object):
         # 1e-8*np.pi*soma.diam*soma.L
         # somaarea = np.sum([1e-8 * np.pi * s.L * s.diam for s in soma_sections])
         self.somaarea = 0.0  # units are um2
+        print("soma sections: ", soma_sections)
         for sec in soma_sections:
             # print(f"   segment: {i:d} area={seg.area():.3f}")
-            for seg in sec.allseg():
-                self.somaarea += seg.area()
+            print("sec: ", sec)
+            print("self.areamethod: ", self.area_method)
+            if self.area_method == "segment":
+                for seg in sec.allseg():
+                    print("seg area: ", seg.area())
+                    self.somaarea += seg.area()
+            elif self.area_method == "pt3d":
+                print("sec.n3d(): ", sec.n3d())
+                for i in range(sec.n3d()):
+                    print("sec arc, diam: ", sec.arc3d(i), sec.diam3d(i))
+                    self.somaarea += np.pi * sec.arc3d(i) * sec.diam3d(i)
+            else:
+                raise ValueError(f"Area method {self.ara_method:s} is not valid for area computations [cnmodel.cells.py]")
+        print("self.somaarea = ", self.somaarea)
         # print(f'{name:s} area: {area:.3f} ')
         gsum = 0.0  # total condutance in us/cm2
         for sec in soma_sections:
@@ -1359,7 +1384,7 @@ class Cell(object):
             s = self.all_sections[secname]  # get all the sections with that name
             if secname == self.somaname:
                 for sec in s:
-                    self.somaarea += self._segareasec(sec=sec)                
+                    self.somaarea += self.segareasec(sec=sec)                
         self.totcap = self.c_m * self.somaarea * 1e-8  # in uF
         # print(f"Original soma area: {self.somaarea:9.3f}  Cap: {self.totcap:.4e}")
         self.nsets += 1
@@ -1367,15 +1392,20 @@ class Cell(object):
             if self.nsets > 1:
                 raise ValueError()
 
-    def print_soma_info(self):
-        print("-" * 40)
-        print("Soma Parameters: ")
-        print(f"   Area: {self.somaarea:9.2f} um^2")
-        print(f"   Cap:  {self.totcap*1e6:9.2f} pF")
-        print(f"   L:    {self.soma.L:9.2f} um")
-        print(f"   diam: {self.soma.diam:9.2f} um")
-        print(f"   c_m:  {self.c_m:9.2f} uF/cm^2")
-        print("-" * 40)
+    def print_soma_info(self, indent=0):
+        print("-" * (40+indent))
+        indents = " "*indent
+        print(f"{indents:s}Soma Parameters: (from cnmodel.cell)")
+        print(f"{indents:s}   Area: {self.somaarea:9.2f} um^2")
+        print(f"{indents:s}   Cap:  {self.totcap*1e6:9.2f} pF")
+        print(f"{indents:s}   L:    {self.soma.L:9.2f} um")
+        print(f"{indents:s}   diam: {self.soma.diam:9.2f} um")
+        print(f"{indents:s}   c_m:  {self.c_m:9.2f} uF/cm^2")
+        print("-" * (40*indent))
+        # soma_sections = self.all_sections[self.somaname]
+        # somaarea = np.sum([ np.pi * s.L * s.diam for s in soma_sections])
+        # print("Soma area by summing cylinders: ", somaarea, " of ", len(soma_sections), "sections")
+        
 
     def distances(self, section=None):
         self.distanceMap = {}
@@ -1396,7 +1426,7 @@ class Cell(object):
                         self.hr.h.distance(0.5) - d
                     )  # should be distance from first point
 
-    def _segareasec(self, sec: object):
+    def segareasec(self, sec: object):
         """
         Sum up the areas of all the _segments_ in a section
 
@@ -1408,8 +1438,27 @@ class Cell(object):
             area += seg.area()
         # print(f'{name:s} area: {area:.3f} ')
         return area
+        
+    def secareasec(self, sec: object) -> float:
+        """
+        compute area using built-in neuron area function
 
-    def computeAreas(self, source:str='pt3d'):
+        """
+        area = h.area(0.5, sec=sec)
+        return area
+
+    def pt3dareasec(self, sec: object) -> float:
+        """
+       Sum up the areas of all the pt3d pieces in a section
+
+       """
+
+        area = 0
+        for i in range(sec.n3d()):
+            area += np.pi * sec.arc3d(i) * sec.diam3d(i)
+        return area
+
+    def computeAreas(self, source:str='seg'):
         """
         Compute the surface area for all sections
         3 ways to compute:
@@ -1419,17 +1468,23 @@ class Cell(object):
         """
         assert source in ['pt3d', 'sec', 'seg']
         self.areaMap = {}
-
+        if source == 'seg':
+            method = self.segareasec
+        elif source == 'pt3d':
+            method = self.pt3dareasec
+        elif source == "sec":
+            method = self.secareasec
+            
         for secname in self.all_sections:  # keys for names of section types
             s = self.all_sections[secname]  # get all the sections with that name
             if secname not in list(self.areaMap.keys()):
                 self.areaMap[secname] = {}
-            for n, u in enumerate(s):
-                # aseg = h.area(0.5, sec=u)
-                # self.areaMap[secname][u] = aseg# np.pi*u.diam*u.L
-                # The following verifies that the area summed by segment and by the h.area call
-                # are infact the same
-                self.areaMap[secname][u] = self._segareasec(sec=u)  # np.pi*u.diam*u.L
+                for n, u in enumerate(s):
+                    # aseg = h.area(0.5, sec=u)
+                    # self.areaMap[secname][u] = aseg# np.pi*u.diam*u.L
+                    # The following verifies that the area summed by segment and by the h.area call
+                    # are infact the same
+                    self.areaMap[secname][u] = method(sec=u)  # np.pi*u.diam*u.L
                 # if self.areaMap[secname][u] != aseg:
  #                    print(f"Areas differ: areaMap: {self.areaMap[secname][u]:8.3f} vs. h.area(0.5): {aseg:8.3f} vs section: {np.pi*u.diam*u.L:8.3f}")
  #                    assert self.areaMap[secname][u] == aseg
