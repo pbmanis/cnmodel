@@ -896,7 +896,9 @@ class Cell(object):
         area is ignored.
         Errors in the units values result in an exception
         """
-        # Units iwht p, n, u, m or S : scale by the default reference area
+        if refarea == 0.0:  # no area specification: may happen if no soma in model
+            return 0
+        # Units can be  p, n, u, m or S : scale by the default reference area
         if units == 'pS':  
             gbar = g*1e-12 / refarea
         elif units == 'nS':  # scale by the default reference area

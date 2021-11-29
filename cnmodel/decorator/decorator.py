@@ -94,7 +94,8 @@ class Decorator():
             if cell.hr.sec_groups[s] == set():
                 continue  # no sections of this type in the model, even if it was defined in a hoc file
             if sectype not in cell.channelMap.keys():
-                raise ValueError(f'Encountered unknown section group type: {sectype:s}. Cannot complete decoration')
+                print(cell.channelMap.keys())
+                raise ValueError(f'Encountered unknown section group type: "{sectype:s}". Cannot complete decoration')
             
             # here we go through all themechanisms in the ionchannels table for this cell and compartment type
             # note that a mechanism may have multiple parameters in the table (gbar, vshft), so we:
