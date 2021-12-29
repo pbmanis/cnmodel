@@ -43,40 +43,55 @@ def play():
         noisewin = win.addPlot(title='WB noise', row=2, col=0)
         noisemodwin = win.addPlot(title='100 \% SAM Modulated WB Noise', row=3, col=0)
         clickwin = win.addPlot(title='clicks', row=4, col=0)
-        fmwin = win.addPlot(title='fmsweep', row=5, col=0)
+        p_clickwin = win.addPlot(title='poisson_clicks', row=5, col=0)
+        fmwin = win.addPlot(title='fmsweep', row=6, col=0)
         # spectra
         pipwins = win.addPlot(title='sound pip Spec', row=0, col=1)
         pipmodwins = win.addPlot(title='100 \% SAM modulated pip', row=1, col=1)
         noisewins = win.addPlot(title='WB noise', row=2, col=1)
         noisemodwins = win.addPlot(title='100 \% SAM Modulated WB Noise', row=3, col=1)
         clickwins = win.addPlot(title='click spec', row=4, col=1)
-        fmwins = win.addPlot(title='fmsweep spec', row=5, col=1)
+        p_clickwins = win.addPlot(title='poisson_clicks', row=5, col=1)
+        fmwins = win.addPlot(title='fmsweep spec', row=6, col=1)
     else:
         pipwin = None
         pipmodwin = None
         noisewin = None
         noisemodwin = None
         clickwin = None
+        p_clickwin = None
         pipwins = None
         pipmodwins = None
         noisewins = None
         noisemodwins = None
         clickwins = None
+        p_clickwins = None
         fmwins = None
 
-    stims = OrderedDict([('pip', (pipwin, sound.TonePip)),
-                         ('pipmod', (pipmodwin, sound.SAMTone)),
-                         ('noise', (noisewin, sound.NoisePip)),
-                         ('noisemod', (noisemodwin, sound.SAMNoise)),
-                         ('clicks', (clickwin, sound.ClickTrain)),
-                         ('fmsweep', (fmwins, sound.FMSweep))])
-                     
-    specs = OrderedDict([('pip', (pipwins, sound.TonePip)),
-                         ('pipmod', (pipmodwins, sound.SAMTone)),
-                         ('noise', (noisewins, sound.NoisePip)),
-                         ('noisemod', (noisemodwins, sound.SAMNoise)),
-                         ('clicks', (clickwins, sound.ClickTrain)),
-                         ('fmsweep', (fmwins, sound.FMSweep))])
+        stims = OrderedDict(
+            [
+                ("pip", (pipwin, sound.TonePip)),
+                ("pipmod", (pipmodwin, sound.SAMTone)),
+                ("noise", (noisewin, sound.NoisePip)),
+                ("noisemod", (noisemodwin, sound.SAMNoise)),
+                ("clicks", (clickwin, sound.ClickTrain)),
+                ("poisson_clicks", (poiss_clickwin, sound.ClickTrain)),
+                ("wavefile", (wavewin, sound.ReadWavefile)),
+            ]
+        )
+
+        specs = OrderedDict(
+            [
+                ("pip", (pipwins, sound.TonePip)),
+                ("pipmod", (pipmodwins, sound.SAMTone)),
+                ("noise", (noisewins, sound.NoisePip)),
+                ("noisemod", (noisemodwins, sound.SAMNoise)),
+                ("clicks", (clickwins, sound.ClickTrain)),
+                ("poisson_clicks", (poiss_clickwins, sound.ClickTrain)),
+                ("wavefile", (wavewins, sound.ReadWavefile)),
+            ]
+        )
+
     if stimarg == 'all':
         stimlist = list(stims.keys())
     else:
@@ -86,6 +101,25 @@ def play():
         if stim in ['clicks']:
             wave = stims[stim][1](rate=Fs, duration=1.0, dbspl=level,
                              click_duration=1e-4, click_starts=1e-3*np.linspace(10, 500, 10))
+        elif stim in ["poisson_clicks"]:
+            clickrate = 50.0 # Hz
+            eventintervals = np.random.exponential(
+                    1.0 / clickrate, int(1.0*clickrate)
+                )
+
+            events = np.cumsum(eventintervals)
+            events = events[events < 0.8]
+            print("click times: ", events)
+            print("mean interval: ", np.mean(events))
+            print(f"# poisson_clicks: {len(events):d}")
+            wave = stims[stim][1](
+                rate=Fs,
+                duration=1.0,
+                dbspl=level,
+                click_duration=1e-4,
+                click_starts=events,
+            )
+            # wave = stims[
         elif stim in ['fmsweep']:
             wave = stims[stim][1](rate=Fs, duration=0.5, dbspl=level,
                                 start=0., ramp='linear', freqs=[16000, 200])
