@@ -2,7 +2,7 @@
 # python -m pip install --upgrade pip --user
 # in the main env (outside this local env)
 ENVNAME="cnmodel_venv"
-python3.8 -m venv $ENVNAME
+python3.9 -m venv $ENVNAME
 
 source $ENVNAME/bin/activate
 
