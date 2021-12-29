@@ -454,7 +454,7 @@ def mask(x, xm, x0, x1):
 def vector_strength(spikes, freq):
     """
     Calculate vector strength and related parameters from a spike train, for the specified frequency
-    :param spikes: Spike train, in msec.
+    :param spikes: Spike train, times in sec.
     :param freq: Stimulus frequency in Hz
     :return: a dictionary containing:
     
@@ -467,7 +467,7 @@ def vector_strength(spikes, freq):
     """
     
     per = 1./freq # convert from Hz to period in msec
-    ph = 2*np.pi*np.fmod(spikes, per)/(per) # convert to radians within a cycle
+    ph = 2.0*np.pi*np.fmod(spikes, per)/(per) # convert to radians within a cycle
     sumcos = np.sum(np.cos(ph))
     sumsin = np.sum(np.sin(ph))
     mean_phase = np.arctan2(sumsin, sumcos)
@@ -477,7 +477,7 @@ def vector_strength(spikes, freq):
     vs = (1./n)*np.sqrt(sumc2+sums2)  # standard vector strength computation
     R = n*vs  # Raleigh coefficient
     Rp = np.exp(-n*vs*vs)  # p value for n > 50 (see Ashida et al. 2010).
-    d = np.sqrt(2.*(1-vs))/(2*np.pi*freq)
+    d = np.sqrt(2.0*(1.0-vs))/(2.0*np.pi*freq)
     return{'r': vs, 'n': n, 'R': R, 'p': Rp, 'ph': ph, 'd': d}
 
 def isi_cv2(splist, binwidth=1, t0=0, t1=300, tgrace=25):
