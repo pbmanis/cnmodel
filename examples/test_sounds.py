@@ -28,14 +28,16 @@ class test_sounds:
         noisewin = win.addPlot(title="Wideband noise", row=2, col=0)
         noisemodwin = win.addPlot(title="100 % SAM Modulated WB Noise", row=3, col=0)
         clickwin = win.addPlot(title="Clicks", row=4, col=0)
-        wavewin = win.addPlot(title="Wavefile (geese)", row=5, col=0)
+        poiss_clickwin = win.addPlot(title="Clicks", row=5, col=0)
+        wavewin = win.addPlot(title="Wavefile (geese)", row=6, col=0)
 
         pipwins = win.addPlot(title="Sound Pip Spectrum", row=0, col=1)
         pipmodwins = win.addPlot(title="100 % SAM modulated pip spectrum", row=1, col=1)
         noisewins = win.addPlot(title="Wideband noise spectrum", row=2, col=1)
         noisemodwins = win.addPlot(title="100 % SAM Modulated WB Noise", row=3, col=1)
         clickwins = win.addPlot(title="Click spectrum", row=4, col=1)
-        wavewins = win.addPlot(title="Wavefile (geese) spectrum", row=5, col=1)
+        poiss_clickwins = win.addPlot(title="Click spectrum", row=5, col=1)
+        wavewins = win.addPlot(title="Wavefile (geese) spectrum", row=6, col=1)
 
         stims = OrderedDict(
             [
@@ -44,6 +46,7 @@ class test_sounds:
                 ("noise", (noisewin, sound.NoisePip)),
                 ("noisemod", (noisemodwin, sound.SAMNoise)),
                 ("clicks", (clickwin, sound.ClickTrain)),
+                ("poisson_clicks", (poiss_clickwin, sound.ClickTrain)),
                 ("wavefile", (wavewin, sound.ReadWavefile)),
             ]
         )
@@ -55,6 +58,7 @@ class test_sounds:
                 ("noise", (noisewins, sound.NoisePip)),
                 ("noisemod", (noisemodwins, sound.SAMNoise)),
                 ("clicks", (clickwins, sound.ClickTrain)),
+                ("poisson_clicks", (poiss_clickwins, sound.ClickTrain)),
                 ("wavefile", (wavewins, sound.ReadWavefile)),
             ]
         )
@@ -62,12 +66,32 @@ class test_sounds:
         for stim in stims:
             print(f"Computing stimulus: {stim:>12s}")
             if stim in ["clicks"]:
+                events = 1e-3 * np.arange(10, 810, 800./50.)
+                print(f"# clicks: {len(events):d}")
                 wave = stims[stim][1](
                     rate=Fs,
                     duration=1.0,
                     dbspl=level,
                     click_duration=1e-4,
-                    click_starts=1e-3 * np.linspace(10, 500, 50),
+                    click_starts=events,
+                )
+            elif stim in ["poisson_clicks"]:
+                clickrate = 50.0 # Hz
+                eventintervals = np.random.exponential(
+                        1.0 / clickrate, int(1.0*clickrate)
+                    )
+
+                events = np.cumsum(eventintervals)
+                events = events[events < 0.8]
+                print("click times: ", events)
+                print("mean interval: ", np.mean(events))
+                print(f"# poisson_clicks: {len(events):d}")
+                wave = stims[stim][1](
+                    rate=Fs,
+                    duration=1.0,
+                    dbspl=level,
+                    click_duration=1e-4,
+                    click_starts=events,
                 )
                 # wave = stims[stim][1](rate=Fs, dbspl=level, click_interval=10., nclicks=10,
                 #                  click_duration=1e-4, click_start=10.)

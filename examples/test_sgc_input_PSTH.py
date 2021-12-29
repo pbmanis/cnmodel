@@ -204,7 +204,8 @@ class SGCInputTestPSTH(Protocol):
         simulator="cochlea",
         parallelmode='serial',
     ):
-        assert stimulus in ["tone", "SAM", "clicks"]  # cases available
+        self.stimulus = stimulus
+        assert self.stimulus in ["tone", "SAM", "noise", "clicks"]  # cases available
         assert self.cell in [
             "bushy",
             "tstellate",
@@ -213,6 +214,7 @@ class SGCInputTestPSTH(Protocol):
             "tuberculoventral",
             "pyramidal",
         ]
+
         self.nrep = reps
         if self.stimulus == "SAM":
             self.dMod = 100.0
@@ -238,6 +240,18 @@ class SGCInputTestPSTH(Protocol):
                 ramp_duration=2.5e-3,
                 pip_duration=self.pip_duration,
                 pip_start=self.pip_start,
+            )
+        if self.stimulus == "noise": # will be frozen, as only generated once.
+            self.f0 = 4000.0
+            self.cf = 4000.0
+            self.stim = sound.NoisePip(
+                rate=self.Fs,
+                duration=self.run_duration,
+                dbspl=self.dbspl,
+                ramp_duration=2.5e-3,
+                pip_duration=self.pip_duration,
+                pip_start=self.pip_start,
+                seed=9,
             )
 
         if self.stimulus == "clicks":
@@ -530,8 +544,8 @@ if __name__ == "__main__":
         type=str,
         dest="stimulus",
         default="tone",
-        choices=["tone", "SAM", "clicks"],
-        help="Select stimulus from ['tone', 'SAM', 'clicks']",
+        choices=["tone", "SAM", "noise", "clicks"],
+        help="Select stimulus from ['tone', 'noise', 'SAM', 'clicks']",
     )
     parser.add_argument(
         "-t",

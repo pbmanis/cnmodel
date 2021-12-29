@@ -6,8 +6,8 @@ objref secondarydendrite
 secondarydendrite = new SectionList()
 objref hillock
 hillock = new SectionList()
-objref unmyelinatedaxon
-unmyelinatedaxon = new SectionList()
+objref initialsegment
+initialsegment = new SectionList()
 objref myelinatedaxon
 myelinatedaxon = new SectionList()
 
@@ -19,21 +19,21 @@ sections[0] {
     pt3dadd(0., 25., 0., 25.)
 }
 
-// axon hillock, 15 microns long, tapered
+// axon hillock, 5 microns long, tapered
 access sections[1]
 hillock.append()
 connect sections[1](0), sections[0](0)
 sections[1] {
     pt3dadd(0., 0., 0., 2.5)
-    pt3dadd(0., -15., 0., 1.0)
+    pt3dadd(0., -5., 0., 1.0)
 }
 
-// initial segment, unmyelinated, 10 microns long, not tapering
+// initial segment, unmyelinated, 20 microns long, not tapering
 access sections[2]
-unmyelinatedaxon.append()
+initialsegment.append()
 connect sections[2](0), sections[1](1)
 sections[2] {
-    pt3dadd(0., -15., 0., 1.0)
+    pt3dadd(0., -5., 0., 1.0)
     pt3dadd(0., -25., 0., 1.0)
 
 }

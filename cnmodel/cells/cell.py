@@ -1519,13 +1519,12 @@ class Cell(object):
         nnodes = range(nodes)
         axnode = []
         internode = []
-        Section = h.Section
-        initsegment = Section(cell=self.soma)
+        initsegment = h.Section()
         initsegment.connect(self.soma)
         for i in nnodes:
-            axnode.append(Section(cell=self.soma))
+            axnode.append(h.Section())
             if i < nodes - 1:
-                internode.append(Section(cell=self.soma))
+                internode.append(h.Section())
         axnode[0].connect(initsegment)
         for i in nnodes:
             if i < nodes - 1:
