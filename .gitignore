@@ -10,6 +10,7 @@ i386
 
 # specific directories and files:
 cnmodel_venv/*  # virutal environment
+cnmodel/cache/*  # everything in the AN cache
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64
