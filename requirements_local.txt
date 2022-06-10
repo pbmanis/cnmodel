@@ -13,8 +13,8 @@ sphinx>=3.4
 
 
 # cnmodel (and vcnmodel) requirements
-# Note that neuron should be installed OUTSIDE of this, and beforehand, but 
-
+# Note that neuron should be installed OUTSIDE of this, and beforehand
+neuron==8.0
 dill==0.3.1.1
 lmfit==1.0.2
 llvmlite # ==0.32.1  # required for numba version to avoid "TypeError: create_target_machine() got an unexpected keyword argument 'jitdebug'"

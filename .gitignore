@@ -5,6 +5,9 @@
 *.dat
 cache
 i386
+x86_64
+arm64
+
 *.p
 *.log
 
@@ -17,7 +20,6 @@ cochleae
 dask-worker-space/
 examples/*.pdf
 examples/*.p
-x86_64
 cnmodel/an_model
 doc/build
 doc/html
