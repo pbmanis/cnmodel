@@ -13,9 +13,15 @@ arm64
 
 # specific directories and files:
 cnmodel_venv/*  # virutal environment
+cnmodel_venv/lib/*
+cnmodel_venv/man/*
+cnmodel_venv/share/*
+cnmodel_venv/pyvenv.cfg
+cnmodel/cache/*  # everything in the AN cache
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64
+cnmodel/an_model/cache
 cochleae
 dask-worker-space/
 examples/*.pdf
