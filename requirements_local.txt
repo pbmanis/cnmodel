@@ -14,7 +14,7 @@ sphinx>=3.4
 
 # cnmodel (and vcnmodel) requirements
 
-neuron==8.0
+neuron>=8.1
 dill==0.3.1.1
 lmfit==1.0.2
 # llvmlite==0.32.1  # required for numba version to avoid "TypeError: create_target_machine() got an unexpected keyword argument 'jitdebug'"
@@ -22,12 +22,13 @@ matplotlib>=3.4.0  # needed to avoid crash on Big Sur
 matplotlib-scalebar==0.5.1
 nose==1.3.7
 numba  # ==0.51.  # 0.43.1
-numpy>=1.21.0
+numpy  # >=1.21.0
 pyparsing==2.4.0
 resampy==0.2.1
-scipy==1.5.4
-pyqt5==5.15.4 # 5.13.1
-pyqt5-sip==12.9.0 # 4.19.19
+scipy # ==1.5.4
+pyqt6 # ==5.15.4 # 5.13.1
+pyqt6-sip # ==12.9.0 # 4.19.19
+pyqtgraph
 seaborn==0.10.1
 toml==0.10.0
 xlrd>=1.0.0
@@ -35,7 +36,7 @@ xlrd>=1.0.0
 # PyOpenGL==3.1.5
 sounddevice==0.4.4
 
--e /Users/pbmanis/Desktop/Python/pyqtgraph
+# -e /Users/pbmanis/Desktop/Python/pyqtgraph
 -e /Users/pbmanis/Desktop/Python/pylibrary
 -e /Users/pbmanis/Desktop/Python/ephys
 # -e /Users/pbmanis/Desktop/Python/python-sounddevice

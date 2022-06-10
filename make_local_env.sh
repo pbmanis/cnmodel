@@ -14,7 +14,7 @@ then
 else
     echo "No previous environment - ok to proceed"
 fi
-python3.9 -m venv $ENVNAME
+python3.8 -m venv $ENVNAME
 
 source $ENVNAME/bin/activate
 
