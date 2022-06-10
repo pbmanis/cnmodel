@@ -106,4 +106,4 @@ if __name__ == "__main__":
     r = runtest()
     print("runtest done")
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()

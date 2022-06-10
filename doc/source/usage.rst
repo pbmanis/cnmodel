@@ -42,7 +42,7 @@ Then we can set up a simulation and run it::
     iv.show(cell=cell)
 
     if sys.flags.interactive == 0:  # keeps application alive for display of data
-        pg.QtGui.QApplication.exec_() 
+        pg.QtWidgets.QApplication.exec() 
 
 
 Simulating cells with morphology defined in swc or hoc files

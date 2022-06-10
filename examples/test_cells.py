@@ -344,7 +344,7 @@ def main():
     t.run_test(sites, ptype, args)
     
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_() 
+        pg.QtWidgets.QApplication.exec() 
 
 if __name__ == '__main__':
     main()

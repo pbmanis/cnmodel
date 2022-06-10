@@ -67,7 +67,7 @@ def testpopulation():
     pt.show()
 
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()
 
 
 if __name__ == "__main__":

@@ -243,7 +243,7 @@ class Toy(Protocol):
         row = 0
         col = 0
         labelStyle = {"color": "#000", "font-size": "9pt", "weight": "normal"}
-        tickStyle = pg.QtGui.QFont("Arial", 9, pg.QtGui.QFont.Light)
+        tickStyle = pg.QtGui.QFont("Arial", 9, pg.QtGui.QFont.Weight.Light)
         self.iv = IVCurve()  # use standard IVCurve here...
         for n, name in enumerate(self.celltypes.keys()):
             nrn_cell = netcells[
@@ -310,8 +310,7 @@ def main():
     t = Toy()
     t.run()
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
-
+        pg.QtWidgets.QApplication.exec()
 
 if __name__ == "__main__":
     main()

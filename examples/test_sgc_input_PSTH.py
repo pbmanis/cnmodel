@@ -375,7 +375,7 @@ class SGCInputTestPSTH(Protocol):
 
 
     def show(self):
-        self.win = pg.GraphicsWindow()
+        self.win = pg.GraphicsLayoutWidget()
         self.win.setBackground("w")
         Fs = self.Fs
         p1 = self.win.addPlot(
@@ -600,4 +600,4 @@ if __name__ == "__main__":
     import sys
 
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()

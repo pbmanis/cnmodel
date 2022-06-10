@@ -20,7 +20,7 @@ def test_max_open_probability(fn=None, savetype=False):
     reset(
         raiseError=False
     )  # reset() fails as unable to remove all neuron objects, unless we ignore the error
-    postsec = h.Section(0.5)
+    postsec = h.Section('soma') # 0.5)
 
     # Create AMPA and NMDA mechanisms
     # AMPA uses mode=0; no rectification
@@ -29,7 +29,7 @@ def test_max_open_probability(fn=None, savetype=False):
     npsd = h.NMDA_Kampa(postsec(0.5), sec=postsec)
     # npsd.loc(sec(0.5))
     # And a presynaptic terminal to provide XMTR input
-    presec = h.Section(0.5)
+    presec = h.Section('sgc')
     term = h.MultiSiteSynapse(presec(0.5), sec=presec)
     term.nZones = 2
     term.multisite = 0

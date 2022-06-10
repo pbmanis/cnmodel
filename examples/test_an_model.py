@@ -77,7 +77,7 @@ def test_an_model():
     t = np.arange(len(psth)) * 1e-5 * ds
     p3.plot(t, psth[:-1], stepMode=True, fillLevel=0, fillBrush='w')
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()
     
 if __name__ == "__main__":
     import sys

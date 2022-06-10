@@ -661,11 +661,11 @@ class IVCurve(Protocol):
             t = np.linspace(self.p_start, self.p_end, 1000)
             y = fit.eval(x=t)
             Vplot.plot(
-                t, y, pen={"color": (100, 100, 0), "style": pg.QtCore.Qt.DashLine}
+                t, y, pen={"color": (100, 100, 0), "style": pg.QtCore.Qt.PenStyle.DashLine}
             )
 
             # plot initial guess
             # y = fit.eval(x=t, **fit.init_params.valuesdict())
-            # Vplot.plot(t, y, pen={'color': 'b', 'style': pg.QtCore.Qt.DashLine})
+            # Vplot.plot(t, y, pen={'color': 'b', 'style': pg.QtCore.Qt.PenStyle.DashLine})
 
         print("Resting membrane potential: %0.1f mV\n" % self.rest_vm())

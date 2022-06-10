@@ -209,7 +209,7 @@ def runtest():
 def main():
     st = runtest()
     if sys.flags.interactive == 0 and st is not None:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()
 
 
 if __name__ == "__main__":

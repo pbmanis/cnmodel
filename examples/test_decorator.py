@@ -38,9 +38,9 @@ class F5:
             modelType="II",
         )
         self.post_cell.set_temperature(float(self.temperature))
-        self.post_cell.set_d_lambda(
+        self.post_cell.set_nseg(
             freq=2000.0
-        )  # necessary to ensure appropriate spatial
+        )  # necessary to ensure appropriate spatial discreetization
         self.iv.reset()
         irange = self.post_cell.i_test_range
         if self.lc_cell:
@@ -145,4 +145,4 @@ if __name__ == "__main__":
     print("Elapsed time for simulation: %f" % (elapsed))
     fig5.plot()
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()

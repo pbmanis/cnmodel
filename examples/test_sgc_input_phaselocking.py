@@ -195,7 +195,7 @@ class SGCInputTestPL(Protocol):
 
     def show(self):
         self.compute_vs()
-        self.win = pg.GraphicsWindow()
+        self.win = pg.GraphicsLayoutWidget()
         p1 = self.win.addPlot(title="stim", row=0, col=0)
         p1.plot(self.stim.time * 1000, self.stim.sound)
         p1.setXLink(p1)
@@ -333,7 +333,7 @@ def main():
     import sys
 
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ class test_sounds:
         seed = 34978
         fmod = 10.0
         dmod = 100.0
-        win = pg.GraphicsWindow()
+        win = pg.GraphicsLayoutWidget()
         pipwin = win.addPlot(title="Sound Pip", row=0, col=0)
         pipmodwin = win.addPlot(title="100 % SAM modulated pip", row=1, col=0)
         noisewin = win.addPlot(title="Wideband noise", row=2, col=0)
@@ -121,8 +121,9 @@ class test_sounds:
             specs[stim][0].plot(f, np.sqrt(Pxx_spec))
             stims[stim][0].show()
                 # print(dir(stims[stim][0]))
+        win.show()
         if sys.flags.interactive == 0:
-            pg.QtGui.QApplication.exec_()
+            pg.QtWidgets.QApplication.exec()
 
 if __name__ == "__main__":
     test_sounds()

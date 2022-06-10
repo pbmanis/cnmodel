@@ -607,9 +607,13 @@ class SynapseTest(Protocol):
                         all_latencies.append(syn['latency'])
                 all_latencies = np.concatenate(all_latencies)
                 (hist, binedges) = np.histogram(all_latencies)
-                curve = p7.plot(binedges, hist, stepMode=True, fillBrush=(100, 100, 255, 150), fillLevel=0)
-                curve.rotate(-90)
-                curve.scale(-1, 1)
+                barg = pg.BarGraphItem(x=0, x0=np.zeros(len(hist)), y=binedges, height=0.7/len(binedges),
+                    width=hist, brush=(100, 100, 255, 150), pen=(100, 100, 255, 150))
+                p7.addItem(barg)
+                # prior to pyqtgraph 12:
+                # curve = p7.plot(binedges, hist, stepMode=True, fillBrush=(100, 100, 255, 150), fillLevel=0)
+                # curve.rotate(-90)
+                # curve.scale((-1, 1))
 
         # if probabilityPlot:
         #     self.win.nextRow()

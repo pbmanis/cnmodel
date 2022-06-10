@@ -60,7 +60,7 @@ class SGCInputTest(Protocol):
         h.run()
 
     def show(self):
-        self.win = pg.GraphicsWindow()
+        self.win = pg.GraphicsLayoutWidget()
         
         p1 = self.win.addPlot(title=f'{self.celltype.capitalize():s} Vm')
         p1.plot(self['t'], self['vm'])
@@ -92,4 +92,4 @@ if __name__ == '__main__':
     prot.show()
 
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()

@@ -36,6 +36,7 @@ with cnmodel that cannot be run with this program.
 import sys
 import argparse
 from pathlib import Path
+import platform
 from neuron import h
 from neuron import nrn
 import gc
@@ -105,7 +106,17 @@ tdurs = {
 }
 
 known = list(tdurs.keys())  # all the "known files"
-modfiles = list(Path("X86_64").glob("*.o"))
+machine = platform.machine()  # determine where to fine
+if machine == "x86_64":
+    modfilepath = Path("x86_64")
+elif machine == "arm64":
+    modfilepath = Path("arm64")
+elif machine == "i386": # hopefully not!
+    modfilepath = Path("i386")
+else:
+    raise ValueError(f"Cannot find mechanism library for machine type: {machine:s}")
+
+modfiles = list(modfilepath.glob("*.o"))
 modfiles = sorted([mf.stem for mf in modfiles])
 print("modfiles: ", modfiles)
 # remap maps from known name to modfile name
@@ -461,7 +472,7 @@ def main():
         ck = ChannelKinetics(args.mechanism, export=args.export)
 
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()
 
 
 if __name__ == "__main__":

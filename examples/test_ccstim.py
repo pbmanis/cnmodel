@@ -44,4 +44,4 @@ def test_cc_stim():
 if __name__ == "__main__":
     test_cc_stim()
     if sys.flags.interactive == 0 :
-        pg.QtGui.QApplication.exec_()
+        pg.QtGui.QApplication.exec()

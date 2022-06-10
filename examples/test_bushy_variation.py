@@ -769,7 +769,7 @@ if __name__ == '__main__':
              showplots(runname)
 #         pg.show()
          # if sys.flags.interactive == 0:
-         #    pg.QtGui.QApplication.exec_()
+         #    pg.QtWidgets.QApplication.exec()
             
     elif runtype in ['showiv']:
         showpicklediv(runname)

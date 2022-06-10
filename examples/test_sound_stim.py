@@ -102,7 +102,7 @@ def runtest():
 
     result = sound_stim(seed, useMatlab=usematlab)
 
-    win = pg.GraphicsWindow()
+    win = pg.GraphicsLayoutWidget()
     p1 = win.addPlot(title="Rate-level function")
     for i, x in enumerate(result.keys()):
         p1.plot(result[x]["levels"], [s.size for s in result[x]["spikes"]], pen=(x, 6))
@@ -111,5 +111,6 @@ def runtest():
 
 if __name__ == "__main__":
     win = runtest()
+    win.show()
     if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_()
+        pg.QtWidgets.QApplication.exec()

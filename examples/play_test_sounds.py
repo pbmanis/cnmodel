@@ -160,7 +160,7 @@ class PlaySound():
                 event.wait(timeout=1.5)
             print("done playing")
         # if self.plots and sys.flags.interactive == 0:
-        #      pg.QtGui.QApplication.exec_()
+        #      pg.QtWidgets.QApplication.exec()
             # if HAVE_PYSOUNDS:
             #
             #     print ('Playing %s' % stim)
@@ -186,4 +186,4 @@ if __name__ == '__main__':
     P.play()
 
     # if P.plots : # and sys.flags.interactive == 0:
-    #      pg.QtGui.QApplication.exec_()
+    #      pg.QtWidgets.QApplication.exec()
