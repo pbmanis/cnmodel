@@ -391,7 +391,7 @@ def refline(axl, refline=None, color=[64, 64, 64], linestyle='--' ,linewidth=0.5
     if type(axl) is not list:
         axl = [axl]
     if linestyle == '--':
-        style = pg.QtCore.Qt.DashLine
+        style = pg.QtCore.Qt.PenStyle.DashLine
     elif linestyle == '.':
         style = pg.QtCore.Qt.DotLine
     elif linestyle == '-':
@@ -526,8 +526,8 @@ def make_crossedAxes(ax, xyzero=[0., 0.], limits=[None, None, None, None], ndec=
     yr = np.diff(yRange)[0]
     xmin, xmax = (np.min(xRange) - xr * insideMargin, np.max(xRange) + xr * insideMargin)
     ymin, ymax = (np.min(yRange) - yr * insideMargin, np.max(yRange) + yr * insideMargin)
-    xtick = ticks.Extended(density=density[0], figure=None, range=(xmin, xmax), axis='x')
-    ytick = ticks.Extended(density=density[1], figure=None, range=(ymin, ymax), axis='y')
+    xtick = Extended(density=density[0], figure=None, range=(xmin, xmax), axis='x')
+    ytick = Extended(density=density[1], figure=None, range=(ymin, ymax), axis='y')
     xt = xtick()
     yt = ytick()
     ytk = yr*tickl
@@ -840,8 +840,8 @@ def do_talbotTicks(ax, ndec=3,
     yr = np.diff(yRange)[0]
     xmin, xmax = (np.min(xRange) - xr * insideMargin, np.max(xRange) + xr * insideMargin)
     ymin, ymax = (np.min(yRange) - yr * insideMargin, np.max(yRange) + yr * insideMargin)
-    xtick = ticks.Extended(density=density[0], figure=None, range=(xmin, xmax), axis='x')
-    ytick = ticks.Extended(density=density[1], figure=None, range=(ymin, ymax), axis='y')
+    xtick = Extended(density=density[0], figure=None, range=(xmin, xmax), axis='x')
+    ytick = Extended(density=density[1], figure=None, range=(ymin, ymax), axis='y')
     xt = xtick()
     yt = ytick()
     xts = tickStrings(xt, scale=1, spacing=None, tickPlacesAdd = tickPlacesAdd[0])
@@ -1088,7 +1088,7 @@ class LayoutMaker():
             self.gridLayout = pg.QtGui.QGridLayout()  # just create the grid layout to add to another item
         self.gridLayout.setContentsMargins(margins, margins, margins, margins)
         self.gridLayout.setSpacing(spacing)
-        self.plots = [[0 for x in xrange(self.cols)] for x in xrange(self.rows)]
+        self.plots = [[0 for x in np.arange(self.cols)] for x in np.arange(self.rows)]
         i = 0
         for r in range(self.rows):
             for c in range(self.cols):
