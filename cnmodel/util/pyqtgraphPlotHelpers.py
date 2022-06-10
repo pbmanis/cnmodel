@@ -393,22 +393,22 @@ def refline(axl, refline=None, color=[64, 64, 64], linestyle='--' ,linewidth=0.5
     if linestyle == '--':
         style = pg.QtCore.Qt.PenStyle.DashLine
     elif linestyle == '.':
-        style = pg.QtCore.Qt.DotLine
+        style = pg.QtCore.Qt.PenStyle.DotLine
     elif linestyle == '-':
-        style = pg.QtCore.Qt.SolidLine
+        style = pg.QtCore.Qt.PenStyle.SolidLine
     elif linestyle == '-.':
-        style = pg.QtCore.Qt.DsahDotLine
+        style = pg.QtCore.Qt.PenStyle.DsahDotLine
     elif linestyle == '-..':
-        style = pg.QtCore.Qt.DashDotDotLine
+        style = pg.QtCore.Qt.PenStyle.DashDotDotLine
     else:
-        style = pg.QtCore.Qt.SolidLine # default is solid
-    if orient is 'horizontal':
+        style = pg.QtCore.Qt.PenStyle.SolidLine # default is solid
+    if orient == 'horizontal':
         for ax in axl:
             if refline is not None:
                 x = ax.getAxis('bottom')
                 xlims = x.range
                 ax.plot(xlims, [refline, refline], pen=pg.mkPen(color, width=linewidth, style=style))
-    if orient is 'vertical':
+    if orient == 'vertical':
         for ax in axl:
             if refline is not None:
                 y = ax.getAxis('left')
@@ -765,7 +765,7 @@ class polarPlot():
         yp = rhist * np.sin(bins[:-1] + binwidth)
         arcinc = np.pi/100.  # arc increments
         for i in range(len(xp)):
-            if mode is 'arc':
+            if mode == 'arc':
                 self.plotItem.plot([xo[i], 0., xp[i]], [yo[i], 0., yp[i]], **kwds) # "v" segement
                 arcseg = np.arange(bins[i], bins[i+1], arcinc)
                 x = np.array(rhist[i] * np.cos(arcseg))

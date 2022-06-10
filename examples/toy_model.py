@@ -235,7 +235,7 @@ class Toy(Protocol):
         # build plotting area
         #
         app = pg.mkQApp()
-        self.win = pg.GraphicsWindow()
+        self.win = pg.GraphicsLayoutWidget()
         self.win.setBackground("w")
         self.win.resize(800, 600)
         cols, rows = autorowcol(ncells)
@@ -309,6 +309,7 @@ class Toy(Protocol):
 def main():
     t = Toy()
     t.run()
+    t.win.show()
     if sys.flags.interactive == 0:
         pg.QtWidgets.QApplication.exec()
 

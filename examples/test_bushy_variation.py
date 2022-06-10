@@ -320,14 +320,15 @@ class Variations(Protocol):
         print(dir(self.pre_cells[0]))
         seed = 0
         j = 0
-
+        synapses = []
+        xmtr = {}
         if mode == 'sound':
             self.make_stimulus(stimulus='tone')
 
             for np in range(len(self.pre_cells)):
                 self.pre_cells[np].set_sound_stim(self.stim, seed=seed)
                 seed += 1
-                synapses.append(pre_cells[-1].connect(post_cell,
+                synapses.append(self.pre_cells[-1].connect(post_cell,
                     post_opts={'AMPAScale': 2.0, 'NMDAScale': 2.0}, type=synapseType))
                 for i in range(synapses[-1].terminal.n_rzones):
                     xmtr['xmtr%04d'%j] = h.Vector()
@@ -442,8 +443,8 @@ class Variations(Protocol):
                 pickle.dump({'t': self['t'], 'v': self.civ, 'i': self.iiv}, f)
                 f.close()
         else:
-            # mp.parallelizer.multiprocessing.cpu_count()
-            nworker = 16
+            maxworker = mp.parallelizer.multiprocessing.cpu_count()
+            nworker = maxworker  # use them all 
             self.npost = len(varsg)
             tasks = list(range(self.npost))
             results = [None] * len(tasks)
@@ -481,7 +482,8 @@ class Variations(Protocol):
             pass
 
         if parallelize:
-            nworker = 16
+            maxworker = mp.parallelizer.multiprocessing.cpu_count()
+            nworker = maxworker # 16  # use them all 
             varsg = np.linspace(0.25, 2.0, int((2.0-0.25)/0.25)+1) #[0.5, 0.75, 1.0, 1.5, 2.0]  # covary Ih and gklt in constant ratio
             self.npost = len(varsg)
             nrep = 25
@@ -708,15 +710,8 @@ def showplots(name):
         ax[i, 1].set_ylim([0, 30])
         vs = PU.vector_strength(spikelists[i], stiminfo['fmod'])
         pre_vs = PU.vector_strength(prespikes[i], stiminfo['fmod'])
-        # print 'pre: ', pre_vs
-        # print 'post: ', vs
-#         apos = ax[i,1].get_position()
-#         ax[i, 1].set_title('VS = %4.3f' % pre_vs['r'])
-# #        vector_plot(fig, vs['ph'], np.ones(len(vs['ph'])), yp = apos)
-#         phase_hist(fig, vs['ph'], yp=apos)
-#        phase_hist(fig, pre_vs['ph'], yp=apos)
+
     prot = Variations(runtype, runname, 'cochlea')
-#   stim_info = {'nreps': nrep, 'cf': cf, 'f0': f0, 'rundur': rundur, 'pipdur': pipdur, 'dbspl': dbspl, 'fmod': fmod, 'dmod': dmod}
     if stiminfo['dmod'] > 0:
         stimulus = 'SAM'
     else:
@@ -752,7 +747,7 @@ if __name__ == '__main__':
     else:
         runtype = panel
     if panel is None:
-        raise ValueError("Must specify figure panel to generate: 'a', 'b'")
+        raise ValueError("Must specify figure panel to generate: 'a', 'd'")
     if runtype in ['sound', 'IV']:
          prot = Variations(runtype, runname, 'cochlea')
          if runtype == 'IV':
@@ -767,9 +762,6 @@ if __name__ == '__main__':
              elapsed = timeit.default_timer() - start_time
              print(('Elapsed time for AN simulations: %f' % (elapsed)))
              showplots(runname)
-#         pg.show()
-         # if sys.flags.interactive == 0:
-         #    pg.QtWidgets.QApplication.exec()
             
     elif runtype in ['showiv']:
         showpicklediv(runname)
