@@ -13,7 +13,7 @@ sphinx>=3.4
 
 
 # cnmodel (and vcnmodel) requirements
-# Note that neuron should be installed OUTSIDE of this, and beforehand
+
 neuron==8.0
 dill==0.3.1.1
 lmfit==1.0.2
@@ -33,9 +33,10 @@ toml==0.10.0
 xlrd>=1.0.0
 # required for 3d display in pyqtgraph
 # PyOpenGL==3.1.5
+sounddevice==0.4.4
 
 -e /Users/pbmanis/Desktop/Python/pyqtgraph
 -e /Users/pbmanis/Desktop/Python/pylibrary
 -e /Users/pbmanis/Desktop/Python/ephys
--e /Users/pbmanis/Desktop/Python/python-sounddevice
+# -e /Users/pbmanis/Desktop/Python/python-sounddevice
 

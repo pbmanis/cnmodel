@@ -1,7 +1,19 @@
 # if pip does not appear to be installed, fix with:
 # python -m pip install --upgrade pip --user
 # in the main env (outside this local env)
+set -e # force failure if anyting fails in script - ensuring completion
+set -o errexit
 ENVNAME="cnmodel_venv"
+if [ -d $ENVNAME ]
+then
+    echo "Removing previous environment: $ENVNAME"
+    set +e
+    rsync -aR --remove-source-files $ENVNAME ~/.Trash/ || exit 1
+    set -e
+    rm -R $ENVNAME
+else
+    echo "No previous environment - ok to proceed"
+fi
 python3.9 -m venv $ENVNAME
 
 source $ENVNAME/bin/activate
