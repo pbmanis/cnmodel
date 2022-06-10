@@ -13,6 +13,7 @@ arm64/**
 # specific directories and files:
 cnmodel_venv/**  # virutal environment
 cnmodel_venv/lib/**
+cnmodel_venv/src/**
 cnmodel_venv/man/**
 cnmodel_venv/share/**
 cnmodel_venv/pyvenv.cfg
@@ -33,9 +34,8 @@ dist/
 cnmodel.egg*
 .cache*
 .pytest*
+Figure6*
 
 
 
 
-
-cnmodel_venv/src
