@@ -59,8 +59,8 @@ def _ax_tolist(ax):
     if isinstance(ax, list):
         return(ax)
     elif isinstance(ax, dict):
-        axlist = list(axl.keys())
-        return([ax for ax in axl[axlist]])
+        axlist = list(ax.keys())
+        return([ax for ax in ax[axlist]])
     else:
         return([ax])
     
@@ -421,10 +421,10 @@ def update_font(axl, size=9, font=stdFont):
              # tick.label1.set_family('sans-serif')
             #  tick.label1.set_fontname(stdFont)
               tick.label1.set_size(size)
-        ax.set_xticklabels(ax.get_xticks(), fontProperties)
-        ax.set_yticklabels(ax.get_yticks(), fontProperties)
-        ax.xaxis.set_smart_bounds(True)
-        ax.yaxis.set_smart_bounds(True) 
+        ax.set_xticks(ax.get_xticks(), fontdict=fontProperties)
+        ax.set_yticks(ax.get_yticks(), fontdict=fontProperties)
+        # ax.xaxis.set_smart_bounds(True)
+        # ax.yaxis.set_smart_bounds(True) 
         ax.tick_params(axis = 'both', labelsize = size)
 
 
