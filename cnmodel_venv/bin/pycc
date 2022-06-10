@@ -1,0 +1,3 @@
+#!/Users/pbmanis/Desktop/Python/cnmodel/cnmodel_venv/bin/python3.8
+from numba.pycc import main
+main()
