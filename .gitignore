@@ -11,7 +11,7 @@ arm64/**
 *.log
 
 # specific directories and files:
-cnmodel_venv/**  # virutal environment
+cnmodel_venv/** # virutal environment
 cnmodel_venv/lib/**
 cnmodel_venv/src/**
 cnmodel_venv/man/**
