@@ -123,7 +123,7 @@ class HocReader(object):
              'soma': ['soma[0]']}
         """
         prefixes = {}
-        regex = re.compile('(?P<prefix>\w+)\[(\d*)\]')
+        regex = re.compile(r'(?P<prefix>\w+)\[(\d*)\]')
         for sec_name in self.sections:
             g = regex.match(sec_name)
             if g is None:

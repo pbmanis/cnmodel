@@ -98,7 +98,7 @@ class GluPSD(PSD):
         return len(self.ampa_psd)
 
     def record(self, *args):
-        """Create a new set of vectors to record parameters for each release
+        r"""Create a new set of vectors to record parameters for each release
         site.
         
         Parameters
