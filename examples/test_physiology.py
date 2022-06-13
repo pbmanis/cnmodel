@@ -22,7 +22,7 @@ import scipy.stats
 from neuron import h
 import pyqtgraph as pg
 import pyqtgraph.multiprocess as mp
-from pyqtgraph.Qt import QtGui, QtCore
+# from pyqtgraph.Qt import QtGui, QtCore
 from cnmodel import populations
 from cnmodel.util import sound, random_seed
 from cnmodel.protocols import Protocol
@@ -149,17 +149,17 @@ class CNSoundStim(Protocol):
         return vec
 
 
-class NetworkSimDisplay(pg.QtGui.QSplitter):
+class NetworkSimDisplay(pg.QtWidgets.QSplitter):
     def __init__(self, prot, results, baseline, response):
-        pg.QtGui.QSplitter.__init__(self, QtCore.Qt.Horizontal)
+        pg.QtWidgets.QSplitter.__init__(self, pg.QtCore.Qt.Orientation.Horizontal)
         self.selected_cell = None
 
         self.prot = prot
         self.baseline = baseline  # (start, stop)
         self.response = response  # (start, stop)
 
-        self.ctrl = QtGui.QWidget()
-        self.layout = pg.QtGui.QVBoxLayout()
+        self.ctrl = pg.QtGui.QWidget()
+        self.layout = pg.QtWidgets.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.ctrl.setLayout(self.layout)
         self.addWidget(self.ctrl)
@@ -168,9 +168,9 @@ class NetworkSimDisplay(pg.QtGui.QSplitter):
         self.layout.addWidget(self.nv)
         self.nv.cell_selected.connect(self.nv_cell_selected)
 
-        self.stim_combo = pg.QtGui.QComboBox()
+        self.stim_combo = pg.QtWidgets.QComboBox()
         self.layout.addWidget(self.stim_combo)
-        self.trial_combo = pg.QtGui.QComboBox()
+        self.trial_combo = pg.QtWidgets.QComboBox()
         self.layout.addWidget(self.trial_combo)
         self.results = OrderedDict()
         self.stim_order = []
@@ -208,7 +208,7 @@ class NetworkSimDisplay(pg.QtGui.QSplitter):
 
         df = np.log10(self.freqs[1]) - np.log10(self.freqs[0])
         dl = self.levels[1] - self.levels[0]
-        self.stim_rect = QtGui.QGraphicsRectItem(QtCore.QRectF(0, 0, df, dl))
+        self.stim_rect = pg.QtWidgets.QGraphicsRectItem(pg.QtCore.QRectF(0, 0, df, dl))
         self.stim_rect.setPen(pg.mkPen("c"))
         self.stim_rect.setZValue(20)
         self.tuning_plot.addItem(self.stim_rect)
@@ -434,13 +434,13 @@ class NetworkSimDisplay(pg.QtGui.QSplitter):
         self.tuning_img.setImage(matrix)
         self.tuning_img.resetTransform()
         self.tuning_img.setPos(np.log10(min(fvals)), min(lvals))
-        self.tuning_img.scale(
-            (np.log10(max(fvals)) - np.log10(min(fvals))) / (len(fvals) - 1),
-            (max(lvals) - min(lvals)) / (len(lvals) - 1),
-        )
+        # self.tuning_img.setScale(
+        #     (np.log10(max(fvals)) - np.log10(min(fvals))) / (len(fvals) - 1),
+        #     (max(lvals) - min(lvals)) / (len(lvals) - 1),
+        # )
 
 
-class NetworkTree(QtGui.QTreeWidget):
+class NetworkTree(pg.QtWidgets.QTreeWidget):
     def __init__(self, prot):
         self.prot = prot
         QtGui.QTreeWidget.__init__(self)
@@ -592,7 +592,7 @@ class NetworkVisualizer(pg.PlotWidget):
 
 def main():
     app = pg.mkQApp()
-    pg.dbg()
+    # pg.dbg()  # enables the debugger, but we don't need it.
 
     # Create a sound stimulus and use it to generate spike trains for the SGC
     # population
@@ -602,7 +602,7 @@ def main():
     nreps = 1
     fmin = 4e3
     fmax = 32e3
-    octavespacing = 1 / 2.0
+    octavespacing = 1 / 4.0
     # octavespacing = 1.
     n_frequencies = int(np.log2(fmax / fmin) / octavespacing) + 1
     fvals = (
