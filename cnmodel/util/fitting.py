@@ -1,7 +1,7 @@
 import numpy as np
 import lmfit
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
+from pyqtgraph.Qt import QtWidgets
 
 
 class FitModel(lmfit.Model):
@@ -164,14 +164,14 @@ class Exp2(FitModel):
         FitModel.__init__(self, exp2, independent_vars=['x'])
 
 
-class FitExplorer(QtGui.QWidget):
+class FitExplorer(QtWidgets.QWidget):
     def __init__(self, model, fit):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.model = model
         self.fit = fit
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
-        self.splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         self.layout.addWidget(self.splitter)
         self.ptree = pg.parametertree.ParameterTree()
         self.splitter.addWidget(self.ptree)
