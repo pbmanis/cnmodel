@@ -1,7 +1,0 @@
-#!/Users/pbmanis/Desktop/Python/cnmodel/cnmodel_venv/bin/python3.8
-# EASY-INSTALL-DEV-SCRIPT: 'cochlea==1.4','run_zilany2014'
-__requires__ = 'cochlea==1.4'
-__import__('pkg_resources').require('cochlea==1.4')
-__file__ = '/Users/pbmanis/Desktop/Python/cnmodel/cnmodel_venv/src/cochlea/scripts/run_zilany2014'
-with open(__file__) as f:
-    exec(compile(f.read(), __file__, 'exec'))

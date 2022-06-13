@@ -9,32 +9,42 @@ x86_64/**
 arm64/**
 *.p
 *.log
+.DS_Store
 
 # specific directories and files:
-cnmodel_venv/** # virutal environment
-cnmodel_venv/lib/**
-cnmodel_venv/src/**
-cnmodel_venv/man/**
-cnmodel_venv/share/**
-cnmodel_venv/pyvenv.cfg
-cnmodel/cache/**  # everything in the AN cache
+cnmodel_venv/
+# cnmodel_venv/** # virutal environment
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64
-cnmodel/an_model/cache/**
+cnmodel/an_model/cache/**  # everything in the AN cache
 cochleae
 dask-worker-space/
-examples/*.pdf
-examples/*.p
-cnmodel/an_model
+# Jupyter Notebook
+.ipynb_checkpoints
+# Sphinx documentation
+docs/_build/
 doc/build
 doc/html
+
+examples/*.pdf
+examples/*.p
+
 build/
 dist/
 cnmodel.egg*
 .cache*
 .pytest*
 Figure6*
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 
 
