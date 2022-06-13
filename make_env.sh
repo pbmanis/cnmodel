@@ -12,11 +12,11 @@ then
     # However, it might not always work. 
     # rsync -aR --remove-source-files $ENVNAME ~/.Trash/ || exit 1
     # set -e
-    rm -R $ENVNAME
+    rm -Rf $ENVNAME
 else
     echo "No previous environment - ok to proceed"
 fi
-python3.8 -m venv $ENVNAME
+python3.9 -m venv $ENVNAME
 
 source $ENVNAME/bin/activate
 
