@@ -37,7 +37,7 @@ source $ENVNAME/bin/activate
 nrnivmodl cnmodel/mechanisms
 
 # these have to be done separately as the compilation depends on what happens above
-pip3 install -e git+https://github.com/pbmanis/cochlea-1.git@c2e8c9612481ebe397ba0e7762b8f2772500388d#egg=cochlea
+pip3 install -e git+https://github.com/pbmanis/cochlea-1.git@8152f032e6e619d8632548b6b632fcda5f0638ed#egg=cochlea
 rm -rf cochleae
 
 # Optional - uncomment only if you need to view .hoc reconstructions
