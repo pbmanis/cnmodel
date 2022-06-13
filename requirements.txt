@@ -6,7 +6,7 @@
 black==19.10b0
 Pint==0.14
 isort==5.0.2
-mypy==0.782
+mypy==0.961
 jupyterlab
 pytest>=6
 sphinx>=3.4
