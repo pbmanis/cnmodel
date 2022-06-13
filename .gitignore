@@ -17,6 +17,7 @@ cnmodel_venv/
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64
+cnmodel/an_model/ # things that refer to the Zilany et al. c/matlab code.
 cnmodel/an_model/cache/**  # everything in the AN cache
 cochleae
 dask-worker-space/
