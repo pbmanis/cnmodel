@@ -26,7 +26,9 @@ Available mechanisms::
         kis                  klt                 kpkj                kpkj2             kpkjslow
       kpksk                 leak                lkpkj                   na                naRsg
        nacn             nacncoop                  nap                napyr               inav11
-     nappyr                nacsh                  kir              ihpyrlc
+     nappyr                nacsh                  kir              ihpyrlc               GRC_NA
+     GRC_KV               GRC_KA              GRC_KIR              GRC_KM                GRC_KCA
+     GRC_CA             GRC_CALC              
 
 Note: only modfiles that implement voltage-dependent ion channel models make sense to run
 with this routine. the list "nottestablemechs" in the file defines mechanisms provided
@@ -57,7 +59,7 @@ nottestablemechs = [
     "Mechanism",
     "capmp",
     "capump",
-    "cl_ion",
+    "cl_ion",n
     "extracellular",
     "fastpas",
     "k_ion",
@@ -66,8 +68,11 @@ nottestablemechs = [
     "narsg",
     "pas",
     "cap",
+    "GRC_CALC",
+    "GRC_GABA",
 ]  # cap uses "pcabar"
 
+# tdur lists are the durations of the voltage step and the post-pulse for each mechanism
 tdurs = {
     "CaPCalyx": [20.0, 10.0],
     "default": [200, 20],
@@ -101,7 +106,13 @@ tdurs = {
     "napyr": [10, 5.0],
     "pkjlk": [100., 20.],
     "rsg": [100., 20.],
-    
+    "GRC_NA": [10.0, 5.0],
+    "GRC_KV":  [50.0, 10.0],
+    "GRC_KA": [50.0, 10.0],
+    "GRC_KM": [50.0, 10.0],
+    "GRC_KIR": [50.0, 10.0],
+    "GRC_KCA": [50.0, 10.0],
+    "GRC_CA": [10.0, 10.0],
     
 }
 

@@ -189,9 +189,13 @@ class Toy(Protocol):
                     (cells.Tuberculoventral, "TVmouse", "mouse", (-0.35, 1, 11), 34),
                 ),
                 (
-                    "SGC, sgc-bm, Mouse",
-                    (cells.SGC, "sgc-bm", "mouse", (-0.2, 0.6, 9), 34),
+                    "Granule, GRC, Mouse",
+                    (cells.Granule, "GRC", "mouse", (-0.05, 0.05, 9), 34),
                 ),
+                # (
+                #     "SGC, sgc-bm, Mouse",
+                #     (cells.SGC, "sgc-bm", "mouse", (-0.2, 0.6, 9), 34),
+                # ),
                 (
                     "SGC, sgc-a, Mouse",
                     (cells.SGC, "sgc-a", "mouse", (-0.2, 0.6, 9), 34),

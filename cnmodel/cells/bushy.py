@@ -1,10 +1,7 @@
 from __future__ import print_function
 from neuron import h
-from collections import OrderedDict
 from .cell import Cell
 from .. import synapses
-from ..util import Params
-import numpy as np
 from .. import data
 import pprint
 pp = pprint.PrettyPrinter(indent=4, width=60)

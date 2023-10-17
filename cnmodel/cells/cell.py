@@ -15,7 +15,7 @@ from .. import decorator
 
 """
 Term definitions:
-cell class is the class of morphological cell: bushy, tstellate, etc. 
+Cell class is the class of morphological cell: bushy, tstellate, etc. 
 Each cell class is implmeneted as a separate python class (no pun)
 modelName is name of the source model used so it is like the type, but one level up). 
 ModelNames are RM03, XM13, and for other cell types may refer to the original model, 
@@ -63,6 +63,9 @@ class Cell(object):
             "Dendritic_Swelling",
             "Basal_Dendrite",
             "Apical_Dendrite",
+            "Apical_Tuft",
+            "Apical_Oblique_Dendrite",
+            "Claw",
             "axon",
             "Myelinated_Axon",
             "myelinatedaxon",
@@ -1289,6 +1292,15 @@ class Cell(object):
             "kpksk": "gk",
             "lkpkj": "gbar",
             "naRsg": "gna",
+            # granule cell specific
+            "GRC_NA": "gna",
+            "GRC_KV": "gk",
+            "GRC_KA": "gk",
+            "GRC_KM": "gk",
+            "GRC_KCA": "gk",
+            "GRC_KIR": "gkir",
+            "GRC_CA": "gca",
+            "GRC_CALC": "gca",
             # SGC Ih specific:
             "ihsgcApical": "gh",
             "ihsgcBasalMiddle": "gh",

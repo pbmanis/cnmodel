@@ -1,5 +1,5 @@
 __author__ = "Paul B. Manis and Luke Campagnola"
-__version__ = "0.50"
+__version__ = "0.55"
 
 try:
     import faulthandler

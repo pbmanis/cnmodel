@@ -18,9 +18,14 @@ import numpy as np
 
 from neuron import h
 import pyqtgraph as pg
-import cnmodel
+
 import cnmodel.cells as cells
+import cnmodel
+
+
 from cnmodel.protocols import IVCurve, VCCurve
+
+
 
 debugFlag = True
 ax = None
@@ -28,7 +33,8 @@ h.celsius = 22
 cclamp = False
 
 cellinfo = {'types': ['bushy', 'bushycoop', 'tstellate', 'tstellatenav11', 'dstellate', 'dstellateeager', 'sgc',
-                      'cartwheel', 'pyramidal', 'pyramidalceballos', 'octopus', 'tuberculoventral', 'mso'],
+                      'cartwheel', 'pyramidal', 'pyramidalceballos', 'octopus', 'tuberculoventral', 'mso',
+                      'granule'],
             'morphology': ['point', 'waxon', 'stick'],
             'nav': ['std', 'jsrna', 'nav11', 'nacncoop'],
             'species': ['guineapig', 'cat', 'rat', 'mouse'],
@@ -46,21 +52,22 @@ ccivrange = {'mouse':
                  'cartwheel': {'pulse': [(-0.5, 0.5, 0.05)]},
                  'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]},
                  'pyramidalceballos': {'pulse': [(-0.09, 0.00, 0.09), (0, 0.008, 0.008)]}, #, 'prepulse': [(-0.25, -0.25, 0.25)]},
-                 'tuberculoventral': {'pulse': [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]}
+                 'tuberculoventral': {'pulse': [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]},
+                 'granule': {'pulse': [(-0.05, 0.05, 0.005)]}
                 },
 
             'guineapig':
-            {'bushy': {'pulse': [(-1, 1.2, 0.05)]},
-            'tstellate': {'pulse': [(-0.15, 0.15, 0.01)]},
-            'dstellate': {'pulse': [(-0.25, 0.25, 0.025)]},
-            'dstellateeager': {'pulse': [(-0.6, 1.0, 0.025)]},
-            'octopus': {'pulse': [(-2., 6., 0.2)]},
-            'sgc': {'pulse': [(-0.3, 0.6, 0.02)]},
-            'mso': {'pulse': [(-1, 1.2, 0.05)]},
-            },
+                {'bushy': {'pulse': [(-1, 1.2, 0.05)]},
+                'tstellate': {'pulse': [(-0.15, 0.15, 0.01)]},
+                'dstellate': {'pulse': [(-0.25, 0.25, 0.025)]},
+                'dstellateeager': {'pulse': [(-0.6, 1.0, 0.025)]},
+                'octopus': {'pulse': [(-2., 6., 0.2)]},
+                'sgc': {'pulse': [(-0.3, 0.6, 0.02)]},
+                'mso': {'pulse': [(-1, 1.2, 0.05)]},
+                },
             'rat':
-            {'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]}, # 'prepulse': [(-0.25, -0.25, 0.25)]},
-            }
+                {'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]}, # 'prepulse': [(-0.25, -0.25, 0.25)]},
+                }
             }
 
 # scales holds some default scaling to use in the cciv plots
@@ -90,6 +97,8 @@ scale = {'bushy': (-1.0, -160., 1.0, -40, 0, 40, 'offset', 5,
         'pyramidalceballos': (-1.0, -160., 1.0, -40, 0, 40, 'offset', 5,
             'crossing', [0, -60]),
         'tuberculoventral': (-1.0, -160., 1.0, -40, 0, 40, 'offset', 5,
+            'crossing', [0, -60]),
+        'granule': (-1.0, -160., 1.0, -40, 0, 40, 'offset', 5,
             'crossing', [0, -60]),
         'octopus': (-1.0, -160., 1.0, -40, 0, 40, 'offset', 5,
             'crossing', [0, -60]),
@@ -214,6 +223,20 @@ class Tests():
                     morphology='cnmodel/morphology/tv_stick.hoc', decorator=True,
                     ttx=args.ttx, debug=debugFlag)
             h.topology()
+
+       #
+        # DCN granule cell tests
+        #
+        elif args.celltype == 'granule' and args.morphology == 'point':
+            print("Dir cells: ", dir(cells))
+            cell = cells.Granule.create(species='mouse', modelType='GRC',
+                     ttx=args.ttx, nach=args.nav, debug=debugFlag)
+
+        # elif args.celltype == 'granule' and args.morphology == 'stick':
+        #     cell = cells.Granule.create(species='mouse', modelType='GRC', 
+        #             morphology='cnmodel/morphology/granule.hoc', decorator=True,
+        #             ttx=args.ttx, debug=debugFlag)
+        #     h.topology()
 
         #
         # DCN cartwheel cell tests
