@@ -4,6 +4,7 @@ Cell definitions for models.
 This class includes a number of different cell definitions and default
 conductances for point models. 
 """
+
 from .granule import *
 from .bushy import *
 from .tstellate import *
