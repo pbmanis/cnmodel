@@ -48,35 +48,38 @@ def set_dbspl(signal, dbspl):
 
 
 @time_usage
-def sound_stim(seed, useMatlab=True):
+def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=True):
     cf = 1.5e3
     levels = list(range(-10, 101, 10))
 
     result = {}
+    spikes: dict = {}
     if useMatlab:
         simulator = "matlab"
     else:
         simulator = "cochlea"
     for sr in 1, 2, 3:
-        spikes = []
-        for level in levels:
-            stim = sound.TonePip(
-                rate=100e3,
-                duration=0.5,
-                f0=cf,
-                dbspl=level,
-                pip_duration=0.5,
-                pip_start=[0],
-                ramp_duration=2.5e-3,
-            )
-            if simulator == "cochlea":
-                stim._sound = set_dbspl(stim.sound, level)  # adjust scaling here
-            spikes.append(
-                an_model.get_spiketrain(
-                    cf=cf, sr=sr, seed=seed, stim=stim, simulator=simulator
-                )
-            )
-            seed += 1
+        spikes = {}
+        for rep in range(reps):
+            spikes[rep] = []
+            for level in levels:
+                stim = sound.TonePip(
+                        rate=100e3,
+                        duration=pip_duration+0.005,
+                        f0=cf,
+                        dbspl=level,
+                        pip_duration=pip_duration,
+                        pip_start=[0.005],
+                        ramp_duration=2.5e-3,
+                    )
+                if simulator == "cochlea":
+                        stim._sound = set_dbspl(stim.sound, level)  # adjust scaling here
+                spikes[rep].append(
+                        an_model.get_spiketrain(
+                            cf=cf, sr=sr, seed=seed, stim=stim, simulator=simulator
+                            )
+                        )
+                seed += 1
         result[sr] = {"levels": levels, "spikes": spikes}
     return result
 
@@ -99,13 +102,28 @@ def runtest():
         print("Running with matlab simulator")
     else:
         print("Running with MR cochlea simulator")
-
-    result = sound_stim(seed, useMatlab=usematlab)
+    reps = 10
+    pip_duration = 0.5 # seconds
+    result = sound_stim(seed, reps=reps, pip_duration=pip_duration, useMatlab=usematlab)
 
     win = pg.GraphicsLayoutWidget()
     p1 = win.addPlot(title="Rate-level function")
-    for i, x in enumerate(result.keys()):
-        p1.plot(result[x]["levels"], [s.size for s in result[x]["spikes"]], pen=(x, 6))
+    p1.setLabel("bottom", "Tone level (dB SPL)")
+    p1.setLabel("left", "Firing Rate (sp/s)")
+    group = {1: "HSR", 2: "MSR", 3: "LSR"}
+    p1.addLegend()
+    for i, x in enumerate(result.keys()):  # across srs
+        for r in range(reps):
+            if r == 0:
+                name = group[x]
+            else:
+                name = None
+            p1.plot(result[x]['levels'], [
+                s.size/pip_duration for s in result[x]["spikes"][r]], 
+                symbol = 'o', symbolBrush=0.25, symbolPen=(x,6), symbolSize=3,
+                pen=(x, 6),
+                name=name)
+
     return win
 
 
