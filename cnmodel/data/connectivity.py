@@ -13,15 +13,20 @@ collaterals within the CN, and so they are not listed as presynaptic cells in
 this table. Octopus cells have collaterals (including in granule cell domains),
 and should be added to this table when more data are available (Golding et al.,
 J. Neurosci. 15: 3138, 1995)
+granule and cartwheel cells are guesses (for building networks)
+TV-TV connection are also a guess.
 
-----------------------------------------------------------------------------------------------
-                  bushy       tstellate   dstellate   octopus     pyramidal    tuberculoventral
-sgc               3.3±0.6 [2] 6.5±1.0 [2] 35±0 [3]    60±0 [2]    48±0 [5]     24±0 [5]
-dstellate         7 [1]       20 [1]      3 [1]       0 [4]       15 [5]       15 [5]
-tstellate         0 [6]       0 [6]       0 [6]       0 [6]       0 [6]        0 [6]
-tuberculoventral  6           6           0           0 [4]       21 [5]       0 [7]
-pyramidal         0           0           0           0           0            0    
-----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
+                  bushy       tstellate   dstellate   octopus     pyramidal    tuberculoventral   granule    cartwheel
+sgc               3.3±0.6 [2] 6.5±1.0 [2] 35±0 [3]    60±0 [2]    48±0 [5]     24±0 [5]           0          0
+dstellate         7 [1]       20 [1]      3 [1]       0 [4]       15 [5]       15 [5]             0          0
+tstellate         0 [6]       0 [6]       0 [6]       0 [6]       0 [6]        0 [6]              0          0
+octopus           0           0           0           0           0            0                  0          0
+tuberculoventral  6           6           0           0 [4]       21 [5]       5 [7]              0          0
+pyramidal         0           0           0           0           0            0                  200 [8]    0
+granule           0           0           0           0           0            0                  0          200 [9]
+cartwheel         0           0           0           0           5            0                  0          5
+----------------------------------------------------------------------------------------------------------------------
 
 [1] Guesses based on Campagnola & Manis 2014
 
@@ -52,8 +57,13 @@ pyramidal         0           0           0           0           0            0
 
 [7] In the models of Hancock and Voigt (1999) and Zheng and Voigt (2006), the TV cells
     have no connections with each other. However, Kuo et al. (J. Neurophysiol., 2015)
-    did see connections between pairs of TV cells in the mouse.
+    did see connections between pairs of TV cells in the mouse. Indirect evidence
+    from Kasten et al. (NF107 mice) also suggests connectivity, but the density is not known. 
+    values are a guess.
 
+[8] Granule cell convergence is a guess.
+
+[9] Cartwheel cell convergence is a guess.
 """
 
 add_table_data('convergence', row_key='pre_type', col_key='post_type', 

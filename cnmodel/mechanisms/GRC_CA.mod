@@ -10,7 +10,7 @@ ENDCOMMENT
 NEURON { 
 	SUFFIX GRC_CA 
 	USEION ca READ eca WRITE ica 
-	RANGE gbar, ica, g, alpha_s, beta_s, alpha_u, beta_u 
+	RANGE gbar, ica, gca, alpha_s, beta_s, alpha_u, beta_u 
 	RANGE Aalpha_s, Kalpha_s, V0alpha_s
 	RANGE Abeta_s, Kbeta_s, V0beta_s
 	RANGE Aalpha_u, Kalpha_u, V0alpha_u
@@ -65,7 +65,7 @@ ASSIGNED {
 	u_inf 
 	tau_s (ms) 
 	tau_u (ms) 
-	g (mho/cm2) 
+	gca (mho/cm2) 
 	alpha_s (/ms)
 	beta_s (/ms)
 	alpha_u (/ms)
@@ -80,8 +80,8 @@ INITIAL {
  
 BREAKPOINT { 
 	SOLVE states METHOD derivimplicit 
-	g = gbar*s*s*u 
-	ica = g*(v - eca) 
+	gca = gbar*s*s*u 
+	ica = gca*(v - eca) 
 	alpha_s = alp_s(v)
 	beta_s = bet_s(v)
 	alpha_u = alp_u(v)

@@ -10,6 +10,7 @@ from .tstellate import TStellate
 from .dstellate import DStellate
 from .pyramidal import Pyramidal
 from .tuberculoventral import Tuberculoventral
+from .cartwheel import Cartwheel
 from .granule import Granule
 from .sgc import SGC
 

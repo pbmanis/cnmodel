@@ -95,8 +95,13 @@ def test_sgc_apical():
 
 def test_mso():
     reset(raiseError=False)
-    cell = cells.MSO.create(species='guineapig', modelType='principal')
+    cell = cells.MSO.create(species='guineapig', modelType='MSO-principal')
     CellTester('mso_guineapig-principal', cell)
+
+def test_granule():
+    reset(raiseError=False)
+    cell = cells.Granule.create(species='mouse', modelType='GRC')
+    CellTester('Granule_cell_GRC', cell)
 
 #
 # Supporting functions
@@ -135,7 +140,7 @@ class CellTester(UserTester):
                 self.iv.win.hide()
  
 if __name__ == "__main__":
-    test_cartwheel()
+    test_granule()
     
 
 #def result_file(key):

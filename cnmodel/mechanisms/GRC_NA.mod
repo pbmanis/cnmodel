@@ -7,7 +7,7 @@ ENDCOMMENT
 NEURON {
 	SUFFIX GRC_NA
 	USEION na READ ena WRITE ina
-	RANGE gbar, ina, g
+	RANGE gbar, ina, gna
 	RANGE gamma, delta, epsilon, Con, Coff, Oon, Ooff
 	RANGE Aalfa, Valfa, Abeta, Vbeta, Ateta, Vteta, Agamma, Adelta, Aepsilon, ACon, ACoff, AOon, AOoff
 	RANGE n1,n2,n3,n4
@@ -44,7 +44,7 @@ PARAMETER {
 
 ASSIGNED {
 	ina  (mA/cm2)
-	g   (mho/cm2)
+	gna   (mho/cm2)
 	
 	gamma
 	delta
@@ -105,8 +105,8 @@ INITIAL {
 
 BREAKPOINT {
 	SOLVE kstates METHOD sparse
-	g = gbar * O	      	: (mho/cm2)
-	ina = g * (v - ena)  	: (mA/cm2)
+	gna = gbar * O	      	: (mho/cm2)
+	ina = gna * (v - ena)  	: (mA/cm2)
 }
 
 

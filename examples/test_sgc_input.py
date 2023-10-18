@@ -30,7 +30,7 @@ from cnmodel.util import custom_init
 cellmap = {'bushy': cells.Bushy, 'tstellate': cells.TStellate}
 
 class SGCInputTest(Protocol):
-    def run(self, celltype='bushy', temp=34.0, dt=0.025, seed=575982035, simulator=None):
+    def run(self, celltype='bushy', temp=34.0, dt=0.025, seed=575982035, simulator='cochlea'):
         preCell = cells.DummySGC(cf=4000, sr=2)
         self.celltype = celltype
         postCell = cellmap[celltype].create() # cells.Bushy.create()
@@ -39,8 +39,8 @@ class SGCInputTest(Protocol):
         self.post_cell = postCell
         self.synapse = synapse
  
-        self.stim = sound.TonePip(rate=100e3, duration=0.1, f0=4000, dbspl=80,
-                                  ramp_duration=2.5e-3, pip_duration=0.04, 
+        self.stim = sound.TonePip(rate=100e3, duration=0.1, f0=4000, dbspl=1.0,
+                                  ramp_duration=2.5e-3, pip_duration=0.1, 
                                   pip_start=[0.02])
         
         preCell.set_sound_stim(self.stim, seed=seed, simulator=simulator)
@@ -52,7 +52,7 @@ class SGCInputTest(Protocol):
             synapse.terminal.relsite.Dep_Flag = False
         self['t'] = h._ref_t
         
-        h.tstop = 100.0 # duration of a run
+        h.tstop = 200.0 # duration of a run
         h.celsius = temp
         h.dt = dt
         

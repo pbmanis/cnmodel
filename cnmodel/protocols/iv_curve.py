@@ -563,17 +563,19 @@ class IVCurve(Protocol):
         #
         # Generate figure with subplots
         #
-        app = pg.mkQApp()
-        win = pg.GraphicsWindow(
+        app = pg.Qt.mkQApp()
+        self.win = pg.GraphicsLayoutWidget() 
+        self.win.setWindowTitle(
             "%s  %s (%s)"
             % (cell.status["name"], cell.status["modelType"], cell.status["species"])
         )
-        self.win = win
-        win.resize(1000, 800)
-        Vplot = win.addPlot(labels={"left": "Vm (mV)", "bottom": "Time (ms)"})
-        rightGrid = win.addLayout(rowspan=2)
-        win.nextRow()
-        Iplot = win.addPlot(labels={"left": "Iinj (nA)", "bottom": "Time (ms)"})
+
+        self.win.resize(1000, 800)
+        self.win.show()
+        Vplot = self.win.addPlot(labels={"left": "Vm (mV)", "bottom": "Time (ms)"})
+        rightGrid = self.win.addLayout(rowspan=2)
+        self.win.nextRow()
+        Iplot = self.win.addPlot(labels={"left": "Iinj (nA)", "bottom": "Time (ms)"})
 
         IVplot = rightGrid.addPlot(labels={"left": "Vm (mV)", "bottom": "Icmd (nA)"})
         IVplot.showGrid(x=True, y=True)
@@ -586,8 +588,8 @@ class IVCurve(Protocol):
             labels={"left": "Spike count", "bottom": "Iinj (nA)"}
         )
 
-        win.ci.layout.setRowStretchFactor(0, 10)
-        win.ci.layout.setRowStretchFactor(1, 5)
+        self.win.ci.layout.setRowStretchFactor(0, 10)
+        self.win.ci.layout.setRowStretchFactor(1, 5)
 
         #
         # Plot simulation and analysis results
@@ -651,10 +653,10 @@ class IVCurve(Protocol):
         # Plot linear subthreshold I/V relationship
         ivals = np.array([Icmd.min(), Icmd.max()])
         vvals = s * ivals + i
-        line = pg.QtGui.QGraphicsLineItem(ivals[0], vvals[0], ivals[1], vvals[1])
-        line.setPen(pg.mkPen(255, 0, 0, 70))
-        line.setZValue(-10)
-        IVplot.addItem(line, ignoreBounds=True)
+        # line = pg.Qt.QGraphicsLineItem(ivals[0], vvals[0], ivals[1], vvals[1])
+        # line.setPen(pg.mkPen(255, 0, 0, 70))
+        # line.setZValue(-10)
+        # IVplot.addItem(line, ignoreBounds=True)
 
         # plot exponential fits
         for fit in self.fits:

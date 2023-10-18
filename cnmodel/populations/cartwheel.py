@@ -4,8 +4,8 @@ import numpy as np
 from .population import Population
 from .. import cells
 
-class Granule(Population):
-    type = 'granule'
+class Cartwheel(Population):
+    type = 'cartwheel'
     
     def __init__(self, species='mouse', **kwds):
         # Note that `cf` is the mean value used when selecting SGCs to connect;
@@ -15,7 +15,7 @@ class Granule(Population):
             ('cf', float),
             ('input_sr', list)
         ]
-        super(Granule, self).__init__(species, len(freqs), fields=fields, **kwds)
+        super(Cartwheel, self).__init__(species, len(freqs), fields=fields, **kwds)
         self._cells['cf'] = freqs
         self._cells['input_sr'] = [np.tile([1., 1., 1.], len(freqs))]
         
@@ -25,7 +25,7 @@ class Granule(Population):
         *cell_rec* argument is the row from self.cells that describes the cell 
         to be created.
         """
-        return cells.Granule.create(species=self.species, **self._cell_args)
+        return cells.Cartwheel.create(species=self.species, **self._cell_args)
 
     def connection_stats(self, pop, cell_rec):
         """ The population *pop* is being connected to the cell described in 

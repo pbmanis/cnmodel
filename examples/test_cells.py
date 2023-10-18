@@ -53,7 +53,7 @@ ccivrange = {'mouse':
                  'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]},
                  'pyramidalceballos': {'pulse': [(-0.09, 0.00, 0.09), (0, 0.008, 0.008)]}, #, 'prepulse': [(-0.25, -0.25, 0.25)]},
                  'tuberculoventral': {'pulse': [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]},
-                 'granule': {'pulse': [(-0.05, 0.05, 0.005)]}
+                 'granule': {'pulse': [(-0.02, 0.02, 0.0005)]}
                 },
 
             'guineapig':
@@ -248,7 +248,8 @@ class Tests():
         # MSO principal neuron tests
         #
         elif args.celltype == 'mso' and args.morphology == 'point':
-            cell = cells.MSO.create(model='RM03', species=args.species, modelType=args.type,
+            print("MSO Creation")
+            cell = cells.MSO.create(model='MSO-principal', species=args.species, modelType=args.type,
                 ttx=args.ttx, nach=args.nav, debug=debugFlag)    
 
         else:

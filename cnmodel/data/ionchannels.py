@@ -545,7 +545,8 @@ for a putative MSO principal neuron based on the original Rothman Manis 2003 mod
                     MSO-principal   
                              
 MSO_name            Principal       
-na_gbar             1000. [1]
+soma_na_gbar        1000. [1]
+soma_nacn_gbar      1000. [1]
 soma_kht_gbar       150.0 [1]
 soma_klt_gbar       200.0 [1]
 soma_ka_gbar        0.0   [1]
@@ -569,43 +570,50 @@ units               nS
 
 """)
 
-add_table_data('GRC_channels', row_key='parameter', col_key='model_type', 
-               species='mouse', model_type='I', data=u"""
+add_table_data('GRC_channels', row_key='field', col_key='model_type', 
+               species='mouse', model_type='GRC', data=u"""
 
 This table describes the ion channel densities for a point granule cell model,
 e.g., relative to REFERENCE densities in the standard granule cell model.
 and voltage shifts, for different compartments of the specified neuron,
-Conductances will be calculated from the Model derived from Xie and Manis 2013 for mouse
+
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                 I         
-                                                  
-GRC_NA_gbar      1.0 [1]   
-GRC_KV_gbar      1.0 [1]   
-GRC_KA_gbar      1.0 [1]   
-GRC_KM_gbar      1.0 [1]   
-GRC_KIR_gbar     1.0 [1] 
-GRC_KCA_gbar     1.0 [1] 
-GRC_CA_gbar      1.0 [1]   
-GRC_CALC_gbar    1.0 [1]   
-leak_gbar        0.0 [1] 
-leak_erev        -65. [1]
+                      GRC   
+
+soma_GRC_NA_gbar      13.0 [1]   
+soma_GRC_KV_gbar      3.0 [1]   
+soma_GRC_KA_gbar      3.2 [1]   
+soma_GRC_KM_gbar      0.25 [1]   
+soma_GRC_KIR_gbar     0.9 [1] 
+soma_GRC_KCA_gbar     0.03 [1] 
+soma_GRC_CA_gbar      0.46 [1]   
+soma_GRC_CALC_gbar    0.01 [1]
+soma_GRC_LKG1_gl      0.0568 [1]
+soma_leak_gbar        0.0 [1] 
+soma_leak_erev        -75. [1]
+soma_Dia              5.8
+soma_na_type          nagrc
+soma_e_k              -84.69 [1]
+soma_e_na             87.39   [1]
+soma_ih_eh            -43   [1]
+soma_e_ca             129. 
+soma_e_leak           -75.
+units                 mmho/cm2
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] Scaling is relative to soma scaling. Numbers are estimates based on general distribution from literature on cortical neurons.
-
+[1] scaling
 
 """)
 
 add_table_data('GRC_channels_compartments', row_key='parameter', col_key='compartment', 
-               species='mouse', model_type='I', data=u"""
+               species='mouse', model_type='GRC', data=u"""
 
 !!!!!!!!!!!! USAGE OF THIS TABLE SHOULD BE CONSIDERED EXPERIMENTAL !!!!!!!!!!!!!!
 
 This table describes the ion channel densities relative to somatic densities,
 e.g., relative to REFERENCE densities in the standard granule cell model.
 and voltage shifts, for different compartments of the specified neuron,
-Conductances will be calculated from the Model derived from Xie and Manis 2013 for mouse
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
                  axon           unmyelinatedaxon     myelinatedaxon     initialsegment    hillock     soma        dendrite         primarydendrite    secondarydendrite
@@ -623,8 +631,6 @@ leak_erev        -65. [1]       -65. [1]             -65. [1]           -65. [1]
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 [1] Scaling is relative to soma scaling. Numbers are estimates based on general distribution from literature on cortical neurons.
-
-
 """)
 
 

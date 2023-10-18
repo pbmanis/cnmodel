@@ -68,6 +68,9 @@ def _lookup(ind, *args, **kwds):
             data[k] = DATA[key][ind]
         return data
     else:
+        # for k in DATA.keys():
+        #     if k[0] == 'GRC_channels':
+        #         print("data in with leading key: ",k,  DATA[k])
         return DATA[key][ind]
             
 def setval(val, *args, **kwds):

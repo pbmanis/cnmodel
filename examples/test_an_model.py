@@ -37,7 +37,7 @@ def test_an_model():
     pdur = 0.02  # pip duration
     pstart = [0.01, 0.035]  # pip start times
     rt = 2.5e-3 # rise/fall time in seconds
-    stimdb = 65 # stimulus intensity in dB SPL
+    stimdb = 0 # stimulus intensity in dB SPL
 
     # PSTH parameters
     nrep = 50           # number of stimulus repetitions (e.g., 50)

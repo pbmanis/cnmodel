@@ -169,7 +169,7 @@ class ChannelKinetics:
         #     modfile2 = args[1]
         doKinetics = False
         self.app = pg.mkQApp()
-        self.win = pg.GraphicsWindow()
+        self.win = pg.GraphicsView()
         self.win.setWindowTitle(f"VC Plots for {args:s}")
         self.win.resize(900, 600)
         # cw = QtGui.QWidget()

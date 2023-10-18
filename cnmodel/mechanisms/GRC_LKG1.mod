@@ -10,7 +10,7 @@ ENDCOMMENT
 NEURON { 
 	SUFFIX GRC_LKG1 
 	NONSPECIFIC_CURRENT il
-	RANGE el, gl,i
+	RANGE el, gl, i
 } 
  
 UNITS { 

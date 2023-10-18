@@ -13,7 +13,7 @@ ENDCOMMENT
 NEURON { 
 	SUFFIX GRC_KIR
 	USEION k READ ek WRITE ik 
-	RANGE gbar, ik, g, alpha_d, beta_d 
+	RANGE gbar, ik, gk, alpha_d, beta_d 
 	RANGE Aalpha_d, Kalpha_d, V0alpha_d
 	RANGE Abeta_d, Kbeta_d, V0beta_d
 	RANGE d_inf, tau_d 
@@ -51,7 +51,7 @@ ASSIGNED {
 	ik (mA/cm2) 
 	d_inf 
 	tau_d (ms) 
-	g (mho/cm2) 
+	gk (mho/cm2) 
 	alpha_d (/ms) 
 	beta_d (/ms) 
 } 
@@ -63,8 +63,8 @@ INITIAL {
  
 BREAKPOINT { 
 	SOLVE states METHOD derivimplicit
-	g = gbar*d   : primo ordine!!!
-	ik = g*(v - ek) 
+	gk = gbar*d   : primo ordine!!!
+	ik = gk*(v - ek) 
 	alpha_d = alp_d(v) 
 	beta_d = bet_d(v) 
 } 

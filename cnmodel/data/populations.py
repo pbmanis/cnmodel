@@ -4,13 +4,13 @@ from ._db import add_table_data
 add_table_data('populations', row_key='field', col_key='cell_type', 
                species='mouse', data=u"""
 
----------------------------------------------------------------------------------------------------------------------------
-             sgc        bushy      tstellate    dstellate     octopus     pyramidal   tuberculoventral   pyramidal_ceballos  
+-------------------------------------------------------------------------------------------------------------------------------------
+             sgc        bushy      tstellate    dstellate     octopus     pyramidal   tuberculoventral   pyramidal_ceballos   granule  
                                                                                                                     
-n_cells      10000 [1]  6500 [2]   6500 [2]     650 [3]       5000        3000        5000               3000       
-cf_min       500        500        500          500           500         500         500                500        
-cf_max       64000      64000      64000        64000         64000       64000       64000              64000      
---------------------------------------------------------------------------------------------------------------------------
+n_cells      10000 [1]  6500 [2]   6500 [2]     650 [3]       5000        3000        5000               3000                  10000 [4]  
+cf_min       500        500        500          500           500         500         500                500                   500
+cf_max       64000      64000      64000        64000         64000       64000       64000              64000                 64000
+-------------------------------------------------------------------------------------------------------------------------------------
 
 [1] ?
 
@@ -29,6 +29,8 @@ cf_max       64000      64000      64000        64000         64000       64000 
     36 cells in 500x500 um = 144e6 / m^2  ~= 1728 / mm^2
     = 651 cells total  (VCN, unilateral)
 
+[4] Granule cell numbers are arbitrary.  We don't have a good estimate of the number of granule cells in the
+     mouse cochlear nucleus, and they don't necessarily receive input from the auditory nerve. 
 """)
 
 add_table_data('populations', row_key='field', col_key='cell_type', 

@@ -140,12 +140,12 @@ class GranuleDefault(Granule):
             Nothing
         """
         super(GranuleDefault, self).__init__()
-        self.i_test_range={'pulse': (-0.05, 0.05, 0.005)}  # note that this might get reset with decorator according to channels
+        self.i_test_range={'pulse': (-0.02, 0.02, 0.002)}  # note that this might get reset with decorator according to channels
                                                     # The default values are set in the species_scaling routine
         if species == 'mouse':
-            if modelType == None or modelType == 'I':
-                modelName = 'GRC'
-                modelType = 'granule'
+            if modelType == None or modelType == 'GRC':
+                modelName = 'granule'
+                modelType = 'GRC'
                 dataset = 'GRC_channels'
                 temp = 34.
 
@@ -170,10 +170,11 @@ class GranuleDefault(Granule):
             # v_sodium = 50           # somaodium reversal potential
 
             self.mechanisms = ['GRC_NA', 'GRC_LKG1', 'GRC_LKG2', 'GRC_KIR', 'GRC_KA', 'GRC_KM', 'GRC_KV',
-                               'GRC_KCA', 'GRC_CA', 'GRC_CALC']
+                               'GRC_KCA', 'GRC_CA'] # , 'GRC_CALC']
             for mech in self.mechanisms:
                 self.soma.insert(mech)
-            self.soma.insert('cadiff')
+            # self.soma.insert('cadiff')
+            self.soma.insert('GRC_CALC')
             self.species_scaling()  # set the default type II cell parameters
         else:  # decorate according to a defined set of rules on all cell compartments
             self.decorate()
@@ -183,13 +184,15 @@ class GranuleDefault(Granule):
         if debug:
             print( "<< Granule: Diwakar et al. model created >>")
 
-    def get_cellpars(self, dataset, species='mouse', modelType='I'):
+    def get_cellpars(self, dataset, species='mouse', modelType='GRC'):
         pars = self.get_initial_pars(dataset, species, modelType)
 
         for g in ['soma_GRC_NA_gbar', 'soma_GRC_KV_gbar', 'soma_GRC_KM_gbar', 'soma_GRC_KA_gbar',
                   'soma_GRC_KCA_gbar',
-                  'soma_GRC_KIR_gbar', 'soma_GRC_CA_gbar', 'soma_GRC_CALC_gbar',
-                  'soma_e_k', 'soma_e_na', 'soma_e_ca',
+                  'soma_GRC_KIR_gbar', 'soma_GRC_CA_gbar',
+                #   'soma_GRC_LGK1_gl', #'soma_GRC_LGK2_gl',
+                  'soma_e_k', 'soma_e_na', 'soma_e_ca', 'soma_e_leak',
+                  'soma_Dia',
                   ]:
             pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
             field=g))
@@ -222,32 +225,32 @@ class GranuleDefault(Granule):
         
         if self.status['species'] != 'mouse':
             raise ValueError ('Granule,  species: only "mouse" is recognized')
-        if self.status['modelType'] != 'Granule':
-            raise ValueError ('Granule modelType: only "I" is recognized, got %s', modelType)
+        if self.status['modelType'] != 'GRC':
+            raise ValueError ('Granule modelType: only "GRC" is recognized, got %s', modelType)
         self._valid_temperatures = (34.,)
         if self.status['temperature'] is None:
             self.set_temperature(34.)
 
-        self.i_test_range = {'pulse': (-0.05, 0.05, 0.005)}
+        # self.i_test_range = {'pulse': (-0.05, 0.05, 0.005)}
        # self.spike_threshold = 0
         self.vrange = [-75., -52.]  # set a default vrange for searching for rmp
         
-        self.set_soma_size_from_Cm(self.pars.cap)
-         # self.set_soma_size_from_Diam(self.pars.soma_Dia)
-        self.soma().GRC_NA.gbar = nstomho(self.pars.soma_GRC_NA_gbar, self.somaarea)
-        self.soma().GRC_KV.gbar = nstomho(self.pars.soma_GRC_KV_gbar, self.somaarea)
-        # self.soma().kpkj.gbar = nstomho(self.pars.soma_kpkj_gbar, self.somaarea)
-        # self.soma().kpkj2.gbar = nstomho(self.pars.soma_kpkj2_gbar, self.somaarea)
-        # self.soma().kpkjslow.gbar = nstomho(self.pars.soma_kpkjslow_gbar, self.somaarea)
-        # self.soma().kpksk.gbar = nstomho(self.pars.soma_kpksk_gbar, self.somaarea)
-        # self.soma().lkpkj.gbar = nstomho(self.pars.soma_lkpkj_gbar, self.somaarea)
-        # self.soma().naRsg.gbar = nstomho(self.pars.soma_narsg_gbar, self.somaarea)
-        # self.soma().cap.pcabar = self.pars.soma_pcabar
-        # self.soma().ena = self.pars.soma_e_na # 50
-        # self.soma().ek = self.pars.soma_e_k # -80
-        # self.soma().lkpkj.e = self.pars.soma_lkpkj_e  #-65
-        # self.soma().hpkj.eh = self.pars.soma_hpkj_eh  #-43
-        # self.soma().eca = self.pars.soma_e_ca # 50
+        # self.set_soma_size_from_Cm(self.pars.cap)
+        print(dir(self.pars))
+        self.set_soma_size_from_Diam(self.pars.soma_Dia)
+
+        self.soma().GRC_NA.gbar = self.g_convert(self.pars.soma_GRC_NA_gbar, self.pars.units, self.somaarea)
+        self.soma().GRC_KV.gbar = self.g_convert(self.pars.soma_GRC_KV_gbar, self.pars.units, self.somaarea)
+        self.soma().GRC_KA.gbar = self.g_convert(self.pars.soma_GRC_KA_gbar, self.pars.units, self.somaarea)
+        self.soma().GRC_KIR.gbar = self.g_convert(self.pars.soma_GRC_KIR_gbar, self.pars.units, self.somaarea)
+        self.soma().GRC_KCA.gbar = self.g_convert(self.pars.soma_GRC_KCA_gbar, self.pars.units, self.somaarea)
+        self.soma().GRC_CA.gbar = self.g_convert(self.pars.soma_GRC_CA_gbar, self.pars.units, self.somaarea)
+        # self.soma().GRC_LGK1.gl = self.g_convert(self.pars.soma_GRC_LGK1_gl, self.pars.units, self.somaarea)
+      
+        self.soma().ena = self.pars.soma_e_na # 50
+        self.soma().ek = self.pars.soma_e_k # -80
+        self.soma().eca = self.pars.soma_e_ca # 50
+        # self.soma().el = self.pars.soma_e_leak
         
         self.check_temperature()
         if not silent:
@@ -281,17 +284,23 @@ class GranuleDefault(Granule):
         if 'GRC_NA' in self.mechanisms:
             self.ix['GRC_NA'] = self.soma().GRC_NA.gna*(V - self.soma().ena)
         if 'GRC_KV' in self.mechanisms:
-             self.ix['GRC_KV'] = self.soma().GRC_IV.gk*(V - self.soma().ek)
+             self.ix['GRC_KV'] = self.soma().GRC_KV.gk*(V - self.soma().ek)
         if 'GRC_KA' in self.mechanisms:
              self.ix['GRC_KA'] = self.soma().GRC_KA.gk*(V - self.soma().ek)
         if 'GRC_KM' in self.mechanisms:
              self.ix['GRC_KM'] = self.soma().GRC_KM.gk*(V - self.soma().ek)
+        if 'GRC_KCA' in self.mechanisms:
+             self.ix['GRC_KCA'] = self.soma().GRC_KCA.gk*(V - self.soma().ek)
         if 'GRC_KIR' in self.mechanisms:
              self.ix['GRC_KIR'] = self.soma().GRC_KIR.gk*(V - self.soma().ek)
         if 'GRC_CA' in self.mechanisms:
              self.ix['GRC_CA'] = self.soma().GRC_CA.gca*(V - self.soma().eca)
-        if 'GRC_CALC' in self.mechanisms:
-             self.ix['GRC_CALC'] = self.soma().GRC_CALC.gca*(V - self.soma().GRC_CALC.eca)
+        if 'GRC_LKG1' in self.mechanisms:  # resistive leak
+             self.ix['GRC_LKG1'] = self.soma().GRC_LKG1.gl*(V - self.soma().GRC_LKG1.el)
+        if 'GRC_LKG2' in self.mechanisms:  # resting GABA conductance
+             self.ix['GRC_LKG2'] = self.soma().GRC_LKG2.ggaba*(V - self.soma().GRC_LKG2.egaba)
+        # if 'GRC_CALC' in self.mechanisms:
+        #      self.ix['GRC_CALC'] = self.soma().GRC_CALC.gca*(V - self.soma().GRC_CALC.eca)
         # leak
         # if 'lkpkj' in self.mechanisms:
         #     self.ix['lkpkj'] = self.soma().lkpkj.gbar*(V - self.soma().GRC.ek)

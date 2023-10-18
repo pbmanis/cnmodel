@@ -11,7 +11,7 @@ NEURON {
 	SUFFIX GRC_KCA
 	USEION k READ ek WRITE ik 
 	USEION ca READ cai
-	RANGE gbar, ik, ica, g, alpha_c, beta_c
+	RANGE gbar, ik, ica, gk, alpha_c, beta_c
 	RANGE Aalpha_c, Balpha_c, Kalpha_c
 	RANGE Abeta_c, Bbeta_c, Kbeta_c 
 	RANGE c_inf, tau_c 
@@ -54,7 +54,7 @@ ASSIGNED {
 
 	c_inf 
 	tau_c (ms) 
-	g (mho/cm2) 
+	gk (mho/cm2) 
 	alpha_c (/ms) 
 	beta_c (/ms) 
 } 
@@ -66,8 +66,8 @@ INITIAL {
  
 BREAKPOINT { 
 	SOLVE states METHOD derivimplicit 
-	g = gbar*c 
-	ik = g*(v - ek) 
+	gk = gbar*c 
+	ik = gk*(v - ek) 
 	alpha_c = alp_c(v) 
 	beta_c = bet_c(v) 
 } 
