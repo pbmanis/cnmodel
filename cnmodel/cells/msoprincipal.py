@@ -5,7 +5,7 @@ from .cell import Cell
 from ..util import Params
 from .. import data
 
-__all__ = ['MSO']
+__all__ = ['MSO', 'MSOPrincipal']
 
 
 class MSO(Cell):
@@ -15,6 +15,7 @@ class MSO(Cell):
     
     @classmethod
     def create(cls, model='MSO-principal', **kwds):
+        print("MSO Making model: ", model)
         if model == 'MSO-principal':
             return MSOPrincipal(**kwds)
         else:
@@ -137,15 +138,16 @@ class MSOPrincipal(MSO):
         super(MSO, self).__init__()
         if species == 'guineapig':
             modelType = 'MSO-principal'
-            modelName = 'MSO'
+            modelName = 'MSO-principal'
             dataset = 'MSO_principal_channels'
         else:
             raise ValueError(f"Species {species:s} not recognized for {self.celltype:s} cells")
-        
+        print(">>> MSO Principal")
         self.status = {self.somaname: True, 'axon': False, 'dendrites': False, 'pumps': False, 'hillock': False, 
                        'initialsegment': False, 'myelinatedaxon': False, 'unmyelinatedaxon': False,
                        'na': nach, 'species': species, 'modelType': modelType, 'ttx': ttx, 'name': 'MSO',
-                       'morphology': morphology, 'decorator': decorator, 'temperature': temperature}
+                       'morphology': morphology, 'decorator': decorator, 'temperature': temperature,
+                       'modelName':modelName}
 
         self.debug = debug
         self.spike_threshold = -40
@@ -172,12 +174,16 @@ class MSOPrincipal(MSO):
         if debug:
             print("   << Created cell >>")
 
-    def get_cellpars(self, dataset, species='guineapig', modelType='principal'):
+    def get_cellpars(self, dataset, species='guineapig', modelType='MSO-principal'):
         pars = self.get_initial_pars(dataset, species, modelType)
-
-        for g in ['soma_kht_gbar', 'soma_klt_gbar', 'soma_ih_gbar', 'soma_leak_gbar']:
-            pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
-            field=g))
+        print("Get cell pars!!!")
+        if self.status['modelName'] == 'MSO-principal':  # different models have different channel types
+            for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ih_gbar', 'leak_gbar']:
+                print("adding g: ", g)
+                pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
+                    field=g))
+        else:
+            raise ValueError(f"Model name {self.status['modelName']:s} is not recognized for MSO cells")
         return pars
 
     def species_scaling(self, silent=True):
@@ -223,10 +229,10 @@ class MSOPrincipal(MSO):
             self.set_soma_size_from_Cm(self.pars.cap)
 
             self.adjust_na_chans(soma, sf=sf)
-            soma().kht.gbar = self.g_convert(self.pars.soma_kht_gbar, self.pars.units, self.somaarea)
-            soma().klt.gbar = self.g_convert(self.pars.soma_klt_gbar, self.pars.units, self.somaarea)
-            soma().ihvcn.gbar = self.g_convert(self.pars.soma_ih_gbar, self.pars.units, self.somaarea)
-            soma().leak.gbar = self.g_convert(self.pars.soma_leak_gbar, self.pars.units, self.somaarea)
+            soma().kht.gbar = self.g_convert(self.pars.kht_gbar, self.pars.units, self.somaarea)
+            soma().klt.gbar = self.g_convert(self.pars.klt_gbar, self.pars.units, self.somaarea)
+            soma().ihvcn.gbar = self.g_convert(self.pars.ih_gbar, self.pars.units, self.somaarea)
+            soma().leak.gbar = self.g_convert(self.pars.leak_gbar, self.pars.units, self.somaarea)
 
             self.axonsf = 0.57
             
