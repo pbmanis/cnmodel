@@ -16,13 +16,13 @@ then
 else
     echo "No previous environment - ok to proceed"
 fi
-python3.9 -m venv $ENVNAME
+python3.10 -m venv $ENVNAME
 
 source $ENVNAME/bin/activate
 
 pip3 install --upgrade pip  # be sure pip is up to date in the new env.
 pip3 install wheel  # seems to be missing (note singular)
-pip3 install cython
+pip3 install cython==0.29.36
 # # if requirements.txt is not present, create:
 # # pip install pipreqs
 # # pipreqs
