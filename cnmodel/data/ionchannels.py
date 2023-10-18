@@ -542,24 +542,25 @@ This table describes the ion channel densities
 for a putative MSO principal neuron based on the original Rothman Manis 2003 model for bushy cells.
 
 -----------------------------------------------------------------------------------------------------------------------------------
-                    MSO-principal   
+                   MSO-principal   
                              
-MSO_name            Principal       
-soma_na_gbar        1000. [1]
-soma_nacn_gbar      1000. [1]
-soma_kht_gbar       150.0 [1]
-soma_klt_gbar       200.0 [1]
-soma_ka_gbar        0.0   [1]
-soma_ih_gbar        20.0  [1]
-soma_leak_gbar      2.0   [1]
-soma_leak_erev      -65   [1]
-soma_na_type        nacn  [1]
-soma_ih_type        ihvcn [1]
-soma_Cap            12.0  [1]
-soma_e_k            -84   [1]
-soma_e_na           50.   [1]
-soma_ih_eh          -43   [1]
-units               nS
+MSO_name           Principal       
+na_gbar            1000. [1]
+nacn_gbar          1000. [1]
+kht_gbar           150.0 [1]
+klt_gbar           200.0 [1]
+ka_gbar            0.0   [1]
+ih_gbar            20.0  [1]
+leak_gbar          2.0   [1]
+leak_erev          -65   [1]
+na_type            nacn  [1]
+ih_type            ihvcn [1]
+Cap                12.0  [1]
+e_k                -84   [1]
+e_na               50.   [1]
+ih_eh              -43   [1]
+soma_Dia           20
+units              nS
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
