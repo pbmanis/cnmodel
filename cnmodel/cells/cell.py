@@ -666,14 +666,18 @@ class Cell(object):
                 "nap",
                 "nappyr"
                 "nabu",
+                "GRC_NA",
             ]:
                 erev = eval("section().ena")
-            if m in ["klt", "kht", "ka"]:
+            if m in ["klt", "kht", "ka", "GRC_KA", "GRC_KCA", "GRC_KM", "GRC_KV"]:
                 erev = eval("section().ek")
-            if m in ["kis", "kif", "kdpyr", "kcnq", "kir"]:
+            if m in ["kis", "kif", "kdpyr", "kcnq", "kir", "GRC_KIR"]:
                 erev = eval("section().ek")
             if m in ["hcno", "ihvcn", "hcnobo", "ihpyr", "ihpyr_adj", "iphyrlc"]:
                 erev = eval("section()." + m + ".eh")
+            # if m in ["GRC_CA"]:
+            #     print(dir(eval("section()." + m)))
+            #     erev = eval("section()." + m + ".eca")
             print(f"{m:>12s} : {gx:7.3e} mho/cm2  {erev:>5.1f} mV")
             # print('{0:>12s} : <no gbar> '.format(m))
         print("-" * 32)
@@ -1298,7 +1302,7 @@ class Cell(object):
             "GRC_KA": "gk",
             "GRC_KM": "gk",
             "GRC_KCA": "gk",
-            "GRC_KIR": "gkir",
+            "GRC_KIR": "gk",
             "GRC_CA": "gca",
             "GRC_CALC": "gca",
             # SGC Ih specific:
