@@ -8,9 +8,10 @@ COMMENT
 ENDCOMMENT
  
 NEURON { 
-	SUFFIX GRC_LKG1 
-	NONSPECIFIC_CURRENT il
-	RANGE el, gl, i
+	THREADSAFE
+	SUFFIX GRCLKG
+	NONSPECIFIC_CURRENT i
+	RANGE e_l, gbar, i
 } 
  
 UNITS { 
@@ -20,18 +21,20 @@ UNITS {
  
 PARAMETER { 
 	v (mV) 
-	gl = 5.68e-5 (mho/cm2)
+	gbar = 5.68e-5 (mho/cm2)
 	celsius = 30 (degC)
-	el =  -16.5 (mV) : resting at -70 mV	:-11 resting at -68 mV
+	e_l =  -58.0 : -16.5 (mV) : resting at -70 mV	:-11 resting at -68 mV
 	: -58 : to make it 
 } 
 
 ASSIGNED { 
-	il (mA/cm2) 
 	i (mA/cm2) 
 }
-  
+
+INITIAL {
+
+}
+
 BREAKPOINT { 
-	il = gl*(v - el) 
-	i = il
+	i = gbar*(v - e_l) 
 } 

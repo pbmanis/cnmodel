@@ -1109,9 +1109,9 @@ class Cell(object):
                         "_gbar" in g and scale_mode == "density"
                     ):  # is this a channel area conductance or total conductance?
                         pars[g] = self.g_convert(x, units, refarea)  # scales data as needed.....
-                        print(
-                            f"    Density mode: , g={x:.3e} units: {units:6s}, refarea: {refarea:.3e}, New gbar: {pars[g]:.3f}  mmho/cm2"
-                        )
+                        # print(
+                        #     f"    Density mode: , g={x:.3e} units: {units:6s}, refarea: {refarea:.3e}, New gbar: {pars[g]:.3f}  mmho/cm2"
+                        # )
 
                     elif "_gbar" in g and scale_mode == "ratio":
                         x2 = data._db.get(
