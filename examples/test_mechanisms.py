@@ -59,7 +59,7 @@ nottestablemechs = [
     "Mechanism",
     "capmp",
     "capump",
-    "cl_ion",n
+    "cl_ion",
     "extracellular",
     "fastpas",
     "k_ion",
@@ -68,8 +68,8 @@ nottestablemechs = [
     "narsg",
     "pas",
     "cap",
-    "GRC_CALC",
-    "GRC_GABA",
+    "GRCCALC",
+    "GRCGABA",
 ]  # cap uses "pcabar"
 
 # tdur lists are the durations of the voltage step and the post-pulse for each mechanism
@@ -106,13 +106,13 @@ tdurs = {
     "napyr": [10, 5.0],
     "pkjlk": [100., 20.],
     "rsg": [100., 20.],
-    "GRC_NA": [10.0, 5.0],
-    "GRC_KV":  [50.0, 10.0],
-    "GRC_KA": [50.0, 10.0],
-    "GRC_KM": [50.0, 10.0],
-    "GRC_KIR": [50.0, 10.0],
-    "GRC_KCA": [50.0, 10.0],
-    "GRC_CA": [10.0, 10.0],
+    "GRCNA": [10.0, 5.0],
+    "GRCKV":  [50.0, 10.0],
+    "GRCKA": [50.0, 10.0],
+    "GRCKM": [50.0, 10.0],
+    "GRCKIR": [50.0, 10.0],
+    "GRCKCA": [50.0, 10.0],
+    "GRCCA": [10.0, 10.0],
     
 }
 
@@ -153,7 +153,8 @@ print("avail: ", sorted(availmech))
 print("not availmedh: ", notavail)
 
 class ChannelKinetics:
-    def __init__(self, args, export=False):
+    def __init__(self, args, temperature:float=34., export=False):
+        self.temperature = temperature
         modfile = []
         if isinstance(args, list):
             for arg in args:
@@ -169,7 +170,7 @@ class ChannelKinetics:
         #     modfile2 = args[1]
         doKinetics = False
         self.app = pg.mkQApp()
-        self.win = pg.GraphicsView()
+        self.win = pg.GraphicsLayoutWidget()
         self.win.setWindowTitle(f"VC Plots for {args:s}")
         self.win.resize(900, 600)
         # cw = QtGui.QWidget()
@@ -192,7 +193,7 @@ class ChannelKinetics:
         self.p6 = self.win.addPlot(title="Inact")
         self.win.show()
 
-        QtGui.QApplication.processEvents()
+        QtGui.QGuiApplication.processEvents()
         #
         # self.tdur is a table of durations for the pulse and post-pulse for each channel type (best to highlight features
         # on appropriate time scales)
@@ -245,17 +246,19 @@ class ChannelKinetics:
         Vr = 0.0
         if (
             modfile.startswith("na")
+            or modfile.startswith("GRCNA")
             or modfile.startswith("jsr")
             or modfile.startswith("ichanWT")
         ):
             Vr = 50.0
-        elif modfile.startswith("k"):
+        elif (modfile.startswith("k") or modfile.startswith("GRCK")):
             Vr = -84.0
         elif modfile.startswith("ih") or modfile.startswith("hcn"):
             Vr = -43.0
-        elif modfile.startswith("Ca") or modfile.startswith("ca"):
+        elif (modfile.startswith("Ca") or modfile.startswith("ca")
+            or modfile.startswith("GRCCA")):
             Vr = +100.0
-        h.celsius = 34.0  # set the temperature.
+        h.celsius = self.temperature  # set the temperature.
         self.vec = {}
         for var in ["time", "V", "IChan", "Vcmd"]:
             self.vec[var] = h.Vector()
@@ -438,11 +441,14 @@ class ChannelKinetics:
 
         G = fm[1, :] / (vstep - Vr)
         Po = np.array(G / np.max(G))
+        # print(vstep, Vr)
+        # print(fm[1,:])
+        # print(fm[0,:], Po)
         self.p2mh.plot(
             fm[0, :], Po, symbol="s", symbolSize=4.0, pen=pg.mkPen(color_inact)
         )
 
-        print(export)
+        print("Exporting to PDF? ", export)
         if export:
             exporter = pg.exporters.MatplotlibExporter(self.p1)
             print("exporting: " + "%s_traces.svg" % modfile)
@@ -474,13 +480,16 @@ def main():
     parser.add_argument(
         "-e", "--export", action="store_true", help="export plot of simulation"
     )
+    parser.add_argument(
+        "-t", "--temperature", type=float, default=34.0, help="temperature (C)",
+    )
     args = parser.parse_args()
 
     if args.mechanism == "all":
         for n in availmech:
-            ck = ChannelKinetics(n)
+            ck = ChannelKinetics(n, args.temperature)
     else:
-        ck = ChannelKinetics(args.mechanism, export=args.export)
+        ck = ChannelKinetics(args.mechanism, args.temperature, export=args.export)
 
     if sys.flags.interactive == 0:
         pg.QtWidgets.QApplication.exec()

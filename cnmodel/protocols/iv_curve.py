@@ -30,6 +30,8 @@ class IVCurve(Protocol):
         self.durs = None  # durations of current steps
         self.current_cmd = None  # Current command levels
         self.current_traces = []
+        self.channel_gK_traces = []
+        self.channel_gNa_traces = []
         self.axon_voltage_traces = None
         self.time_values = None
         self.dt = None
@@ -238,6 +240,10 @@ class IVCurve(Protocol):
 
         # Connect recording vectors
         self["v_soma"] = self.cell.soma(0.5)._ref_v
+        # self.cell.list_sections()
+        # print(dir(self.cell.soma(0.5).GRCKA))
+        # self['g_Na'] = h.Vector().record(self.cell.soma(0.5).GRCKA._ref_gk)
+        # self['g_K'] = h.Vector().record(self.cell.soma(0.5).GRCKM._ref_gk)
         # self['q10'] = self.cell.soma(0.5).ihpyr_adj._ref_q10
         # self['ih_ntau'] = self.cell.soma(0.5).ihpyr_adj._ref_kh_n_tau
         self["i_inj"] = istim._ref_i
@@ -246,6 +252,7 @@ class IVCurve(Protocol):
             recvec = [h.Vector() for x in sites]
             for i, r in enumerate(recvec):
                 r.record(sites[i](0.5)._ref_v, h.dt, 0, sec=sites[i])
+
         # h('secondorder=0')  # direct call fails; let hoc do the work
         h.celsius = self.cell.status["temperature"]
         # print("iv_curve:run_one:calling cell_initialize")
@@ -261,6 +268,8 @@ class IVCurve(Protocol):
 
         self.voltage_traces.append(self["v_soma"])
         self.current_traces.append(self["i_inj"])
+        # self.channel_gNa_traces.append(self["g_Na"])
+        # self.channel_gK_traces.append(self["g_K"])
         self.time_values = np.array(self["time"] - self.initdelay)
         if sites is not None:
             # for i, r in enumerate(recvec):
@@ -444,19 +453,19 @@ class IVCurve(Protocol):
                 "WARNING: Not enough traces to do linear regression in "
                 "IVCurve.input_resistance_tau()."
             )
-            print(
-                "{0:<15s}: {1:s}".format(
-                    "vss", ", ".join(["{:.2f}".format(v) for v in Vss])
-                )
-            )
-            print(
-                "{0:<15s}: {1:s}".format(
-                    "Icmd", ", ".join(["{:.2f}".format(i) for i in Icmd])
-                )
-            )
-            print("{0:<15s}: {1:s}".format("vmask", repr(vmask.astype(int))))
-            print("{0:<15s}: {1:s} ".format("imask", repr(imask.astype(int))))
-            print("{0:<15s}: {1:s}".format("spikemask", repr(smask.astype(int))))
+            # print(
+            #     "{0:<15s}: {1:s}".format(
+            #         "vss", ", ".join(["{:.2f}".format(v) for v in Vss])
+            #     )
+            # )
+            # print(
+            #     "{0:<15s}: {1:s}".format(
+            #         "Icmd", ", ".join(["{:.2f}".format(i) for i in Icmd])
+            #     )
+            # )
+            # print("{0:<15s}: {1:s}".format("vmask", repr(vmask.astype(int))))
+            # print("{0:<15s}: {1:s} ".format("imask", repr(imask.astype(int))))
+            # print("{0:<15s}: {1:s}".format("spikemask", repr(smask.astype(int))))
             slope = np.nan
             intercept = np.nan
             tau = np.nan
@@ -570,7 +579,7 @@ class IVCurve(Protocol):
             % (cell.status["name"], cell.status["modelType"], cell.status["species"])
         )
 
-        self.win.resize(1000, 800)
+        self.win.resize(1000, 1200)
         self.win.show()
         Vplot = self.win.addPlot(labels={"left": "Vm (mV)", "bottom": "Time (ms)"})
         rightGrid = self.win.addLayout(rowspan=2)
@@ -587,6 +596,12 @@ class IVCurve(Protocol):
         FIplot = rightGrid.addPlot(
             labels={"left": "Spike count", "bottom": "Iinj (nA)"}
         )
+        # rightGrid.nextRow()
+        # gKPlot = rightGrid.addPlot(labels={"left": "gK (uS)", "bottom": "Time (ms)"})
+        # rightGrid.addPlot(labels={"left": "gNa (uS)", "bottom": "Time (ms)"})
+        # gNaPlot = rightGrid.addPlot(labels={"left": "gNa (uS)", "bottom": "Time (ms)"})
+        
+                                   
 
         self.win.ci.layout.setRowStretchFactor(0, 10)
         self.win.ci.layout.setRowStretchFactor(1, 5)
@@ -605,6 +620,8 @@ class IVCurve(Protocol):
         for i in range(steps):
             Vplot.plot(t, Vm[i], pen=colors[i])
             Iplot.plot(t, Iinj[i], pen=colors[i])
+            # gKPlot.plot(t, self.channel_gK_traces[i], pen=colors[i])
+            # gNaPlot.plot(t, self.channel_gNa_traces[i], pen=colors[i])
             if len(DVm) == 0:
                 continue
             nnodes = len(DVm[i])

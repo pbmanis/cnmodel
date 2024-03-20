@@ -25,6 +25,7 @@ ASSIGNED {
 INITIAL {
     
 }
+
 BREAKPOINT {
 	i = gbar*(v - erev)
 }

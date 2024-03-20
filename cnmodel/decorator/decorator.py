@@ -39,7 +39,8 @@ class Decorator():
         # print('modelType in dec: ', cell.status['modelType'])
         # print('modelName in dec is ', cell.status['modelName'])
         # print('cell type in dec: ', cellType)
-        cell.channel_manager(modelName=cell.status['modelName'], modelType=cell.status['modelType'])
+        cell.channel_manager(cell.status)
+        
 #        print 'Cell: \n', dir(cell)
 #        print 'mechanisms: ', cell.hr.mechanisms
         # gmapper allows us tor remap the names of mechanisms and their conductance names, which may
@@ -50,13 +51,16 @@ class Decorator():
         self.gbar_mapper = {'nacn': 'gbar', 'kht': 'gbar', 'klt': 'gbar', 'leak': 'gbar',
                         'ihvcn': 'gbar', 'jsrna': 'gbar', 'nav11': 'gbar', 'nacncoop': 'gbar',
                         'nabu': 'gbar',
-                        'hcnobo': 'gbar'}
+                        'hcnobo': 'gbar',
+                        'GRCKA': 'gbar', 'GRCKV': 'gbar', 'GRCKM': 'gbar', 'GRCNA': 'gbar', 'GRCKIR': 'gbar',
+                        'GRCKCA': 'gbar', 'GRCCA': 'gbar', 'GRCCALC': None, 'GRCLKG': 'gbar', 'GRCLKGG': 'gbar'}
         self.erev_mapper = {'nacn': 'ena', 'kht': 'ek', 'klt': 'ek', 'leak': 'erev', 'nabu': 'ena',
                         'ihvcn': 'eh', 'jsrna': 'ena', 'nav11': 'ena', 'nacncoop': 'ena',
-                        'hcnobo': 'eh'}
+                        'hcnobo': 'eh', 'GRCLKG': 'e_l', 'GRCLKGG': 'e_gaba',}
         self.vshift_mapper = {'nacn': None, 'kht': None, 'klt': None, 'leak': None,
                         'ihvcn': None, 'jsrna': None, 'nav11': 'vshift', 'nacncoop': 'vshift', 'nabu': 'vshift',
-                        'hcnobo': None}
+                        'hcnobo': None, 'GRCKA': None, 'GRCKV': None, 'GRCKM': None, 'GRCNA': None,
+                        'GRCKCA': None, 'GRCCA': None, 'GRCCALC': None, 'GRCKIR': None, 'GRCLKG': None, 'GRCLKGG': None}
         self._biophys(cell, verify=verify)
         print('\033[1;31;40m Decorator: Model Decorated with channels (if this appears more than once per cell, there is a problem)\033[0m')
 
@@ -85,89 +89,99 @@ class Decorator():
         dmap = self.channelInfo.distanceMap
         if self.channelInfo is None:
             raise Exception('biophys - no parameters or info passed!')
-        if verify:
-            print(f'Biophys: Inserting channels as if cell type is {cellType:s} with modelType {self.channelInfo.modelType:s}')
+        # if verify:
+        print(f'Biophys: Inserting channels as if cell type is {cellType:s} with modelType {self.channelInfo.modelType:s}')
         
         cell.hr.mechanisms = []
-        for s in list(cell.hr.sec_groups.keys()):
-            sectype = self.remapSectionType(s.rsplit('[')[0])
-            if cell.hr.sec_groups[s] == set():
+        for secname in list(cell.hr.sec_groups.keys()):
+            sectype = self.remapSectionType(secname.rsplit('[')[0])
+            if cell.hr.sec_groups[secname] == set():
                 continue  # no sections of this type in the model, even if it was defined in a hoc file
             if sectype not in cell.channelMap.keys():
-                print(cell.channelMap.keys())
+                print("channel map keys: ", cell.channelMap.keys())
                 raise ValueError(f'Encountered unknown section group type: "{sectype:s}". Cannot complete decoration')
             
-            # here we go through all themechanisms in the ionchannels table for this cell and compartment type
+            # here we go through all the mechanisms in the ionchannels table for this cell and compartment type
             # note that a mechanism may have multiple parameters in the table (gbar, vshft), so we:
             #   a. only insert the mechanism once
             #   b. only adjust the relevant parameter
+            # print("channel map: ", cell.channelMap)
             for mechname in list(cell.channelMap[sectype].keys()):
-                mech = mechname.split('_')[0] # get the part before the _
-                parameter = mechname.split('_')[1]  # and the part after
+                mech = mechname.split('_')[:-1] # get the part before the last _
+                mech = '_'.join([m for m in mech])
+                parameter = mechname.split('_')[-1]  # and the part after (usuall _gbar or _el or something like that)
                 if mech in self.excludeMechs:
                     continue
-                # print('    *** ', mech, parameter)
+                print('    *** ', mech, parameter)
 
                 if mech not in self.gbar_mapper.keys():
-                    raise ValueError(f'Mechanism {mech:s} was requested in decorator but is not found?')
+                    raise ValueError(f'Mechanism {mech:s} was requested in decorator but it cannot be found?')
                 if verify:
-                    print(f'Biophys: section group: {s:s}  insert mechanism: {mech:s} at {cell.channelMap[sectype][mech]:.8f}')
+                    print(f'Biophys: section group: {secname:s}  insert mechanism: {mech:s} at {cell.channelMap[sectype][mech]:.8f}')
                 if mech not in cell.hr.mechanisms:  
                     cell.hr.mechanisms.append(mech)  # just add the mechanism to our list
-                x = nu.Mechanism(mech)
- 
-                for sec in cell.hr.sec_groups[s]:  # insert into all the sections of this type (group)
+                nu_mech = nu.Mechanism(mech)
+                for section in cell.hr.sec_groups[secname]:  # insert into all the sections of this type (group)
                     try:
-                        x.insert_into(cell.hr.get_section(sec))
+                        nu_mech.insert_into(cell.hr.get_section(section))
                     except:
-                        raise ValueError(f'Failed to insert mechanism: {mech:s}')  # fail if cannot insert.
+                        raise ValueError(f'Failed to insert mechanism: {mech:s} into section {str(section):s} of type {secname:s}')  # fail if cannot insert.
                     if verify:
-                        print('   Successfully inserted mechanism {mech:s} into section: {str(sec}:s)} ')
+                        print(f'   Successfully inserted mechanism {mech:s} into section: {str(section):s} of type {secname:s}')
                 
                 gbar_setup = None
                 gbar = 0.
                 if parameter == 'gbar':
-                    gbar = self.gbarAdjust(cell, sectype, mechname, sec)  # map density by location/distance
-                
+                    gbar = self.gbarAdjust(cell, sectype, mechname, section)  # map density by location/distance             
                     gbar_setup = ('%s_%s' % (self.gbar_mapper[mech], mech))  # map name into .mod file name
+                    print(f"Setting gbar for {sectype:>20s}, {gbar_setup:>12s} to   Value: {gbar:9.3e}")
                     # if parMap is not None and mech in parMap.keys():  # note, this allows parmap to have elements BESIDES mechanisms
                     #     if verify:
                     #         print 'parMap[mech]', mech, parMap[mech], gbar,
                     #     gbar = gbar * parMap[mech]  # change gbar here...
                     #     if verify:
                     # print(f'####### new gbar: ', gbar)
-                
+                else:
+                    print("***** Setting not happening for sectype: ", sectype, parameter)
                 vshift_setup = None
                 vshift = 0.
                 # print('mapper: ', self.vshift_mapper[mech])
                 if self.vshift_mapper[mech] is not None:
                     vshift_setup = ('%s_%s' % (self.vshift_mapper[mech], mech))  # map voltage shift
                     # print(cell.channelMap[sectype].keys())
-                    vshift = cell.channelMap[sectype]['%s_%s' % (mech, self.vshift_mapper[mech])]
+                    try:
+                        vshift = cell.channelMap[sectype]['%s_%s' % (mech, self.vshift_mapper[mech])]
+                    except KeyError:
+                        vshift = 0
+                        # print(mech)
+                        # raise(KeyError(f'Cannot find vshift for mechanism {mech}'))
                     # print("Channel Map: \n   ", cell.channelMap)
                     # print(f'*********   Shift add to mechanism {mech:s}: gbar={gbar:e}, vshift: {vshift:.6f}')
                 
                 cell.hr.h.Ra = self.channelInfo.newRa
-                for sec in cell.hr.sec_groups[s]:  # now set conductances and other parameters as requested
-                    cell.hr.get_section(sec).Ra = self.channelInfo.newRa  # set Ra here
+                for section in cell.hr.sec_groups[secname]:  # now set conductances and other parameters as requested
+                    cell.hr.get_section(section).Ra = self.channelInfo.newRa  # set Ra here
                     if gbar_setup is not None:
-                        setattr(cell.hr.get_section(sec), gbar_setup, gbar)  # set conductance magnitude
+                        try:
+                            setattr(cell.hr.get_section(section), gbar_setup, gbar)  # set conductance magnitude
+                        except:
+                            pass # some mechanisms might not do this... 
                         # print('gbar_setup: %s %s' % (sectype, gbar_setup), gbar)
                     # if m is not 'None':
                     #     print('param, vshift_setup: ', parameter, vshift_setup)
                     #     print('mapper, mech, vshift, sectype: ', self.vshift_mapper[mech], mech, vshift, sectype)
                     # exit()
                     if vshift_setup is not None:
-                        # print(cell.hr.get_section(sec))
+                        # print(cell.hr.get_section(section))
                         try:
-                            setattr(cell.hr.get_section(sec), vshift_setup, vshift)  # set shift magnitude
+                            setattr(cell.hr.get_section(section), vshift_setup, vshift)  # set shift magnitude
                         except:
-                            print(dir(cell.hr.get_section(sec)))
+                            print(dir(cell.hr.get_section(section)))
                             raise ValueError (f'cannot set mechanism attribute %s  ... %s ' % (vshift_setup, vshift))
                         # print('\033[1;31;40m Vshift set to : \033[0m', vshift, vshift_setup)
                     
                     if hasattr(cell, 'channelErevMap'):  # may not always have this mapping
-                        secobj = cell.hr.get_section(sec)  # get the NEURON section object
+                        secobj = cell.hr.get_section(section)  # get the NEURON section object
                         mechsinsec = cell.get_mechs(secobj)  # get list of mechanisms in this section
                         if mech in mechsinsec:  # confirm that the mechanism is really there
                             setrev = False  # We try two ways for different mechanisms - just flag it
@@ -198,6 +212,25 @@ class Decorator():
 
 
     def gbarAdjust(self, cell, sectype, mech, sec):
+        """gbarAdjust adjust gbar for a given cell, section type and mechanism
+            based on distance from soma, and on the section.
+
+        Parameters
+        ----------
+        cell : _type_
+            _description_
+        sectype : _type_
+            _description_
+        mech : _type_
+            _description_
+        sec : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         gbar = cell.channelMap[sectype][mech]
         gbar_orig = gbar
         if sectype not in cell.distMap.keys():  # no map for this section type
@@ -279,7 +312,6 @@ class Decorator():
     def remapSectionType(self, sectype):
         if sectype in ['AXON_0']:
             sectype = 'axon'
-
         if sectype in ['initseg', 'initialsegment']:
             sectype = 'initialsegment'
         if sectype in ['dendscaled_0', 'dendscaled_1', 'dendscaled_2', 'dendrite']:

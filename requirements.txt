@@ -26,3 +26,8 @@ pyqt6 # ==5.15.4 # 5.13.1
 pyqt6-sip # ==12.9.0 # 4.19.19
 pyqtgraph
 sounddevice==0.4.4
+
+# extras
+
+-e /Users/pbmanis/Desktop/Python/pylibrary
+-e /Users/pbmanis/Desktop/Python/neuronvis

@@ -1,12 +1,15 @@
+"""
+Demonstrate how voltage clamp does not clamp distant compartments.
+"""
 import os
 import os.path
 from neuron import h
-import pylibrary.Utility as U
-from ..util import PlotHelpers as PH
+from cnmodel.util import PlotHelpers as PH
 import numpy as np
 import scipy
 import scipy.integrate
 import scipy.stats
+import matplotlib as mpl
 
 try:
     import pyqtgraph as pg
@@ -14,7 +17,7 @@ try:
 except ImportError:
     HAVE_PG = False
 
-from ..util.stim import make_pulse
+from cnmodel.util.stim import make_pulse
 
 #import matplotlib as MP # must call first... before pylag/pyplot or backends
 #MP.use('Qt4Agg')
@@ -161,5 +164,12 @@ def run_democlamp(cell, dend, vsteps=[-60,-70,-60], tsteps=[10,50,100]):
     PH.calbar(pCi, [ptx-1, -50., 0.2, 10])
     PH.calbar(pBi, [ptx-1, 0, 0.2, 10])
     PH.calbar(pDi, [ptx-1, -50., 0.2, 20])
-    pylab.draw()
-    pylab.show()    
+    mpl.draw()
+    mpl.show()    
+
+def main():
+    run_democlamp("tstellate", "stick")
+
+
+if __name__ == "__main__":
+    main()

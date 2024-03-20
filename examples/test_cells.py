@@ -15,7 +15,7 @@ latency analyses.
 import argparse
 import os, sys
 import numpy as np
-
+from pathlib import Path
 from neuron import h
 import pyqtgraph as pg
 
@@ -53,7 +53,7 @@ ccivrange = {'mouse':
                  'pyramidal': {'pulse': [(-0.3, 0.3, 0.025), (-0.040, 0.025, 0.005)]},
                  'pyramidalceballos': {'pulse': [(-0.09, 0.00, 0.09), (0, 0.008, 0.008)]}, #, 'prepulse': [(-0.25, -0.25, 0.25)]},
                  'tuberculoventral': {'pulse': [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]},
-                 'granule': {'pulse': [(-0.02, 0.02, 0.0005)]}
+                 'granule': {'pulse': [(-0.02, 0.02, 0.002)]}
                 },
 
             'guineapig':
@@ -228,13 +228,22 @@ class Tests():
         # DCN granule cell tests
         #
         elif args.celltype == 'granule' and args.morphology == 'point':
-            print("Dir cells: ", dir(cells))
-            cell = cells.Granule.create(species='mouse', modelType='GRC',
+            cell = cells.Granule.create(model="GRC", species='mouse', modelType='GRC',
                      ttx=args.ttx, nach=args.nav, debug=debugFlag)
 
+        elif args.celltype == 'granule' and args.morphology == 'stick':
+            grc_stick = Path('cnmodel/morphology/granule_stick_simple.hoc')
+            print("find morphology: ", grc_stick.is_file())
+            cell = cells.Granule.create(species=args.species, 
+                modelName="GRC_channels_compartments", modelType='GRC', 
+                morphology=str(grc_stick), decorator=True,
+                ttx=args.ttx, debug=debugFlag)
+            h.topology()
         # elif args.celltype == 'granule' and args.morphology == 'stick':
-        #     cell = cells.Granule.create(species='mouse', modelType='GRC', 
-        #             morphology='cnmodel/morphology/granule.hoc', decorator=True,
+        #     grc = Path('cnmodel/morphology/granule_stick_simple.hoc')
+        #     print("find morphology: ", grc.is_file())
+        #     cell = cells.Granule.create(species='mouse', modelType='GRC_channels_compartment', 
+        #             morphology='cnmodel/morphology/granule_stick_simple.hoc', decorator=True,
         #             ttx=args.ttx, debug=debugFlag)
         #     h.topology()
 
@@ -274,7 +283,7 @@ class Tests():
         print("Resting potential: ", self.cell.vm0)
         durations = eval(args.durations)
         if self.cell.vm0 is None:
-            V0 = self.cell.find_i0(showinfo=True)
+            V0 = self.cell.find_i0(showinfo=True, vrange=[-85, -55])
         else:
             V0 = self.cell.vm0
 #        self.cell.cell_initialize()
@@ -302,7 +311,7 @@ class Tests():
         elif args.vc is True:
             # define the voltage clamp electrode and default settings
             self.vc = VCCurve()
-            self.vc.run((-120, 40, 5), self.cell)
+            self.vc.run((-120, 40, 10), self.cell)
             self.vc.show(cell=self.cell)
 
         else:
@@ -366,9 +375,10 @@ def main():
     t.selectCell(args)
     app = pg.mkQApp()
     t.run_test(sites, ptype, args)
-    
-    if sys.flags.interactive == 0:
-        pg.QtWidgets.QApplication.exec() 
+    print("run complete")
+    app.exec()
+    # if sys.flags.interactive == 0:
+    #     pg.QtWidgets.QApplication.exec() 
 
 if __name__ == '__main__':
     main()

@@ -6,6 +6,16 @@ All of the ion channel densities for the models implemented in cnmodel
 are (or should be) stated here, and should not be modified in the
 cnmodel code itself. 
 
+In the case where a table is being provided for domain-specific channel densities
+(e.g., for compartmental models), the table is based a the basic "soma-only"
+table with a particular model type. The table name should be the base table
+name suffixed with "_compartments". The table should have the same channels as the base table.
+The model_type should point to a valid column name in the base table model type.
+The column key should be "compartment", and the row key should be "parameter".
+The base table name should have _channels as the last part of the name, 
+and the compartment table should have _channels_compartments as the last part of the name.
+
+
 """
 
 add_table_data('RM03_channels', row_key='field', col_key='model_type', 
@@ -140,7 +150,7 @@ ih_type        ihvcn      ihvcn                ihvcn              ihvcn         
 # ***** BEGINNING OF XM13_Channels for nacncoop version of model
 
 
-add_table_data('XM13nacncoop_channels', row_key='field', col_key='model_type', 
+add_table_data('XM13_nacncoop_channels', row_key='field', col_key='model_type', 
                species='mouse', data=u"""
 
 This table describes the REFERENCE ion channel densities (and voltage shifts if necessary)
@@ -193,7 +203,7 @@ units            nS             nS             nS            nS            nS
 
 """)
 
-add_table_data('XM13nacncoop_channels_compartments', row_key='parameter', col_key='compartment', 
+add_table_data('XM13_nacncoop_channels_compartments', row_key='parameter', col_key='compartment', 
                species='mouse', model_type='II', data=u"""
 
 !!!!!!!!!!!! USAGE OF THIS TABLE SHOULD BE CONSIDERED EXPERIMENTAL !!!!!!!!!!!!!!
@@ -215,6 +225,7 @@ leak_erev          -65. [1]       -65. [1]             -65. [1]           -65. [
 nacncoop_vshift    0.0  [1]       0.0  [1]             0.0 [1]            0.0  [1]          0.0  [1]    0.0 [1]     0.0 [1]          0.0 [1]            0.0 [1]       
 na_type            nacncoop       nacncoop             nacncoop           nacncoop          nacncoop    nacncoop    nacncoop         nacncoop           nacncoop
 ih_type            ihvcn          ihvcn                ihvcn              ihvcn             ihvcn       ihvcn       ihvcn            ihvcn              ihvcn                            
+units              ratio          ratio                ratio              ratio             ratio       ratio        ratio           ratio              ratio              1
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 [1] Scaling is relative to soma scaling. Numbers are estimates based on general distribution from literature on cortical neurons.
@@ -571,67 +582,77 @@ units              nS
 
 """)
 
-add_table_data('GRC_channels', row_key='field', col_key='model_type', 
-               species='mouse', model_type='GRC', data=u"""
+add_table_data('GRC_channels', row_key='field', col_key='model_type',
+               species='mouse', data=u"""
 
-This table describes the ion channel densities for a point granule cell model,
-e.g., relative to REFERENCE densities in the standard granule cell model.
-and voltage shifts, for different compartments of the specified neuron,
-
-
-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                      GRC   
-
-soma_GRC_NA_gbar      13.0 [1]   
-soma_GRC_KV_gbar      3.0 [1]   
-soma_GRC_KA_gbar      3.2 [1]   
-soma_GRC_KM_gbar      0.25 [1]   
-soma_GRC_KIR_gbar     0.9 [1] 
-soma_GRC_KCA_gbar     0.03 [1] 
-soma_GRC_CA_gbar      0.46 [1]   
-soma_GRC_CALC_gbar    0.01 [1]
-soma_GRC_LKG1_gl      0.0568 [1]
-soma_leak_gbar        0.0 [1] 
-soma_leak_erev        -75. [1]
-soma_Dia              5.8
-soma_na_type          nagrc
-soma_e_k              -84.69 [1]
-soma_e_na             87.39   [1]
-soma_ih_eh            -43   [1]
-soma_e_ca             129. 
-soma_e_leak           -75.
-units                 mmho/cm2
---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-[1] scaling
-
-""")
-
-add_table_data('GRC_channels_compartments', row_key='parameter', col_key='compartment', 
-               species='mouse', model_type='GRC', data=u"""
-
-!!!!!!!!!!!! USAGE OF THIS TABLE SHOULD BE CONSIDERED EXPERIMENTAL !!!!!!!!!!!!!!
-
-This table describes the ion channel densities relative to somatic densities,
-e.g., relative to REFERENCE densities in the standard granule cell model.
-and voltage shifts, for different compartments of the specified neuron,
+This table describes the ion channel densities for a *point* granule cell model.
+The model is based mostly on the hillock and AIS channels from the GRC model of
+Diwakar et al., 2009
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                 axon           unmyelinatedaxon     myelinatedaxon     initialsegment    hillock     soma        dendrite         primarydendrite    secondarydendrite
-                                                                                                                                                                                                      
-GRC_NA_gbar      3.0 [1]        3.0 [1]              0.0 [1]            5.0 [1]           5.0 [1]     1.0 [1]     0.5 [1]          0.50 [1]           0.25 [1]       
-GRC_KV_gbar      1.0 [1]        2.0 [1]              0.01 [1]           2.0 [1]           2.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.25 [1]       
-GRC_KA_gbar      1.0 [1]        1.0 [1]              0.01 [1]           1.0 [1]           1.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.25 [1]       
-GRC_KM_gbar      0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]       
-GRC_KIR_gbar     0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-GRC_KCA_gbar     0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-GRC_CA_gbar      0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-GRC_CALC_gbar    0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-leak_gbar        1.0 [1]        0.25 [1]             0.25e-3 [1]        1.0 [1]           1.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]       
-leak_erev        -65. [1]       -65. [1]             -65. [1]           -65. [1]          -65. [1]    -65. [1]    -65. [1]         -65. [1]           -65. [1]      
+                 GRC
+              
+GRCNA_gbar       238.889 [1] 
+GRCKV_gbar       35.673  [1] 
+GRCKA_gbar       9.06137 [1] 
+GRCKM_gbar       0.25    [1]    
+GRCKIR_gbar      2.54851 [1] 
+GRCKCA_gbar      0.0     [1]     
+GRCCA_gbar       0.0     [1]      
+GRCCALC_gbar     0.01    [1]    
+GRCLKG_gbar      0.107226    
+GRCLKGG_gbar     0.0     [1]     
+na_type          nagrc       
+e_k              -84.69  [1]  
+e_na             87.39   [1]  
+e_ca             129.33      
+e_l              -16.5   [2]    
+e_gaba           -65.        
+soma_Cap         1.0568     [3]
+units            mmho/cm2
+
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] Scaling is relative to soma scaling. Numbers are estimates based on general distribution from literature on cortical neurons.
+[1] from the paper, but really taken from modelDB 123689, which is the model used in the paper.
+[2] originally -16.5
+[3] pF for a cell that is 5.8 um in diameter...
 """)
+
+
+add_table_data('GRC_channels_compartments', row_key='parameter', col_key='compartment',
+               species='mouse', model_type='GRC', data=u"""
+
+This table describes the ion channel densities for a compartmental granule cell model, for 
+different compartments of the specified neuron,
+taken from modelDB 265584, which is the model used in the latest paper (Masoli et al. COmm. Bio. 2020) from the group.
+Based on Diwaker et al. 2009.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                 soma           hillock         axon         ais               primarydendrite      preclaw        dendriticclaw
+                                                                                               
+GRCNA_gbar       0 [1]          9.2    [1]      26.3   [1]   20.  [1]          0.00 [1]             0.0 [1]        0.0 [1]  
+GRCKV_gbar       0 [1]          35.6   [1]      4.4  [1]     6.459  [1]        8.176 [1]            0.0 [1]        0.0 [1]   
+GRCKA_gbar       9.061   [1]    0.0 [1]         0.0 [1]      0.0 [1]           0.0 [1]              0.0 [1]        0.0 [1]   
+GRCKM_gbar       0.25 [1]       0.00 [1]        0.00 [1]     0.567 [1]         0.00 [1]             0.00 [1]       0.00 [1]  
+GRCKIR_gbar      2.54  [1]      0.0 [1]         0.0 [1]      0.0 [1]           0.0 [1]              0.0 [1]        0.0 [1] 
+GRCKCA_gbar      10.0 [1]       0.0 [1]         0.0 [1]      0.0 [1]           10.0 [1]             10.0           0.038103 [1]
+GRCCA_gbar       5.0[1]         0.5 [1]         0.0 [1]      0.3 [1]           5.0 [1]              5.0  [1]       5.0[1]  
+GRCCALC_gbar     0.00 [1]       0.00 [1]        0.00 [1]     0.00 [1]          0.00 [1]             0.00 [1]       0.00 [1]
+GRCLKG_gbar      0.290381       0.250           0.0936       0.292             3.5e-4 [1]           0.0            0.0 [1]
+GRCLKGG_gbar     0.0 [1]        0.0 [1]         0.0 [1]      0.0 [1]           0.0 [1]              0.0            0.0 [1]
+na_type          nagrc          nagrc           nagrc        nagrc             nagrc                nagrc          nagrc  
+e_k              -84.69 [1]     -84.69 [1]      -84.69 [1    -84.69 [1         -84.69 [1]           -84.69 [1]     -84.69 [1]1
+e_na             87.39  [1]     87.39  [1]      87.39 [1]    87.39 [1]         87.39   [1]          87.39  [1]     87.39   [1]
+e_ca             129.33         129.33          129.33       129.33            129.33               129.33         129.33 
+e_l              -16.5          -16.5           -16.5        -16.5             -16.5                -16.5          -16.5 [2]
+e_gaba           -65.           -65.            -65.         -65.              -65.                 -65.           -65.
+soma_Cap         1.0568         1.0568          1.0568       1.0568            1.0568               1.0568         1.0568  
+units            mmho/cm2       mmho/cm2        mmho/cm2     mmho/cm2          mmho/cm2             mmho/cm2       mmho/cm2
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[1] from the paper, but really taken from modelDB 265584, which is the model used in the latest paper.
+[2] originally -16.5
+""")
+
 
 

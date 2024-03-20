@@ -162,9 +162,9 @@ class VCCurve(Protocol):
         #
         app = pg.mkQApp()
         if cell is not None:
-            win = pg.GraphicsWindow('%s  %s (%s)' % (cell.status['name'], cell.status['modelType'], cell.status['species']))
+            win = pg.GraphicsLayoutWidget(title='%s  %s (%s)' % (cell.status['name'], cell.status['modelType'], cell.status['species']))
         else:
-            win = pg.GraphisWindow('Voltage Clamp')
+            win = pg.GraphisLayoutWidget(title='Voltage Clamp')
         self.win = win
         win.resize(1000, 800)
         Iplot = win.addPlot(labels={'left': 'Im (nA)', 'bottom': 'Time (ms)'})
@@ -172,7 +172,7 @@ class VCCurve(Protocol):
         win.nextRow()
         Vplot = win.addPlot(labels={'left': 'V (mV)', 'bottom': 'Time (ms)'})
 
-        IVplot = rightGrid.addPlot(labels={'left': 'Vm (mV)', 'bottom': 'Icmd (nA)'})
+        IVplot = rightGrid.addPlot(labels={'bottom': 'Vm (mV)', 'left': 'Ic(nA)'})
         IVplot.showGrid(x=True, y=True)
         rightGrid.nextRow()
 
@@ -197,4 +197,6 @@ class VCCurve(Protocol):
         # I/V relationships
         IVplot.plot(Vcmd, self.peak_im(), symbol='o', symbolBrush=(50, 150, 50, 255))
         IVplot.plot(Vcmd, self.steady_im(), symbol='s')
+
+        self.win.show()
 

@@ -200,6 +200,8 @@ class BushyRothman(Bushy):
                 dataset = 'XM13_channels'
             elif modelName  in 'XM13_nacncoop':
                 dataset = 'XM13_nacncoop_channels'
+            elif modelName  in 'XM13_nacncoop_compartments':
+                dataset = 'XM13_nacncoop_channels_compartments'
             elif modelName  in 'XM13A_nacncoop':
                 dataset = 'XM13A_nacncoop_channels'
             elif modelName  == 'XM13_nacn':
@@ -218,7 +220,7 @@ class BushyRothman(Bushy):
                        self.somaname: True, 'axon': False, 'dendrites': False, 'pumps': False, 'hillock': False, 
                        'initialsegment': False, 'myelinatedaxon': False, 'unmyelinatedaxon': False,
                        'na': nach, 'ttx': ttx, 'name': self.celltype,
-                       'morphology': morphology, 'decorator': decorator, 'temperature': temperature}
+                       'morphology': morphology, 'decorator': decorator, 'dataset':dataset, 'temperature': temperature}
         self.vrange = [-70., -55.]  # set a default vrange for searching for rmp
 
         self.c_m = 0.9  # default in units of uF/cm^2
@@ -288,6 +290,11 @@ class BushyRothman(Bushy):
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ihvcn_gbar', 'leak_gbar']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
                     field=g))
+        elif self.status['modelName'] in ['XM13_nacncoop_compartments']:
+            for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ihvcn_gbar', 'leak_gbar']:
+                pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
+                    parameter=g, compartment="soma"))
+
         elif self.status['modelName'] == 'XM13_nacn':
             for g in ['%s_gbar' % pars.natype, 'kht_gbar', 'klt_gbar', 'ihvcn_gbar', 'leak_gbar']:
                 pars.additem(g,  data.get(dataset, species=species, model_type=modelType,

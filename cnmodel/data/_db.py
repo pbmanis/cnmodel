@@ -2,12 +2,15 @@
 from __future__ import print_function
 from collections import OrderedDict
 import re
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4, width=80)
 
 
 # Unified collection point for all empirically-determined biophysical
 # values. Each value is a tuple (val, source). 
 
-DATA = OrderedDict()
+DATA:dict = OrderedDict()
 
 def get(*args, **kwds):
     """ Get a single value from the database using the supplied arguments
@@ -68,10 +71,21 @@ def _lookup(ind, *args, **kwds):
             data[k] = DATA[key][ind]
         return data
     else:
-        # for k in DATA.keys():
-        #     if k[0] == 'GRC_channels':
-        #         print("data in with leading key: ",k,  DATA[k])
-        return DATA[key][ind]
+        try:
+            data = DATA[key][ind]
+        except KeyError:
+            data = None
+            if key not in DATA.keys():
+                print("Here are the known Keys: ")
+                print("looking for something like:")
+                print("     ('GRC_channels', ('field', 'GRCNA_gbar'), ('model_type', 'GRC'), ('species', 'mouse')),")
+                # pp.pprint(DATA.keys())
+                print(f"Primary Key: {key!s} not found in DATA dictionary")
+            elif ind not in DATA[key].keys():
+                print("here is the DATA for the key: ", key) 
+                # pp.print(DATA[key])
+                print(f"secondary Key: {ind:d} not found in DATA dictionary")                       
+        return data
             
 def setval(val, *args, **kwds):
     key = mk_key(*args, **kwds)
