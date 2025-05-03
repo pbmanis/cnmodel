@@ -3,7 +3,7 @@
 # minimal requirements
 
 # development utilities
-black==19.10b0
+black==24.3.0
 Pint==0.14
 isort==5.0.2
 mypy==0.961
