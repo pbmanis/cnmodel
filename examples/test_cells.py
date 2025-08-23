@@ -11,21 +11,17 @@ cell with a series of current/voltage pulses to produce I/V, F/I, and spike
 latency analyses.
 
 """
-
 import argparse
-import os, sys
+import os
+import sys
+
 import numpy as np
-
-from neuron import h
 import pyqtgraph as pg
+from neuron import h
 
-import cnmodel.cells as cells
 import cnmodel
-
-
+from cnmodel import cells as cells
 from cnmodel.protocols import IVCurve, VCCurve
-
-
 
 debugFlag = True
 ax = None
