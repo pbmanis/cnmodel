@@ -524,7 +524,7 @@ if __name__ == "__main__":
             "dstellate",
             "octopus",
             "tuberculoventral",
-            "pyramida",
+            "pyramidal",
         ],
         help="Select target cell",
     )
