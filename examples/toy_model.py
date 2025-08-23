@@ -26,7 +26,7 @@ from cnmodel.protocols import IVCurve
 try:  # check for pyqtgraph install
     import pyqtgraph as pg
 except ImportError:
-    raise ImportError("This model requires pyqtgraph")
+    raise ImportError("This example requires pyqtgraph")
 
 from cnmodel.util.stim import make_pulse
 
