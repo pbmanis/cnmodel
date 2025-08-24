@@ -103,12 +103,18 @@ class MSOBinauralTest(Protocol):
         for cg in self.all_cells:
             for c in cg:
                 c.check_all_mechs()
+        ts = 0
         while h.t < h.tstop:
+            if ts == 0 or (h.t-ts) > 10:
+                print(f"{h.t:8.3f} ms {int(100*h.t/h.tstop):d}%\r", end="")
+                ts = h.t
             h.fadvance()
             
 
     def show(self):
-        self.win = pg.GraphicsWindow()
+        self.app = pg.mkQApp()
+        self.win = pg.GraphicsLayoutWidget()
+        self.win.setBackground("k")
         
         p5 = self.win.addPlot(title='stim')
         p5.plot(self.stim['left'][0].time * 1000., self.stim['left'][0].sound)

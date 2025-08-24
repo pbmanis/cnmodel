@@ -59,7 +59,7 @@ nottestablemechs = [
     "Mechanism",
     "capmp",
     "capump",
-    "cl_ion",n
+    "cl_ion",
     "extracellular",
     "fastpas",
     "k_ion",
@@ -169,30 +169,22 @@ class ChannelKinetics:
         #     modfile2 = args[1]
         doKinetics = False
         self.app = pg.mkQApp()
-        self.win = pg.GraphicsView()
+        self.win = pg.GraphicsLayoutWidget()
+        self.win.setBackground("k")
         self.win.setWindowTitle(f"VC Plots for {args:s}")
         self.win.resize(900, 600)
-        # cw = QtGui.QWidget()
-        # self.win.setCentralWidget(cw)
-        # self.gridLayout = QtGui.QGridLayout()
-        # cw.setLayout(self.gridLayout)
-        # self.gridLayout.setContentsMargins(9, 9, 4, 4)
-        # self.gridLayout.setSpacing(1)
+
         self.p1 = self.win.addPlot(title="I (VC)")
-        # self.gridLayout.addWidget(self.p1, 0, 0, 1, 1)
         self.p2 = self.win.addPlot(title="I_ss, I_max")
-        # self.gridLayout.addWidget(self.p2, 0, 1, 1, 1)
         self.p2mh = self.win.addPlot(title="act, inact")
 
         self.win.nextRow()
         self.p3 = self.win.addPlot(title="V command")
-        # self.gridLayout.addWidget(self.p3, 1, 0, 1, 1)
         self.p5 = self.win.addPlot(title="I_min")
-        # self.gridLayout.addWidget(self.p5, 1, 1, 1, 1)
         self.p6 = self.win.addPlot(title="Inact")
         self.win.show()
 
-        QtGui.QApplication.processEvents()
+        pg.QtWidgets.QApplication.processEvents()
         #
         # self.tdur is a table of durations for the pulse and post-pulse for each channel type (best to highlight features
         # on appropriate time scales)

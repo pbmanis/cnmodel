@@ -86,7 +86,8 @@ class SimpleSynapseTest(Protocol):
             h.run()
 
     def show(self):
-        self.win = pg.GraphicsWindow()
+        self.app=pg.mkQApp()
+        self.win = pg.GraphicsLayoutWidget()
         self.win.resize(800, 800)
         t = self['t']
 
@@ -99,3 +100,4 @@ class SimpleSynapseTest(Protocol):
         p2.plot(t[1:], self['i_soma'][1:], pen=pg.mkPen('w', width=2))
         p2.setLabels(left='I post (nA)', bottom='Time (ms)')
         p2.setXLink(p1)
+        self.win.show()

@@ -314,7 +314,7 @@ class SGCInputTestPSTH(Protocol):
 
         if parallelmode in ['mp', 'multiprocessing']:
             results = {}
-            workers = None  # use all available
+            workers = mp.Parallelize.suggestedWorkerCount()  # use suggested # 
             tot_runs = self.nrep
             tasks = []
             for nr in range(self.nrep):

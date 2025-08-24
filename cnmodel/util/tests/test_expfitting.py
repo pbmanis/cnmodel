@@ -1,4 +1,3 @@
-from __future__ import print_function
 from cnmodel.util import ExpFitting
 import numpy as np
 

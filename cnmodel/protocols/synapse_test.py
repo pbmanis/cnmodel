@@ -474,8 +474,8 @@ class SynapseTest(Protocol):
                 print( '   N/(N+A): %f\n' % (nmImax / (nmImax + amImax)))
             else:
                 print( "   (no NMDA/AMPA current; release might have failed)")
-
-        self.win = pg.GraphicsWindow()
+        self.app = pg.mkQApp()
+        self.win = pg.GraphicsLayoutWidget()
         self.win.resize(1000, 1000)
         self.win.show()
         
@@ -607,8 +607,10 @@ class SynapseTest(Protocol):
                         all_latencies.append(syn['latency'])
                 all_latencies = np.concatenate(all_latencies)
                 (hist, binedges) = np.histogram(all_latencies)
-                barg = pg.BarGraphItem(x=0, x0=np.zeros(len(hist)), y=binedges, height=0.7/len(binedges),
-                    width=hist, brush=(100, 100, 255, 150), pen=(100, 100, 255, 150))
+                print(len(binedges))
+                print(len(hist))
+                barg = pg.BarGraphItem(x=0, x0=np.zeros(len(hist)+1), y=binedges, height=0.7/len(binedges),
+                    width=0.8, brush=(100, 100, 255, 150), pen=(100, 100, 255, 150))
                 p7.addItem(barg)
                 # prior to pyqtgraph 12:
                 # curve = p7.plot(binedges, hist, stepMode=True, fillBrush=(100, 100, 255, 150), fillLevel=0)
