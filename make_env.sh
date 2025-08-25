@@ -3,7 +3,7 @@
 # in the main env (outside this local env)
 set -e # force failure if anyting fails in script - ensuring completion
 set -o errexit
-ENVNAME="cnmodel_venv"
+ENVNAME=".venv"
 if [ -d $ENVNAME ]
 then
     echo "Removing previous environment: $ENVNAME"
@@ -17,8 +17,9 @@ else
     echo "No previous environment - ok to proceed"
 fi
 python3.10 -m venv $ENVNAME
-
+echo "Created virtual environment: $ENVNAME"
 source $ENVNAME/bin/activate
+echo "Activated virtual environment: $ENVNAME"
 
 pip3 install --upgrade pip  # be sure pip is up to date in the new env.
 pip3 install wheel  # seems to be missing (note singular)
@@ -29,21 +30,29 @@ pip3 install cython==0.29.36
 #
 # #Then:
 #
+echo "Installing requirements from requirements.txt"
 pip3 install -r requirements.txt
 source $ENVNAME/bin/activate
+echo "Activated virtual environment: $ENVNAME"
 
 # build the mechanisms
+echo "Building NEURON mechanisms"
+pip3 install NEURON
+source $ENVNAME/bin/activate
+$ENVNAME/bin/nrnivmodl cnmodel/mechanisms
 
-nrnivmodl cnmodel/mechanisms
-
+echo "Installing Cochlea"
 # these have to be done separately as the compilation depends on what happens above
 pip3 install -e git+https://github.com/pbmanis/cochlea-1.git@8152f032e6e619d8632548b6b632fcda5f0638ed#egg=cochlea
 rm -rf cochleae
 
 # Optional - uncomment only if you need to view .hoc reconstructions
 #
+echo "Installing neuronvis"
 pip3 install -e git+https://github.com/pbmanis/neuronvis.git@Python3#egg=neuronvis
 source $ENVNAME/bin/activate
 python --version
 
+echo "Executing setup"
 python setup.py develop
+echo "Setup Complete"

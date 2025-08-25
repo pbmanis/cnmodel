@@ -7,4 +7,5 @@ from .user_tester import UserTester
 from .get_anspikes import *
 from .Params import *
 from .talbotetalTicks import Extended
+# from .gif import *
 
