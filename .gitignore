@@ -13,6 +13,7 @@ arm64/**
 
 # specific directories and files:
 cnmodel_venv/
+.venv/
 # cnmodel_venv/** # virutal environment
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
