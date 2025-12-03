@@ -4,12 +4,12 @@ version = "0.56.0"
 description = "CNModel - a computational framework for modeling and simulating neurons and networks in the auditory system"
 
 readme = "README.md"
-requires-python = "==3.10.6"
+requires-python = "==3.13.7"
 dependencies = [
-    "cython==0.29.36",
+    # "cython==0.29.36",
     "jupyterlab>=4.4.6",
     "lmfit==1.0.2",
-    "matplotlib>=3.6.0",
+    "matplotlib>=3.9.0",
     "matplotlib-scalebar==0.5.1",
     "neuron>=8.2",
     "numba>=0.61.2",
@@ -19,24 +19,29 @@ dependencies = [
     "pyqt6-sip>=13.10.2",
     "pyqtgraph>=0.13.7",
     "pytest>=6",
+    # "pyzbc2014",
+    "pyzbc2014",
     "resampy>=0.4",
     "scipy>=1.15.3",
     "sounddevice==0.4.4",
 ]
-[tools.uv.sources]
-    httpx = {git = "https://github.com/pbmanis/cochlea-1.git", rev = "8152f032e6e619d8632548b6b632fcda5f0638ed"}
+
+[tool.uv.sources]
+pyzbc2014 = { path = "pyzbc2014-0.0.3-cp313-cp313-macosx_15_0_arm64.whl" }
+#[tools.uv.sources]
+#    httpx = {git = "https://github.com/pbmanis/cochlea-1.git", rev = "8152f032e6e619d8632548b6b632fcda5f0638ed"}
 
 
-[develop-groups]
-dev = [
-    "sphinx>=3.4",
-    "black==24.3.0",
-    "isort==5.0.2",
-    "mypy==0.961",
-    "nose==1.3.7",
-]
-[tool.uv.extra-build-dependencies]
-cochlea = ["Cython", "numpy", "pandas", "tzdata"]
+# [develop-groups]
+# dev = [
+#     "sphinx>=3.4",
+#     "black==24.3.0",
+#     "isort==5.0.2",
+#     "mypy==0.961",
+#     "nose==1.3.7",
+# ]
+# [tool.uv.extra-build-dependencies]
+# cochlea = ["Cython", "numpy", "pandas", "tzdata"]
 # note: to install cochlea, make sure pip3 install numpy and pip3 install cochlea... 
 
 #uv pip install "cochlea @ /Users/pbmanis/Desktop/Python/cochlea"
