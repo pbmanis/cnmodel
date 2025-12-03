@@ -94,13 +94,12 @@ def makeSynapses(post_cell, info):
         pre_cells[-1].set_sound_stim(
             info["stim"], seed=info["seed"] + nsgc, simulator=info["simulator"]
         )
-    # print('makesyn ok')
+
     return {'pre_cells':pre_cells, 'synapses': synapses, 'xmtr':xmtr}
 
     
 def runNeuron(post_cell, info, psx):
 
-    # print('runNeuron entry')
     Vm = h.Vector()
     Vm.record(post_cell.soma(0.5)._ref_v)
     rtime = h.Vector()
@@ -113,7 +112,6 @@ def runNeuron(post_cell, info, psx):
     h.t = 0.0
     while h.t < h.tstop:
         h.fadvance()
-    # print('runNeuron exit')
     pre_trains = [psx['pre_cells'][k]._spiketrain for k in range(len(psx['pre_cells']))]
     # print(psx['xmtr'].keys())
     # print([psx['xmtr'][k].to_python() for k in list(psx['xmtr'].keys())])
@@ -129,10 +127,14 @@ def runNeuron(post_cell, info, psx):
 
 
 def runTrial(cell, info):
+    print("building cell", end="")
     post_cell = buildCell(cell)
+    # print("make synapses")
     psx = makeSynapses(post_cell, info )
     # setupNeuron(post_cell, info)
+    # print("run neuron")
     res = runNeuron(post_cell, info, psx)
+    print("  >> done in runTrial")
     return(res)
 
 
@@ -176,7 +178,7 @@ class SGCInputTestPSTH(Protocol):
         self.fMod = 100.0  # mod freq, Hz
         self.dMod = 0.0  # % mod depth, Hz
         self.dbspl = 50.0
-        self.simulator = "cochlea"
+        self.simulator = "py3" # "cochlea"
         self.sr = 2  # set SR group
 
     def set_cell(self, cell="bushy"):
@@ -594,7 +596,7 @@ if __name__ == "__main__":
     prot.set_db(args.dbspl)
     prot.set_sr(args.srgroup)
     
-    prot.run(stimulus=args.stimulus, reps=args.nrep, simulator='cochlea', parallelmode=args.parallelmode)
+    prot.run(stimulus=args.stimulus, reps=args.nrep, simulator='py3', parallelmode=args.parallelmode)
     prot.show()
 
     import sys
