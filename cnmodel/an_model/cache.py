@@ -8,12 +8,18 @@ import numpy as np
 from .wrapper import get_matlab, model_ihc, model_synapse, seed_rng
 from ..util.filelock import FileLock
 
-import cochlea
+# import cochlea
 try:
     import cochlea
     HAVE_COCHLEA = True
 except ImportError:
     HAVE_COCHLEA = False
+
+try:
+    import pyzbc2014
+    HAVE_PYZBC2014 = True
+except ImportError:
+    HAVE_PYZBC2014 = False
 
 _cache_version = 2
 _cache_path = os.path.join(os.path.dirname(__file__), 'cache')
@@ -118,7 +124,7 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
         Stimulus sound to be presented on each repetition
     seed : int >= 0
         Random seed
-    simulator : 'cochlea' | 'matlab' | None
+    simulator : 'cochlea' | 'matlab' | 'py3' | None
         Specifies the auditory periphery simulator to use. If None, then a
         simulator will be automatically chosen based on availability.
     **kwds : 
@@ -155,6 +161,7 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
         psth = psth.get().ravel()
         times = np.argwhere(psth).ravel()
         return times * stim.dt
+    
     elif (simulator in ['cochlea']) and HAVE_COCHLEA:
         fs = int(0.5+1./stim.dt)  # need to avoid roundoff error
         srgrp = [0,0,0] # H, M, L (but input is 1=L, 2=M, H = 3)
@@ -167,8 +174,27 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
                 seed=seed,
                 species='cat')
         return np.array(sp.spikes.values[0])
+    
+    elif simulator in ['py3']:
+        if not HAVE_PYZBC2014:
+            raise ImportError("The 'pyzbc2014' package is required for the 'py3' simulator.")
+        fiberType = 'hsr' if sr == 2 else ('msr' if sr == 1 else 'lsr')
+        powerlaw = 'approx'  # approximate power-law implementation
+        noiseType = 'fresh'  # variable fGn
+        vihc = pyzbc2014.sim_ihc_zbc2014(stim.sound, cf, 1, int(0.5+1./stim.dt),
+                                         cohc=ihc_kwds['cohc'], cihc=ihc_kwds['cihc'],
+                                         species='cat')
+        an_drive = pyzbc2014.sim_anrate_zbc2014(vihc, cf, 1, int(0.5+1./stim.dt),
+                                                 fiberType, powerlaw, noiseType)
+        # generate spikes from the instantaneous rate
+        spikes = pyzbc2014.sim_spike_generator_zbc2014(an_drive, fs=int(0.5+1./stim.dt),
+                                                       totalstim=stim.duration, nrep=1)
+        spiketimes = spikes[spikes > 0.0]
+        return np.array(spiketimes)
+
+
     else:  # it remains possible to have a typo.... 
-        raise ValueError("anmodel/cache.py: Simulator must be specified as either MATLAB or cochlea; found <%s> of type %s (cochlea? %r)"
+        raise ValueError("anmodel/cache.py: Simulator must be specified as either MATLAB or py3; found <%s> of type %s (cochlea? %r)"
             % (simulator, type(simulator), HAVE_COCHLEA))
 
 
@@ -180,9 +206,15 @@ def detect_simulator():
     If not, raise an exception.
     """
     try:
-        import cochlea
-        simulator = 'cochlea'
-    except ImportError:
-        get_matlab()
-        simulator = 'matlab'
+        import pyzbc2014
+        simulator = "py3"
+    except:
+        try:
+            import cochlea
+            simulator = 'cochlea'
+        except ImportError:
+            get_matlab()
+            simulator = 'matlab'
+    finally:
+        pass
     return simulator
