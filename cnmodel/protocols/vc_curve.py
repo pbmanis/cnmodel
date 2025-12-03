@@ -161,10 +161,11 @@ class VCCurve(Protocol):
         # Generate figure with subplots
         #
         app = pg.mkQApp()
+        win = pg.GraphicsLayoutWidget()
         if cell is not None:
-            win = pg.GraphicsWindow('%s  %s (%s)' % (cell.status['name'], cell.status['modelType'], cell.status['species']))
+            win.setWindowTitle('%s  %s (%s)' % (cell.status['name'], cell.status['modelType'], cell.status['species']))
         else:
-            win = pg.GraphisWindow('Voltage Clamp')
+            win.setWindowTitle('Voltage Clamp')
         self.win = win
         win.resize(1000, 800)
         Iplot = win.addPlot(labels={'left': 'Im (nA)', 'bottom': 'Time (ms)'})
@@ -198,3 +199,4 @@ class VCCurve(Protocol):
         IVplot.plot(Vcmd, self.peak_im(), symbol='o', symbolBrush=(50, 150, 50, 255))
         IVplot.plot(Vcmd, self.steady_im(), symbol='s')
 
+        win.show()
