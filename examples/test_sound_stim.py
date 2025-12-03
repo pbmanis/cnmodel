@@ -23,7 +23,11 @@ import time
 import pyqtgraph as pg
 from cnmodel import an_model
 from cnmodel.util import sound
-import cochlea
+try:
+    import cochlea
+    HAVE_COCHLEA = True
+except ImportError:
+    HAVE_COCHLEA = False
 
 seed = 34986
 
@@ -48,7 +52,7 @@ def set_dbspl(signal, dbspl):
 
 
 @time_usage
-def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=True):
+def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=False):
     cf = 1.5e3
     levels = list(range(-10, 101, 10))
 
@@ -57,7 +61,7 @@ def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=True):
     if useMatlab:
         simulator = "matlab"
     else:
-        simulator = "cochlea"
+        simulator = "py3"
     for sr in 1, 2, 3:
         spikes = {}
         for rep in range(reps):
@@ -72,7 +76,7 @@ def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=True):
                         pip_start=[0.005],
                         ramp_duration=2.5e-3,
                     )
-                if simulator == "cochlea":
+                if simulator == "py3":
                         stim._sound = set_dbspl(stim.sound, level)  # adjust scaling here
                 spikes[rep].append(
                         an_model.get_spiketrain(
@@ -85,23 +89,23 @@ def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=True):
 
 
 def runtest():
-    usematlab = True
+    usematlab = False
     if len(sys.argv) > 0:
         if len(sys.argv) == 1:
             print(
-                'Call requires argument, must be either "matlab" or "cochlea"; default is "matlab"'
+                'Call requires argument, must be either "matlab" or "cochlea" or "py3"; default is "py3"'
             )
             exit()
         flag = sys.argv[1]
-        if flag not in ["matlab", "cochlea"]:
-            print('Flag must be either "matlab" or "cochlea"; default is "matlab"')
+        if flag not in ["matlab", "cochlea", "py3"]:
+            print('Flag must be either "matlab" or "cochlea" or "py3"; default is "py3"')
             exit()
-        if flag == "cochlea":
+        if flag in ["cochlea" or "py3"]:
             usematlab = False
     if usematlab:
         print("Running with matlab simulator")
     else:
-        print("Running with MR cochlea simulator")
+        print("Running with a python simulator")
     reps = 10
     pip_duration = 0.5 # seconds
     result = sound_stim(seed, reps=reps, pip_duration=pip_duration, useMatlab=usematlab)
