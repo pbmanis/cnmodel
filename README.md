@@ -1,8 +1,8 @@
 Latest changes
 ==============
 
-1. The AN model has been modified to use the Python scripts from Daniel G and 
-Thomas Stoll, with some modifications. This wrapper around the original Zilany et al,
+1. The AN model has been modified to use the Python wrapper scripts from Daniel Guest (and proposed pull from
+Tom Stoll) with some modifications. This wrapper around the original Zilany et al,
 2014 model works with Python 3.13. 
 
 2. The "cochlea" model (Rudnicki and Hemmert) is being deprecated. THe matlab version
@@ -59,9 +59,13 @@ followed by:
 
 This may take a few moments.
 
-It should now be possible to run the "examples/test_an_model.py" script to confirm that the 3 main
-routines in the model run correctly.
+After install Neuron 9.0 for your platform, make the dll/so library for the mechanisms. For example,
+run this command, to build a "universal" set of mechanisms for mac-os:
 
+`nrnivmodl -incflags '-arch x86_64 -arch arm64' -loadflags '-arch x86_64 -arch arm64' cnmodel/mechanisms`
+
+It should now be possible to run the "examples/test_an_model.py" script to confirm that the 3 main
+routines in the model run correctly. Remove the "-arch arm64" flags if you are on a Windows machine and need to build for the x86_64 architecture only.
 
 
 A Note About the Branches
@@ -71,6 +75,8 @@ There are 2 branches in this public repository for CNModel.
 The "main" branch is the original branch that goes with Manis and Campagnola, Hear. Res. 2018. This is a Python 2.7 branch.
 
 The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.7.9. Please read the notes on that branch for information on differences and new functionality. This is now the default branch.
+
+A new branch ("rimrock_cleanup") from 2025 is the latest, and works with Python 3.13 and a different version of the wraper for the Zilany et al. 2014 model. 
 
 Changes
 =======
