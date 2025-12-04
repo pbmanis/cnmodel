@@ -7,8 +7,11 @@ from __future__ import print_function
 import numpy as np
 import numpy.ma as ma # masked array
 import re, sys, gc, collections
+import time
 
 import neuron
+from neuron import h
+
 
 
 _mechtype_cache = None
@@ -115,33 +118,34 @@ def reset(raiseError=True):
     numsec = 0
 
     remaining = []
-    n = len(list(neuron.h.allsec()))
+    nsecs = len(list(neuron.h.allsec()))
 
-    if n > 0:
-        remaining.append((n, 'Section'))
+    if nsecs > 0:
+        remaining.append((nsecs, 'Section'))
         
-    n = len(neuron.h.List('NetCon'))
-    if n > 0:
-        remaining.append((n, 'NetCon'))
+    nsecs = len(neuron.h.List('NetCon'))
+    if nsecs > 0:
+        remaining.append((nsecs, 'NetCon'))
     
     # No point processes or artificial cells left
     for name, typ in all_mechanism_types().items():
         if typ['artificial_cell'] or typ['point_process']:
-            n = len(neuron.h.List(name))
-            if n > 0:
-                remaining.append((n, name))
+            npps = len(neuron.h.List(name))
+            if npps > 0:
+                remaining.append((npps, name))
     
     if len(remaining) > 0 and raiseError:  # note that not raising the error leads to memory leak
         msg = ("Cannot reset--old objects have not been cleared: %s" %
                ', '.join(['%d %s' % rem for rem in remaining]))
         raise RuntimeError(msg)
 
-def custom_init(v_init=-60.):
+def custom_init(v_init:float = -60.,
+                t0:float = -1e3,
+                dt:float = 0.05,
+                dur:float = 5e1):
     """
     Perform a custom initialization of the current model/section. 
-    
-    This initialization follows the scheme outlined in the
-    NEURON book, 8.4.2, p 197 for initializing to steady state.
+    This is from the Neuron 9.0 website, "Excercise: initializing to steady state"
     
     N.B.: For a complex model with dendrites/axons and different channels,
     this initialization will not find the steady-state the whole cell,
@@ -158,31 +162,57 @@ def custom_init(v_init=-60.):
         Voltage to start the initialization process. This should
         be close to the expected resting state.
     """
-    inittime = -1e10
-    tdt = neuron.h.dt  # save current step size
-    dtstep = 1e9
-    neuron.h.finitialize(v_init) 
-    neuron.h.t = inittime  # set time to large negative value (avoid activating
-                    # point processes, we hope)
-    tmp = neuron.h.cvode.active()  # check state of variable step integrator
-    if tmp != 0:   # turn off CVode variable step integrator if it was active
-        neuron.h.cvode.active(0)  # now just use backward Euler with large step
-    neuron.h.dt = dtstep
-    n = 0
-    while neuron.h.t < -1e9:  # Step forward
-        neuron.h.fadvance()
-        n += 1
-    #print('advances: ', n)
-    if tmp != 0:
-        neuron.h.cvode.active(1)  # restore integrator
-    neuron.h.t = 0
-    if neuron.h.cvode.active():
-        neuron.h.cvode.re_init()  # update d(state)/dt and currents
+    # stime = time.time()
+    # print("starting custom init")
+
+    h.t = t0
+    old_cvode_state = h.CVode().active()
+    h.CVode().active(False)  # turn off variable step integrator
+    h.dt = dt
+    while (h.t < t0 + dur):
+        h.fadvance()
+    
+    # restore CVode state
+    h.CVode().active(old_cvode_state)
+    h.t = 0.0
+    if h.CVode().active():
+        h.CVode().re_init()  # update d(state)/dt and currents
     else:
-        neuron.h.fcurrent()  # recalculate currents
-    neuron.h.frecord_init()  # save new state variables
-    neuron.h.dt = tdt  # restore original time step
-        
+        h.fcurrent()  # recalculate currents
+    h.frecord_init()  # save new state variables
+    # print(f"custom init completed: {time.time() - stime:0.2f} sec")
+
+    # OLD VERSION:
+    # This initialization follows the scheme outlined in the
+    # NEURON book, 8.4.2, p 197 for initializing to steady state.
+
+    # starttime = time.time()
+    # inittime = -1e10
+    # tdt = neuron.h.dt  # save current step size
+    # dtstep = 1e9
+    # neuron.h.finitialize(v_init) 
+    # neuron.h.t = inittime  # set time to large negative value (avoid activating
+    #                 # point processes, we hope)
+    # tmp = neuron.h.cvode.active()  # check state of variable step integrator
+    # if tmp != 0:   # turn off CVode variable step integrator if it was active
+    #     neuron.h.cvode.active(0)  # now just use backward Euler with large step
+    # neuron.h.dt = dtstep
+    # n = 0
+    # while neuron.h.t < -1e9:  # Step forward
+    #     neuron.h.fadvance()
+    #     n += 1
+    # print(' custom init advances: ', n)
+    # if tmp != 0:
+    #     neuron.h.cvode.active(1)  # restore integrator
+    # neuron.h.t = 0
+    # if neuron.h.cvode.active():
+    #     neuron.h.cvode.re_init()  # update d(state)/dt and currents
+    # else:
+    #     neuron.h.fcurrent()  # recalculate currents
+    # neuron.h.frecord_init()  # save new state variables
+    # neuron.h.dt = tdt  # restore original time step
+    # endtime = time.time()
+    # print(f" Custom init completed in {endtime - starttime:0.2f} sec")
 
 # routine to convert conductances from nS as given elsewhere
 #   to mho/cm2 as required by NEURON 1/28/99 P. Manis
