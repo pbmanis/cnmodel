@@ -393,7 +393,6 @@ if __name__ == '__main__':
                      )
 
     manager = ManageANSpikes()  # create instance of the manager
-    print(dir(manager))
     test='RI'
 
     if test == 'all':
