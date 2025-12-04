@@ -1,5 +1,5 @@
 from neuron import h
-from ..util import nstomho
+# from ..util.pynrnutilities import nstomho
 import numpy as np
 from .cell import Cell
 from .. import data
