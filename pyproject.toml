@@ -19,7 +19,6 @@ dependencies = [
     "pyqt6-sip>=13.10.2",
     "pyqtgraph>=0.13.7",
     "pytest>=6",
-    # "pyzbc2014",
     "pyzbc2014",
     "resampy>=0.4",
     "scipy>=1.15.3",
