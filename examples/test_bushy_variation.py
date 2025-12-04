@@ -23,7 +23,7 @@ from cnmodel.protocols import Protocol
 from cnmodel.protocols import iv_curve
 from cnmodel import cells
 from cnmodel.util import sound
-from cnmodel.util import custom_init
+from cnmodel.util.pynrnutilities import custom_init
 from cnmodel.util import make_pulse
 import cnmodel.util.pynrnutilities as PU
 from cnmodel import data
