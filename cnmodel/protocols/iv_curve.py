@@ -13,9 +13,9 @@ try:
 except ImportError:
     HAVE_PG = False
 
-from ..util.stim import make_pulse
+from ..util.stim import make_pulse as make_pulse
 from ..util import fitting
-from ..util import custom_init
+from ..util.pynrnutilities import custom_init
 from .protocol import Protocol
 
 

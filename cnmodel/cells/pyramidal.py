@@ -1,9 +1,7 @@
 from __future__ import print_function
 from neuron import h
 
-import numpy as np
 from .cell import Cell
-from ..util import Params
 from .. import data
 
 __all__ = ['Pyramidal', 'PyramidalKanold', 'PyramidalCeballos']

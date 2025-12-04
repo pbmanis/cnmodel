@@ -1,6 +1,7 @@
 from neuron import h
 import numpy as np
-from ..util import random_seed, custom_init
+from ..util import random_seed
+from ..util.pynrnutilities import custom_init
 
 class Protocol(object):
     """

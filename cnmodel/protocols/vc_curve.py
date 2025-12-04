@@ -14,8 +14,8 @@ try:
     HAVE_PG = True
 except ImportError:
     HAVE_PG = False
-from ..util import custom_init
-from ..util.stim import make_pulse
+from ..util.pynrnutilities import custom_init
+# from ..util.stim import make_pulse
 
 #import matplotlib as MP # must call first... before pylag/pyplot or backends
 #MP.use('Qt4Agg')
