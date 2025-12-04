@@ -14,7 +14,7 @@ to the PSTH
 4. Some changes to .MOD files may be necessary to work with the latest NEURON version (9.0+). 
 The multisite synapse model has already been updated, but some additional cleanup may be needed.
 
-The rimrock_cleanup branch is the latest branch. 
+The *rimrock_cleanup* branch is the latest branch. 
 -----------------------------------------------
 
 Installation notes
@@ -60,7 +60,8 @@ followed by:
 This may take a few moments.
 
 After install Neuron 9.0 for your platform, make the dll/so library for the mechanisms. For example,
-run this command, to build a "universal" set of mechanisms for mac-os:
+run this command, to build a "universal" set of mechanisms for mac-os (but before you do this, 
+it is probably a good idea to delete the previous x64_64 or arm4 directory!):
 
 `nrnivmodl -incflags '-arch x86_64 -arch arm64' -loadflags '-arch x86_64 -arch arm64' cnmodel/mechanisms`
 
@@ -76,7 +77,7 @@ The "main" branch is the original branch that goes with Manis and Campagnola, He
 
 The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.7.9. Please read the notes on that branch for information on differences and new functionality. This is now the default branch.
 
-A new branch ("rimrock_cleanup") from 2025 is the latest, and works with Python 3.13 and a different version of the wraper for the Zilany et al. 2014 model. 
+A newer branch ("rimrock_cleanup") from 2025 is the latest, and works with Python 3.13 and a different version of the wraper for the Zilany et al. 2014 model. 
 
 Changes
 =======
