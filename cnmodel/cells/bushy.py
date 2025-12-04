@@ -334,7 +334,7 @@ class BushyRothman(Bushy):
             if self.debug:
                 print (f"  Setting conductances for mouse {self.celltype.title():s} cell ({self.status['modelType']})")
 
-            print(self.pars)
+            # print("bushy pars: ", self.pars)
             self.vrange = [-68., -50.]  # set a default vrange for searching for rmp
             self.i_test_range = {'pulse': (-1., 1.0, 0.05)}
             self._valid_temperatures = (34., )
