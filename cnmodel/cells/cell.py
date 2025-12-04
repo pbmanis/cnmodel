@@ -5,9 +5,8 @@ import scipy.optimize
 from collections import OrderedDict
 import neuron
 from neuron import h
-from ..util import nstomho, mho2ns
-from ..util import custom_init
-from ..util import Params
+from cnmodel.util.pynrnutilities import nstomho, mho2ns, custom_init
+from cnmodel.util.Params import Params
 from .. import synapses
 from .. import data
 from .. import morphology
@@ -595,12 +594,15 @@ class Cell(object):
         Initialize this cell to it's "rmp" under current conditions
         All sections in the cell are set to the same value
         """
+        # print("cell.py: cell initialize")
         if vrange is None and self.vrange is None:
             vrange = [-90.0, -50.0]
         if self.vrange is not None:
             vrange = self.vrange
+        # print("     vrange, vm0: ", vrange, self.vm0)
         if self.vm0 is None:
             self.vm0 = self.find_i0(showinfo=showinfo, vrange=vrange, **kwargs)
+            # print("Found vm0: ", self.vm0)
         for part in self.all_sections.keys():
             for sec in self.all_sections[part]:
                 sec.v = self.vm0
@@ -1102,11 +1104,9 @@ class Cell(object):
                 sec.v = V
         h.celsius = self.status["temperature"]
         h.t = 0.0
-        # print(self.mechanisms)
         h.finitialize(V)
         h.fcurrent()
         self.ix = {}
-
         if "na" in self.mechanisms:
             # print dir(self.soma().na)
             try:
@@ -1209,7 +1209,7 @@ class Cell(object):
                 self.i_currents, vrange[0], vrange[1], maxiter=10000
             )
         except:
-            print("find i0 failed:")
+            print("Find i0 failed:")
             # print(self.ix)
             i0 = self.i_currents(V=vrange[0])
             i1 = self.i_currents(V=vrange[1])
