@@ -141,7 +141,7 @@ def reset(raiseError=True):
 
 def custom_init(v_init:float = -60.,
                 t0:float = -1e3,
-                dt:float = 0.05,
+                dt:float = 0.025,
                 dur:float = 5e1):
     """
     Perform a custom initialization of the current model/section. 
@@ -177,9 +177,9 @@ def custom_init(v_init:float = -60.,
     h.t = 0.0
     if h.CVode().active():
         h.CVode().re_init()  # update d(state)/dt and currents
-    else:
-        h.fcurrent()  # recalculate currents
-    h.frecord_init()  # save new state variables
+    # else:
+    h.fcurrent()  # recalculate currents
+    h.finitialize(v_init)
     # print(f"custom init completed: {time.time() - stime:0.2f} sec")
 
     # OLD VERSION:
