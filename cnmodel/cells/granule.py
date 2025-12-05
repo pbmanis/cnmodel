@@ -236,7 +236,7 @@ class GranuleDefault(Granule):
         self.vrange = [-75., -52.]  # set a default vrange for searching for rmp
         
         # self.set_soma_size_from_Cm(self.pars.cap)
-        print(dir(self.pars))
+        # print(dir(self.pars))
         self.set_soma_size_from_Diam(self.pars.soma_Dia)
 
         self.soma().GRC_NA.gbar = self.g_convert(self.pars.soma_GRC_NA_gbar, self.pars.units, self.somaarea)
