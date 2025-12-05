@@ -23,7 +23,7 @@ NEURON {
     SUFFIX kir
     USEION kir READ ekir WRITE ikir VALENCE 1
 	RANGE gkir, gbar, ikir 	: Kir channels 
-	GLOBAL ntau, ninf	: Kir channels 
+	RANGE ntau, ninf	: Kir channels 
 }
 
 

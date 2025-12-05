@@ -31,7 +31,7 @@ NEURON {
         SUFFIX ka
         USEION k READ ek WRITE ik
         RANGE gbar, gka, ik
-        GLOBAL ainf, binf, cinf, atau, btau, ctau
+        RANGE ainf, binf, cinf, atau, btau, ctau
 }
 
 INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)}
