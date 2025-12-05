@@ -50,6 +50,7 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 from pyqtgraph.Qt import QtCore, QtGui
 import cnmodel.util.pynrnutilities as Util
+import cnmodel.util.nrnutils as nrnutils
 
 nottestablemechs = [
     "cadyn",
@@ -217,15 +218,15 @@ class ChannelKinetics:
         tdelay = 5.0
         if modfile in list(remap.keys()):
             modfile = remap[modfile]
-        Channel = cnmodel.util.Mechanism(modfile)
-        leak = cnmodel.util.Mechanism("leak")
+        Channel = nrnutils.Mechanism(modfile)
+        leak = nrnutils.Mechanism("leak")
         if modfile == "nacsh":
             Channel.set_parameters({"gbar": 6e3})  # weird units from Kole paper
         else:
             Channel.set_parameters({"gbar": 1})
         leak.set_parameters({"gbar": 1e-12})
 
-        self.soma = cnmodel.util.Section(L=10, diam=10, mechanisms=[Channel, leak])
+        self.soma = nrnutils.Section(L=10, diam=10, mechanisms=[Channel, leak])
         if modfile == "bkpjk":
             ca_init = 100e-6
             self.soma().cai = ca_init
