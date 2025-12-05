@@ -1,6 +1,6 @@
 [project]
 name = "cnmodel"
-version = "0.56.0"
+version = "0.58.0"
 description = "CNModel - a computational framework for modeling and simulating neurons and networks in the auditory system"
 
 readme = "README.md"
