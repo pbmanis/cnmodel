@@ -1,18 +1,25 @@
 Latest changes
 ==============
+v0.58 (rimrock_cleanup branch):
 
 1. The AN model has been modified to use the Python wrapper scripts from Daniel Guest (and proposed pull from
-Tom Stoll) with some modifications. This wrapper around the original Zilany et al,
+Tom Stoll) with some modifications, specifically making a class for the C wrapper,
+and adding the SpikeGenerator back into the code. This wrapper around the original Zilany et al,
 2014 model works with Python 3.13. 
 
-2. The "cochlea" model (Rudnicki and Hemmert) is being deprecated. THe matlab version
-has not been tested, but likely still works.
+2. The "cochlea" model (Rudnicki and Hemmert) is being deprecated, as there is no working
+   version for Python 3, and the wrapper described above is a cleaner solution.
+   
+3.  The matlab wrapper has 
+has not been tested lately (I do not use it), but likely still works.
 
-3. The test_an_model.py example has been modified to show the ISI histogram in addition
+1. The test_an_model.py example has been modified to show the ISI histogram in addition
 to the PSTH
 
-4. Some changes to .MOD files may be necessary to work with the latest NEURON version (9.0+). 
-The multisite synapse model has already been updated, but some additional cleanup may be needed.
+1. Some changes to .MOD files were be necessary to work with the latest NEURON version (9.0+). 
+The multisite synapse model has already been updated, but some additional cleanup may be needed. In particular,
+GLOBAL variables have been changed to RANGE, and a couple of verbatim blocks have been updated. Vecstim.mod
+was also updated.
 
 The *rimrock_cleanup* branch is the latest branch. 
 -----------------------------------------------
@@ -20,10 +27,6 @@ The *rimrock_cleanup* branch is the latest branch.
 Installation notes
 ==================
 
-The project uses the UV tool. Download the github repo, select the right branch. If this
-is the first installation, do a
-
-`uv venv python==3.13`. 
 
 Install the pyzbc2014 model from the pbmanis github repo (this is forked from the 
 the Stoll repo, but has a number of changes, including the re-insertion of the
@@ -46,10 +49,22 @@ sufficient to run
 
 from the terminal. 
 
-Find the wheel in the repo under the "dist" directory, and copy it to the main directory of
+cnmodel
+-------
+
+The project uses the UV tool. Download the github repo (https://github.com/pbmanis/cnmodel.git),
+and select the right branch (rimrock_cleanup). If this
+is the first installation, do a
+
+`uv venv python==3.13`. 
+
+(If this is not the first installation, delete any virtual enviroments, including the .venv one first,
+and remove any x86_64 or arm64 directories in the directory.)
+
+Find the wheel you built above for PyZBC2014 in the repo under the "dist" directory, and copy it to the main directory of
 cnmodel. (Once the PyPi repo has been updated, this will not be necessary.)
 
-In cnmodel (note the minor version bump, this is critical!): 
+In cnmodel (note the minor version bump for PyZBC2014, this is critical!): 
 
 `uv add pyzbc2014-0.0.3-cp313-cp313-macosx_15_0_arm64.whl`
 
@@ -59,11 +74,14 @@ followed by:
 
 This may take a few moments.
 
-After install Neuron 9.0 for your platform, make the dll/so library for the mechanisms. For example,
-run this command, to build a "universal" set of mechanisms for mac-os (but before you do this, 
+After installing Neuron 9.0 for your platform (see the neuron website, but "uv add neuron" might work),
+ make the dll/so library for the mechanisms. For example,
+run the command below, to build a "universal" set of mechanisms for mac-os (but before you do this, I remind you that 
 it is probably a good idea to delete the previous x64_64 or arm4 directory!):
 
 `nrnivmodl -incflags '-arch x86_64 -arch arm64' -loadflags '-arch x86_64 -arch arm64' cnmodel/mechanisms`
+
+(Note: On a mac with an Apple Silicon processor, it is not necessary to have the arch x86_64 built.)
 
 It should now be possible to run the "examples/test_an_model.py" script to confirm that the 3 main
 routines in the model run correctly. Remove the "-arch arm64" flags if you are on a Windows machine and need to build for the x86_64 architecture only.
