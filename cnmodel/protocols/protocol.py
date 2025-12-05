@@ -36,7 +36,7 @@ class Protocol(object):
         """
         Return a np array for previously recorded data given *name*.
         """
-        return np.array(self._vectors[name])
+        return np.array(self._vectors[name].to_python())
 
     def custom_init(self, vinit=-60.):
         return custom_init(vinit)
