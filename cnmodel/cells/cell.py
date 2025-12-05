@@ -1318,23 +1318,23 @@ class Cell(object):
         # 1e-8*np.pi*soma.diam*soma.L
         # somaarea = np.sum([1e-8 * np.pi * s.L * s.diam for s in soma_sections])
         self.somaarea = 0.0  # units are um2
-        print("soma sections: ", soma_sections)
+        # print("soma sections: ", soma_sections)
         for sec in soma_sections:
             # print(f"   segment: {i:d} area={seg.area():.3f}")
-            print("sec: ", sec)
-            print("self.areamethod: ", self.area_method)
+            # print("sec: ", sec)
+            # print("self.areamethod: ", self.area_method)
             if self.area_method == "segment":
                 for seg in sec.allseg():
-                    print("seg area: ", seg.area())
+                    # print("seg area: ", seg.area())
                     self.somaarea += seg.area()
             elif self.area_method == "pt3d":
-                print("sec.n3d(): ", sec.n3d())
+                # print("sec.n3d(): ", sec.n3d())
                 for i in range(sec.n3d()):
-                    print("sec arc, diam: ", sec.arc3d(i), sec.diam3d(i))
+                    # print("sec arc, diam: ", sec.arc3d(i), sec.diam3d(i))
                     self.somaarea += np.pi * sec.arc3d(i) * sec.diam3d(i)
             else:
                 raise ValueError(f"Area method {self.ara_method:s} is not valid for area computations [cnmodel.cells.py]")
-        print("self.somaarea = ", self.somaarea)
+        # print("self.somaarea = ", self.somaarea)
         # print(f'{name:s} area: {area:.3f} ')
         gsum = 0.0  # total condutance in us/cm2
         for sec in soma_sections:
