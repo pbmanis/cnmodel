@@ -4,7 +4,8 @@ import neuron
 
 import cnmodel
 import cnmodel.cells as cells
-from cnmodel.util import UserTester, reset
+from cnmodel.util.pynrnutilities import reset
+from cnmodel.util.user_tester import UserTester
 from cnmodel.protocols import IVCurve
 
 """

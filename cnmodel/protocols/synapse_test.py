@@ -4,7 +4,11 @@ from scipy import interpolate
 import numpy as np
 import pyqtgraph as pg
 from neuron import h
-import cnmodel.util as util
+import cnmodel.util
+import cnmodel.util.stim
+import cnmodel.util.pynrnutilities
+import cnmodel.util.random_seed
+
 from .protocol import Protocol
 from .. import cells
 from ..synapses import GluPSD, GlyPSD, Exp2PSD
@@ -74,7 +78,7 @@ class SynapseTest(Protocol):
         }
         if stim_params is not None:
             stim.update(stim_params)
-        (secmd, maxt, tstims) = util.make_pulse(stim)
+        (secmd, maxt, tstims) = cnmodel.util.stim.make_pulse(stim)
         self.stim = stim
 
         if tstop is None:
@@ -108,7 +112,7 @@ class SynapseTest(Protocol):
         #
         # Run simulation
         #
-        h.tstop = tstop # duration of a run
+        # h.tstop = tstop # duration of a run  h.stop is gone in Nrn 9
         h.celsius = temp
         h.dt = dt
         self.temp = temp
@@ -175,9 +179,9 @@ class SynapseTest(Protocol):
 
             if not isinstance(synapse.psd, Exp2PSD):
                 for i, s in enumerate(synapses):
-                    s.terminal.relsite.rseed = util.random_seed.current_seed() + nrep
-            util.custom_init()
-            h.run()
+                    s.terminal.relsite.rseed = cnmodel.util.random_seed.current_seed() + nrep
+            cnmodel.util.pynrnutilities.custom_init()
+            h.batch_run(tstop, h.dt) # h.run()
 
             # add up psd current across all runs
             if isinstance(synapse.psd, GluPSD):
