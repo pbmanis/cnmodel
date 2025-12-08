@@ -100,6 +100,11 @@ run this command, to build a "universal" set of mechanisms for mac-os:
 
 (Note: On a mac with an Apple Silicon processor, it is not necessary to have the arch x86_64 built.)
 
+To run the examples, make sure to do this:
+
+`
+uv pip install -e .
+`
 It should now be possible to run the "examples/test_an_model.py" script to confirm that the 3 main
 routines in the model run correctly. Remove the "-arch arm64" flags if you are on a Windows machine and need to build for the x86_64 architecture only.
 
