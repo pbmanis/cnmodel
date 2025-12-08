@@ -471,7 +471,7 @@ def main():
         eval(args.durations)
     except:
         raise ValueError(
-            "Durations values could not be parsed\nFor example, use: '[10,100,10]' in quotes"
+            "Durations values could not be parsed\nFor example, use: -d '[10,100,10]' in quotes"
         )
 
     if args.celltype not in cellinfo["types"]:

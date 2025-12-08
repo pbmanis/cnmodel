@@ -42,7 +42,7 @@ NEURON {
     SUFFIX klt
     USEION k READ ek WRITE ik
     RANGE gbar, gklt, ik, q10g
-    GLOBAL winf, zinf, wtau, ztau
+    RANGE winf, zinf, wtau, ztau
 }
 
 INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)}

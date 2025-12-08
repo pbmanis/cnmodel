@@ -25,7 +25,7 @@ from neuron import h
 from cnmodel.protocols import Protocol
 from cnmodel import cells
 from cnmodel.util import sound
-from cnmodel.util import custom_init
+from cnmodel.util.pynrnutilities import custom_init
 
 cellmap = {'bushy': cells.Bushy, 'tstellate': cells.TStellate}
 

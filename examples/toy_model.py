@@ -137,6 +137,7 @@ class Toy(Protocol):
     def run(self):
         sre = re.compile(
             r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
+            r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
         )  # regex for keys in cell types
         self.celltypes = OrderedDict(
             [
@@ -186,10 +187,10 @@ class Toy(Protocol):
                     "Granule, GRC, Mouse",
                     (cells.Granule, "GRC", "mouse", (-0.05, 0.05, 9), 34),
                 ),
-                # (
-                #     "SGC, sgc-bm, Mouse",
-                #     (cells.SGC, "sgc-bm", "mouse", (-0.2, 0.6, 9), 34),
-                # ),
+                (
+                    "SGC, sgc-bm, Mouse",
+                    (cells.SGC, "sgc-bm", "mouse", (-0.2, 0.6, 9), 34),
+                ),
                 (
                     "SGC, sgc-a, Mouse",
                     (cells.SGC, "sgc-a", "mouse", (-0.2, 0.6, 9), 34),
@@ -273,6 +274,9 @@ class Toy(Protocol):
                 temp=float(temperature),
             )
             for k in range(len(self.iv.voltage_traces)):
+                # print(self.iv.voltage_traces[k])
+                # print(self.iv.time_values)
+                # print()
                 pl[name].plot(
                     self.iv.time_values,
                     self.iv.voltage_traces[k],
@@ -300,6 +304,7 @@ class Toy(Protocol):
             pars = nrn_cell.compute_rmrintau(auto_initialize=False)
             mohm = "\u03a9"
             print(
+                f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} {mohm}  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
                 f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} {mohm}  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
             )
 

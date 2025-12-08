@@ -1049,7 +1049,7 @@ def piptone(t, rt, Fs, F0, dBSPL, pip_dur, pip_start):
     # apply template to waveform
     pin = np.zeros(t.size)
     ps = pip_start
-    if ~isinstance(ps, list):
+    if not isinstance(ps, list):
         ps = [ps]
     for start in pip_start:
         ts = int(np.floor(start * Fs))
@@ -1101,7 +1101,7 @@ def shape_signal(signal, t, rt, Fs, F0, dBSPL, pip_dur, pip_start):
     # apply envelope template to waveform
     pin = np.zeros(t.size)
     ps = pip_start
-    if ~isinstance(ps, list):
+    if not isinstance(ps, list):
         ps = [ps]
     for start in pip_start:
         ts = int(np.floor(start * Fs))

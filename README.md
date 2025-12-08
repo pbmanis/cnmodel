@@ -1,8 +1,10 @@
 Latest changes
 ==============
+v0.58 (rimrock_cleanup branch):
 
 1. The AN model has been modified to use the Python wrapper scripts from Daniel Guest (and proposed pull from
-Tom Stoll) with some modifications. This wrapper around the original Zilany et al,
+Tom Stoll) with some modifications, specifically making a class for the C wrapper,
+and adding the SpikeGenerator back into the code. This wrapper around the original Zilany et al,
 2014 model works with Python 3.13. 
 
 2. The "cochlea" model (Rudnicki and Hemmert) will be deprecated. THe matlab version
@@ -11,10 +13,12 @@ has not been tested, but likely still works.
 3. The test_an_model.py example has been modified to show the ISI histogram in addition
 to the PSTH.
 
-4. Some changes to .MOD files may be necessary to work with the latest NEURON version (9.0+). 
-The multisite synapse model has already been updated, but some additional cleanup may be needed.
+1. Some changes to .MOD files were be necessary to work with the latest NEURON version (9.0+). 
+The multisite synapse model has already been updated, but some additional cleanup may be needed. In particular,
+GLOBAL variables have been changed to RANGE, and a couple of verbatim blocks have been updated. Vecstim.mod
+was also updated.
 
-The rimrock_cleanup branch is the latest branch. 
+The *rimrock_cleanup* branch is the latest branch. 
 -----------------------------------------------
 
 Installation notes
@@ -60,7 +64,19 @@ sufficient to run
 
 from the terminal. 
 
-Find the wheel in the repo under the "dist" directory, and copy it to the main directory of
+cnmodel
+-------
+
+The project uses the UV tool. Download the github repo (https://github.com/pbmanis/cnmodel.git),
+and select the right branch (rimrock_cleanup). If this
+is the first installation, do a
+
+`uv venv python==3.13`. 
+
+(If this is not the first installation, delete any virtual enviroments, including the .venv one first,
+and remove any x86_64 or arm64 directories in the directory.)
+
+Find the wheel you built above for PyZBC2014 in the repo under the "dist" directory, and copy it to the main directory of
 cnmodel. (Once the PyPi repo has been updated, this will not be necessary.)
 
 Next, set up the cnmodel environment:
@@ -82,6 +98,8 @@ run this command, to build a "universal" set of mechanisms for mac-os:
 
 `nrnivmodl -incflags '-arch x86_64 -arch arm64' -loadflags '-arch x86_64 -arch arm64' cnmodel/mechanisms`
 
+(Note: On a mac with an Apple Silicon processor, it is not necessary to have the arch x86_64 built.)
+
 It should now be possible to run the "examples/test_an_model.py" script to confirm that the 3 main
 routines in the model run correctly. Remove the "-arch arm64" flags if you are on a Windows machine and need to build for the x86_64 architecture only.
 
@@ -94,7 +112,7 @@ The "main" branch is the original branch that goes with Manis and Campagnola, He
 
 The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.7.9. Please read the notes on that branch for information on differences and new functionality. This is now the default branch.
 
-A new branch ("rimrock_cleanup") from 2025 is the latest, and works with Python 3.13 and a different version of the wraper for the Zilany et al. 2014 model. 
+A newer branch ("rimrock_cleanup") from 2025 is the latest, and works with Python 3.13 and a different version of the wraper for the Zilany et al. 2014 model. 
 
 Changes
 =======

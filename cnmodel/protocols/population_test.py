@@ -6,7 +6,7 @@ from neuron import h
 
 import cnmodel.util as util
 from cnmodel.protocols import Protocol
-from cnmodel.util import custom_init
+from cnmodel.util.pynrnutilities import custom_init
 from cnmodel.util import sound
 
 class PopulationTest(Protocol):

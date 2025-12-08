@@ -14,8 +14,8 @@ try:
     HAVE_PG = True
 except ImportError:
     HAVE_PG = False
-from ..util import custom_init
-from ..util.stim import make_pulse
+from ..util.pynrnutilities import custom_init
+# from ..util.stim import make_pulse
 
 #import matplotlib as MP # must call first... before pylag/pyplot or backends
 #MP.use('Qt4Agg')
@@ -92,22 +92,23 @@ class VCCurve(Protocol):
         nreps = iv_nstepv
         h.dt = dt
         self.dt = h.dt
+        self.vec = {}
+        for var in ["time", "v_soma", "i_inj"]:
+            self.vec[var] = h.Vector()
         for i in range(nreps):
             # Connect recording vectors
-            self['v_soma'] = cell.soma(0.5)._ref_v
-            self['i_inj'] = vstim._ref_i
-            self['time'] = h._ref_t
+            self.vec['v_soma'].record(self.cell.soma(0.5)._ref_v, sec=self.cell.soma)
+            self.vec['i_inj'].record(vstim._ref_i)
+            self.vec['time'].record(h._ref_t)
             vstim.amp2 = self.voltage_cmd[i]
             custom_init(v_init=-60.)
-            h.tstop = tend
             self.cell.check_all_mechs()
-            while h.t < h.tstop:
-                    h.fadvance()
-            self.voltage_traces.append(self['v_soma'])
-            self.current_traces.append(self['i_inj'])
-            self.time_values = np.array(self['time'])
-
-
+            h.finitialize()
+            h.batch_run(tend, self.dt)
+            self.voltage_traces.append(np.array(self.vec['v_soma'].to_python()))
+            self.current_traces.append(np.array(self.vec['i_inj'].to_python()))
+            self.time_values = np.array(self.vec['time'].to_python())
+ 
     def steady_im(self, window=0.1):
         """
         Parameters

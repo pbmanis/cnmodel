@@ -16,7 +16,8 @@ except ImportError:
     HAVE_COCHLEA = False
 
 try:
-    import pyzbc2014
+    import pyzbc2014.pyzbc2014 as pyzbc2014
+    zbc = pyzbc2014.pyzbc2014()  # create an instance of the model, and load the shared libraries.
     HAVE_PYZBC2014 = True
 except ImportError:
     HAVE_PYZBC2014 = False
@@ -25,6 +26,8 @@ _cache_version = 2
 _cache_path = os.path.join(os.path.dirname(__file__), 'cache')
 _index_file = os.path.join(_cache_path, 'index.pk')
 _index = None
+
+
 
 
 def get_spiketrain(cf, sr, stim, seed, verbose=False, **kwds):
@@ -181,13 +184,13 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
         fiberType = 'hsr' if sr == 2 else ('msr' if sr == 1 else 'lsr')
         powerlaw = 'approx'  # approximate power-law implementation
         noiseType = 'fresh'  # variable fGn
-        vihc = pyzbc2014.sim_ihc_zbc2014(stim.sound, cf, 1, int(0.5+1./stim.dt),
+        vihc = zbc.sim_ihc_zbc2014(stim.sound, cf, 1, int(0.5+1./stim.dt),
                                          cohc=ihc_kwds['cohc'], cihc=ihc_kwds['cihc'],
                                          species='cat')
-        an_drive = pyzbc2014.sim_anrate_zbc2014(vihc, cf, 1, int(0.5+1./stim.dt),
+        an_drive = zbc.sim_anrate_zbc2014(vihc, cf, 1, int(0.5+1./stim.dt),
                                                  fiberType, powerlaw, noiseType)
         # generate spikes from the instantaneous rate
-        spikes = pyzbc2014.sim_spike_generator_zbc2014(an_drive, fs=int(0.5+1./stim.dt),
+        spikes = zbc.sim_spike_generator_zbc2014(an_drive, fs=int(0.5+1./stim.dt),
                                                        totalstim=stim.duration, nrep=1)
         spiketimes = spikes[spikes > 0.0]
         return np.array(spiketimes)

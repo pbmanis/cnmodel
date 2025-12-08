@@ -24,7 +24,7 @@ NEURON {
     SUFFIX ihvcn
     NONSPECIFIC_CURRENT i
     RANGE gbar, gh, i, eh
-    GLOBAL rinf, rtau
+    RANGE rinf, rtau
 }
 
 INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)}

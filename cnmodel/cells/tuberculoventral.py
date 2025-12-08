@@ -1,7 +1,6 @@
 from __future__ import print_function
 from neuron import h
-import numpy as np
-#import neuron as nrn
+
 
 from .cell import Cell
 from .. import synapses

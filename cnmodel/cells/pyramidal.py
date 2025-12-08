@@ -1,9 +1,7 @@
 from __future__ import print_function
 from neuron import h
 
-import numpy as np
 from .cell import Cell
-from ..util import Params
 from .. import data
 
 __all__ = ['Pyramidal', 'PyramidalKanold', 'PyramidalCeballos']
@@ -225,7 +223,7 @@ class PyramidalKanold(Pyramidal, Cell):
             
         soma = self.soma
         if self.status['species'] in ['rat', 'mouse']:
-            print('for species: ', self.status['species'])
+            # print('for species: ', self.status['species'])
             if self.status['modelType'] not in ['pyramidal']:  # canonical K&M2001 model cell
                 raise ValueError(f"\nModel type {self.status['modelType']:s} is not implemented for mouse {self.celltype.title():s} cells")
             
