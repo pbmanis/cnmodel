@@ -136,7 +136,7 @@ class Toy(Protocol):
 
     def run(self):
         sre = re.compile(
-            "(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
+            r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
         )  # regex for keys in cell types
         self.celltypes = OrderedDict(
             [
@@ -298,8 +298,9 @@ class Toy(Protocol):
             nrn_cell = netcells[name]
             nrn_cell.vm0 = nrn_cell.soma.v
             pars = nrn_cell.compute_rmrintau(auto_initialize=False)
+            mohm = "\u03a9"
             print(
-                f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} M\ohm  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
+                f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} {mohm}  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
             )
 
 
