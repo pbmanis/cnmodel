@@ -5,11 +5,11 @@ Latest changes
 Tom Stoll) with some modifications. This wrapper around the original Zilany et al,
 2014 model works with Python 3.13. 
 
-2. The "cochlea" model (Rudnicki and Hemmert) is being deprecated. THe matlab version
+2. The "cochlea" model (Rudnicki and Hemmert) will be deprecated. THe matlab version
 has not been tested, but likely still works.
 
 3. The test_an_model.py example has been modified to show the ISI histogram in addition
-to the PSTH
+to the PSTH.
 
 4. Some changes to .MOD files may be necessary to work with the latest NEURON version (9.0+). 
 The multisite synapse model has already been updated, but some additional cleanup may be needed.
@@ -20,16 +20,30 @@ The rimrock_cleanup branch is the latest branch.
 Installation notes
 ==================
 
-The project uses the UV tool. Download the github repo, select the right branch. If this
-is the first installation, do a
-
-`uv venv python==3.13`. 
-
-Install the pyzbc2014 model from the pbmanis github repo (this is forked from the 
+First, build a wheel for PyZBC2014 that is compatible with the OS. 
+------------------------------------------------------------------
+The project uses the UV tool. Download the 
+ pyzbc2014 model from the pbmanis github repo (this is forked from the 
 the Stoll repo, but has a number of changes, including the re-insertion of the
 spike generator, and extension of the test routine). 
 
-Go to src/pyzbc2014/model. Compile the model code with: 
+`uv venv python==3.13`. 
+
+
+Go to src/pyzbc2014/model. run:
+
+`gcc --version`
+
+The response should be:
+
+`
+Apple clang version 15.0.0 (clang-1500.3.9.4)
+Target: arm64-apple-darwin23.4.0
+Thread model: posix
+`
+
+If the version is not 15 or 14,
+compile the model code with: 
 
 `
 gcc -fPIC -O3 -shared -o libzbc2014.o complex.c model_IHC.c model_Synapse.c model_spikeGenerator.c
@@ -49,7 +63,11 @@ from the terminal.
 Find the wheel in the repo under the "dist" directory, and copy it to the main directory of
 cnmodel. (Once the PyPi repo has been updated, this will not be necessary.)
 
-In cnmodel (note the minor version bump, this is critical!): 
+Next, set up the cnmodel environment:
+-------------------------------------
+
+In cnmodel (note the minor version bump, this is critical!). Also check the macosx value 
+which should be either 14 or 15 (adjust the command as needed).
 
 `uv add pyzbc2014-0.0.3-cp313-cp313-macosx_15_0_arm64.whl`
 
@@ -59,7 +77,7 @@ followed by:
 
 This may take a few moments.
 
-After install Neuron 9.0 for your platform, make the dll/so library for the mechanisms. For example,
+After installing Neuron 9.0 for your platform (pip3 install neuron), make the dll/so library for the mechanisms. For example,
 run this command, to build a "universal" set of mechanisms for mac-os:
 
 `nrnivmodl -incflags '-arch x86_64 -arch arm64' -loadflags '-arch x86_64 -arch arm64' cnmodel/mechanisms`
