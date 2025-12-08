@@ -2,7 +2,7 @@
 name = "cnmodel"
 version = "0.56.0"
 description = "CNModel - a computational framework for modeling and simulating neurons and networks in the auditory system"
-
+license = "MIT"
 readme = "README.md"
 requires-python = "==3.13.7"
 dependencies = [
@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-pyzbc2014 = { path = "pyzbc2014-0.0.3-cp313-cp313-macosx_15_0_arm64.whl" }
+pyzbc2014 = { path = "pyzbc2014-0.0.3-cp313-cp313-macosx_14_0_arm64.whl" }
 #[tools.uv.sources]
 #    httpx = {git = "https://github.com/pbmanis/cochlea-1.git", rev = "8152f032e6e619d8632548b6b632fcda5f0638ed"}
 
