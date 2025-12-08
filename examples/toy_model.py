@@ -14,7 +14,7 @@ from collections import OrderedDict
 import numpy as np
 from neuron import h
 
-from cnmodel import cells as cells
+import cnmodel.cells as cells
 from cnmodel.protocols import IVCurve, Protocol
 from cnmodel.util import pyqtgraphPlotHelpers as PH
 
@@ -137,7 +137,7 @@ class Toy(Protocol):
     def run(self):
         sre = re.compile(
             r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
-            r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
+            # r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
         )  # regex for keys in cell types
         self.celltypes = OrderedDict(
             [
