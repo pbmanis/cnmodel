@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 import os
-from Cython.Build import cythonize
+# from Cython.Build import cythonize
 
 
 path = os.path.join(os.path.dirname(__file__), 'cnmodel')
