@@ -11,6 +11,10 @@ arm64/**
 *.log
 .DS_Store
 
+# C compilation outputs:
+*.o
+#NMODL cpp files
+*.cpp
 # specific directories and files:
 cnmodel_venv/
 .venv/
