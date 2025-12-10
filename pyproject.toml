@@ -1,6 +1,6 @@
 [project]
 name = "cnmodel"
-version = "0.58.0"
+version = "0.58.21"
 description = "CNModel - a computational framework for modeling and simulating neurons and networks in the auditory system"
 license = "MIT"
 readme = "README.md"
@@ -30,15 +30,48 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools>=70", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=70", "hatchling", "wheel"]
+build-backend = "hatchling.build" #"setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["cnmodel*"] # Include your main package
 exclude = ["docs*", "gif*", "cochlea*", "examples*"] # Exclude specific directories
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "cnmodel*", 
+    "cnmodel/mechanisms/*.mod",
+    "cnmodel/mechanisms/x86_64/*.so",
+    "cnmodel/mechanisms/arm64/*.so",
+    "cnmodel/mechanisms/x86_64/*.dylib",
+    "cnmodel/mechanisms/arm64/*.dylib",
+    "cnmodel/mechanisms/x86_64/*.dll",
+    "cnmodel/mechanisms/arm64/*.dll",
+    "cnmodel/mechanisms/x86_64/*.mod",
+    "cnmodel/mechanisms/arm64/*.mod"
+]
+exclude = [
+    "docs/*",
+    "gif/*",
+    "cochlea/*",
+    "examples/*"
+]
+
+[tool.hatch.build.targets.wheel]
+artifacts = [
+    '*.so',
+    '*.dylib',
+    '*.dll',
+    '*.mod'
+]
+# [tool.setuptools.package-data]
+# cnmodel = ["*.dylib", "*.so", "*.dll", "*.mod"]
+
 [tool.uv.sources]
-pyzbc2014 = { path = "/Users/pbmanis/Desktop/Python/pyzbc2014/dist/pyzbc2014-0.0.3-cp313-cp313-macosx_15_0_arm64.whl" }
+pyzbc2014 = { path = "/Users/pbmanis/Desktop/Python/pyzbc2014/dist/pyzbc2014-0.0.3-cp313-cp313-macosx_14_0_arm64.whl" }
 #[tools.uv.sources]
 #    httpx = {git = "https://github.com/pbmanis/cochlea-1.git", rev = "8152f032e6e619d8632548b6b632fcda5f0638ed"}
 
