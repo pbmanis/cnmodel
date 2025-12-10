@@ -35,22 +35,19 @@ with this routine. the list "nottestablemechs" in the file defines mechanisms pr
 with cnmodel that cannot be run with this program.
 
 """
-import sys
 import argparse
-from pathlib import Path
-import platform
-from neuron import h
-from neuron import nrn
 import gc
-import numpy as np
+import platform
+import sys
+from pathlib import Path
 
-# import scipy as sp
-import cnmodel.util
+import numpy as np
 import pyqtgraph as pg
-import pyqtgraph.exporters
-from pyqtgraph.Qt import QtCore, QtGui
-import cnmodel.util.pynrnutilities as Util
+from neuron import h, nrn
+
 import cnmodel.util.nrnutils as nrnutils
+import cnmodel.util.pynrnutilities as Util
+from cnmodel import MODFILE_PATH
 
 nottestablemechs = [
     "cadyn",
@@ -119,6 +116,7 @@ tdurs = {
 
 known = list(tdurs.keys())  # all the "known files"
 machine = platform.machine()  # determine where to fine
+print("machine: ", machine)
 if machine == "x86_64":
     modfilepath = Path("x86_64")
 elif machine == "arm64":
@@ -128,6 +126,8 @@ elif machine == "i386": # hopefully not!
 else:
     raise ValueError(f"Cannot find mechanism library for machine type: {machine:s}")
 
+modfilepath = Path(MODFILE_PATH) 
+print("modfilepath: ", modfilepath)
 modfiles = list(modfilepath.glob("*.o"))
 modfiles = sorted([mf.stem for mf in modfiles])
 print("modfiles: ", modfiles)
