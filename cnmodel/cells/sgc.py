@@ -1,4 +1,4 @@
-from __future__ import print_function
+from typing import Union
 from neuron import h
 import numpy as np
 from .cell import Cell
@@ -41,7 +41,7 @@ class SGC(Cell):
         else:
             raise ValueError(f"SGC model {model} is unknown")
 
-    def __init__(self, cf=None, sr=None):
+    def __init__(self, cf:float=None, sr:Union[str, int]=None):
         Cell.__init__(self)
         self._cf = cf
         self._sr = sr
@@ -123,13 +123,13 @@ class DummySGC(SGC):
             required : Selects the spontaneous rate group from the
             Zilany et al (2010) model. 1 = LSR, 2 = MSR, 3 = HSR
 
-        simulator : 'cochlea' | 'matlab' | None (default None)
+        simulator : 'matlab' | 'py3' | None (default None)
             Sets the simulator interface that will be used. All models
             currently use the Zilany et al. model, but the simulator can
             be run though a Python-interface directly to the Matlab code
-            as publicy available, (simulator='matlab'), or can be run through
-            Rudnicki & Hemmert's Python interface to the simulator's C code
-            (simulator='cochlea').
+            as publicy available, (simulator='matlab')
+            , or can be run through the more recent python interface for py3
+            The Cochlea simulator (simulator='cochlea') is deprecated for python 3.
 
         """
         self._simulator = simulator
