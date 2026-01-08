@@ -5,10 +5,10 @@ x86_64
 cnmodel/an_model/cache/*  # ignore all of the cached AN files
 *.npz
 
-cnnodel/arm64/*
+cnmodel/arm64/*
 cnmodel/x86_64/*
-cnnmodel/i386/*
-cnnmodel/mexmaci64/*
+cnmodel/i386/*
+cnmodel/mexmaci64/*
 cnmodel/mechanisms/arm64/*
 cnmodel/mechanisms/x86_64/*
 cnmodel/mechanisms/i386/*
