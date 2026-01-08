@@ -30,6 +30,7 @@ cnmodel/mechanisms/x86_64
 cnmodel/i386
 cnmodel/x86_64
 cnmodel/cnmodel_pbm.egg-info/
+cnmodel_pbm.egg-info/
 cnmodel/__pycache__/
 tests/__pycache__/
 docs/_build/
