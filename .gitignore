@@ -13,6 +13,10 @@ cnmodel/mechanisms/arm64/*
 cnmodel/mechanisms/x86_64/*
 cnmodel/mechanisms/i386/*
 cnmodel_pbm.egg-info/*
+cnmodel/cnmodel_pbm.egg-info/*
+cnmodel.egg-info/*
+cnmodel/cnmodel.egg-info/*
+
 
 
 
