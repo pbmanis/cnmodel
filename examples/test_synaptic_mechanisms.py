@@ -95,7 +95,7 @@ def test_max_open_probability(fn=None, savetype=False):
     # NMDAS = dict.fromkeys(nmda_statenames, np.zeros(npts))
     # NMDAS['t'] = np.zeros(npts)
     xmtrs = {"nmda": h.Vector(), "ampa": h.Vector()}
-    print(dir(term))
+    # print(dir(term))
     xmtrs["nmda"].record(h.ref(term.XMTR[nzone]))
     xmtrs["ampa"].record(h.ref(term.XMTR[azone]))
     NSM = {}  # {k: nmda_states[i] for i, k in enumerate(nmda_statenames)}
@@ -137,7 +137,7 @@ def test_max_open_probability(fn=None, savetype=False):
         NSM[s] = np.array(NSM[s])  # no longer vector objects
     for s in ASM.keys():
         ASM[s] = np.array(ASM[s])  # no longer vector objects
-    print(np.max(NSM["Open"]), npsd.MaxOpen)
+    print("open, maxopen: ", np.max(NSM["Open"]), npsd.MaxOpen)
     print(max(ASM["O1"] + ASM["O2"]), apsd.MaxOpen)
     if not savetype:
         sdata = NSM
@@ -165,15 +165,16 @@ def test_max_open_probability(fn=None, savetype=False):
 def plot(fn=None, which="nmda"):
     with open(fn, "rb") as fh:
         sdata = pickle.load(fh)
-    P = PH.regular_grid(
-        4,
-        3,
-        margins={
-            "bottommargin": 0.1,
-            "leftmargin": 0.07,
-            "rightmargin": 0.05,
-            "topmargin": 0.1,
-        },
+    print(dir(PH))
+    P = PH.Plotter(
+        (4, 3), figsize=(8, 10)
+        
+        # margins={
+        #     "bottommargin": 0.1,
+        #     "leftmargin": 0.07,
+        #     "rightmargin": 0.05,
+        #     "topmargin": 0.1,
+        # },
     )
     axs = P.axarr.ravel()
     print(sdata.keys())
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     if not args.retrieve:
         test_max_open_probability(args.filename, savetype=args.ampa)
     if args.plot or args.retrieve:
-        import pylibrary.plotting.plothelpers as PH
+        import cnmodel.util.PlotHelpers as PH
         import matplotlib.pyplot as mpl
 
         plot(args.filename, args.ampa)

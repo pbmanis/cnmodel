@@ -45,7 +45,7 @@ NEURON {
 :
  RANGE gh, kh_m_inf, kh_n_inf, aih, gbar, ghvshift
  RANGE kh_m_tau, kh_n_tau
- GLOBAL q10, q10f
+ RANGE q10, q10f
 
 }
  

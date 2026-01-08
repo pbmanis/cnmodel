@@ -1,6 +1,7 @@
 from neuron import h
 import numpy as np
-from ..util import random_seed, custom_init
+from ..util import random_seed
+from ..util.pynrnutilities import custom_init
 
 class Protocol(object):
     """
@@ -35,7 +36,7 @@ class Protocol(object):
         """
         Return a np array for previously recorded data given *name*.
         """
-        return np.array(self._vectors[name])
+        return np.array(self._vectors[name].to_python())
 
     def custom_init(self, vinit=-60.):
         return custom_init(vinit)

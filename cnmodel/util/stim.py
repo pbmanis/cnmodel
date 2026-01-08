@@ -84,6 +84,11 @@ def make_pulse(stim):
         for i in range(start + posttest, start + posttest + pdur):
             w[i] = stim['amp']
     w = np.append(w, 0.)
+    # tb = np.arange(0, len(w)) * dt
     maxt = maxt + dt
+    # import matplotlib.pyplot as mpl
+    # mpl.plot(tb, w)
+    # mpl.show()
+
     return(w, maxt, tstims)
 

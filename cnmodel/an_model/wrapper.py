@@ -153,9 +153,9 @@ def seed_rng(seed):
     """
     seed = int(seed)
     cmd = "RandStream.setGlobalStream(RandStream('mcg16807','seed',%d));" % seed
-    ml = get_matlab()
-    rso = ml.RandStream('mcg16807', 'seed', matlab.int32([seed]), nargout=1)
-    ml.RandStream.setGlobalStream(rso)
+    # ml = get_matlab()
+    # rso = ml.RandStream('mcg16807', 'seed', matlab.int32([seed]), nargout=1)
+    # ml.RandStream.setGlobalStream(rso)
     #(cmd)
 
 if __name__ == '__main__':

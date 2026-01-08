@@ -8,7 +8,8 @@ import neuron
 import cnmodel
 import cnmodel.cells as cells
 from cnmodel.protocols import SynapseTest
-from cnmodel.util import random_seed, reset
+from cnmodel.util.pynrnutilities import reset
+from cnmodel.util import random_seed
 from cnmodel import data
 
 """
@@ -16,7 +17,7 @@ Check that sgc PSDs have correct AMPA and NMDA peak conductances / CV.
 """
 
 def test_sgc_bushy_psd(plot=False):
-    sgc_psd_test(cells.Bushy, seed=23572385, tstop=4.0, plot=plot)
+    sgc_psd_test(cells.Bushy, seed=23572385, tstop=8.0, plot=plot)
 
     
 def test_sgc_tstellate_psd(plot=False):
@@ -79,7 +80,7 @@ def sgc_psd_test(cell_class, seed, plot=False, tstop=5.0, n_syn=20):
         print('NMDA Receptor conductance in model should be %.16f (table is %.16f)'
                 % (NMDAR_gmax * ratio, NMDAR_gmax))
     cv_correct = (abs(exp_epsc_cv / epsc_cv - 1.0) < 0.1)
-    print ('cv_correct: ', cv_correct)
+    # print ('cv_correct: ', cv_correct, 'CV measured: %.6f; expected: %.6f' % (epsc_cv, exp_epsc_cv))
     if not cv_correct:
         ratio = exp_epsc_cv/epsc_cv
         print('CV Receptor in synapses.py model should be %.6f (measured = %.6f; table = %.6f)'

@@ -1,7 +1,7 @@
 from __future__ import print_function
 from neuron import h
 import neuron as nrn
-from ..util import nstomho
+from ..util.pynrnutilities import nstomho
 
 from .cell import Cell
 

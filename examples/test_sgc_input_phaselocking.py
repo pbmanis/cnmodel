@@ -86,8 +86,8 @@ class SGCInputTestPL(Protocol):
             )
             self.vs_freq = self.fMod
         if self.stimulus == "tone":
-            self.f0 = 1000.0
-            self.cf = 1000.0
+            # self.f0 = 1000.0
+            # self.cf = 1000.0
             self.stim = sound.TonePip(
                 rate=self.Fs,
                 duration=self.run_duration,

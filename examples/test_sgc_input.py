@@ -25,7 +25,7 @@ from neuron import h
 from cnmodel.protocols import Protocol
 from cnmodel import cells
 from cnmodel.util import sound
-from cnmodel.util import custom_init
+from cnmodel.util.pynrnutilities import custom_init
 
 cellmap = {'bushy': cells.Bushy, 'tstellate': cells.TStellate}
 
@@ -39,7 +39,7 @@ class SGCInputTest(Protocol):
         self.post_cell = postCell
         self.synapse = synapse
  
-        self.stim = sound.TonePip(rate=100e3, duration=0.1, f0=4000, dbspl=1.0,
+        self.stim = sound.TonePip(rate=100e3, duration=0.2, f0=4000, dbspl=1.0,
                                   ramp_duration=2.5e-3, pip_duration=0.1, 
                                   pip_start=[0.02])
         

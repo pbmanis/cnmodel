@@ -43,7 +43,7 @@ NEURON {
         SUFFIX kht
         USEION k READ ek WRITE ik
         RANGE gbar, gkht, ik, q10g, vshift
-        GLOBAL ninf, pinf, ntau, ptau
+        RANGE ninf, pinf, ntau, ptau
 }
 
 :INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)}

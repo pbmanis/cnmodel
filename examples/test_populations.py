@@ -66,9 +66,15 @@ def testpopulation():
     pt.run(pops)
     pt.show()
 
-    if sys.flags.interactive == 0:
-        pg.QtWidgets.QApplication.exec()
+    print("Ready.")
+    return pt
+
+
+
+
 
 
 if __name__ == "__main__":
-    testpopulation()
+    pt = testpopulation()
+    if sys.flags.interactive == 0:
+        pg.QtWidgets.QApplication.exec()

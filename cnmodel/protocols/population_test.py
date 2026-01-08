@@ -6,7 +6,7 @@ from neuron import h
 
 import cnmodel.util as util
 from cnmodel.protocols import Protocol
-from cnmodel.util import custom_init
+from cnmodel.util.pynrnutilities import custom_init
 from cnmodel.util import sound
 
 class PopulationTest(Protocol):
@@ -104,23 +104,32 @@ class PopulationTest(Protocol):
         custom_init(v_init=post_cell.vm0)
         h.t = 0.
         h.tstop = 200.0
+        current_t = 0.
         while h.t < h.tstop:
             h.fadvance()
+            if h.t - current_t >= 10.0:
+                current_t = h.t
+                print(f"Current time: {current_t:.2f}\r", end="")
+        print("\nDone!")
 
 
     def show(self):
         print ("Connected %d presynaptic cells to 1 postsynaptic cell." % len(self.pre_cell_inds))
         print ("Postsynaptic CF = %0.2f" % self.post_pop.cells[self.post_cell_ind]['cf'])
         print ("Presynaptic CF = %s" % self.pre_pop.cells[self.pre_cell_inds]['cf'])
-        
-        self.win = pg.GraphicsWindow()
-        self.win.resize(1000, 1000)
+        self.app = pg.mkQApp()
+        self.win = pg.GraphicsLayoutWidget()
+        self.win.setBackground("k")
+        self.win.setWindowTitle(f"Population Test")
+        self.win.resize(900, 600)
+        # self.win = pg.GraphicsWindow()
+        # self.win.resize(1000, 1000)
         
         cmd_plot = self.win.addPlot(title='Stim')
         try:
             cmd_plot.plot(self['t'], self['istim'])
         except:
-            pass
+            print("No istim recorded")
         
         self.win.nextRow()
         pre_plot = self.win.addPlot(title=self.pre_cells[0].celltype + ' Vm')
@@ -128,7 +137,8 @@ class PopulationTest(Protocol):
             pre_plot.plot(self['t'], self['v_pre%d'%i], pen=pg.mkPen(pg.intColor(i, len(self.pre_cells)), hues=len(self.pre_cells), width=1.0))
         
         self.win.nextRow()
-        post_plot = self.win.addPlot(title='Post Cell: %s' % self.post_cell.type)
-        post_plot.plot(self['t'], self['v_post'])
+        self.post_plot = self.win.addPlot(title='Post Cell: %s' % self.post_cell.type)
+        self.post_plot.plot(self['t'], self['v_post'])
+        self.win.show()
         
         

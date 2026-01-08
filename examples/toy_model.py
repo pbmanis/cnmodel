@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
 Basic test of initialization of multiple cells in the model, and running multiple cells at one time.
 Plots the resposnes to a series of current injections for most implemented baseic cell types in
@@ -8,30 +7,25 @@ Usage:
     python examples/toy_model.py  (no arguments)
 
 """
-
-
-import sys
-import numpy as np
-from collections import OrderedDict
 import re
+import sys
+from collections import OrderedDict
 
+import numpy as np
 from neuron import h
-import cnmodel.cells as cells
-from cnmodel.protocols import Protocol
-from cnmodel.util import custom_init
-from cnmodel.util import pyqtgraphPlotHelpers as PH
-from cnmodel.protocols import IVCurve
 
+import cnmodel.cells as cells
+from cnmodel.protocols import IVCurve, Protocol
+from cnmodel.util import pyqtgraphPlotHelpers as PH
 
 try:  # check for pyqtgraph install
     import pyqtgraph as pg
 except ImportError:
-    raise ImportError("This model requires pyqtgraph")
-
-from cnmodel.util.stim import make_pulse
+    raise ImportError("This example requires pyqtgraph")
 
 
-def autorowcol(n):
+
+def autorowcol(nplots):
     """
     return a reasonable layout (cols, rows) for n plots on a page
     up to 16.
@@ -55,10 +49,10 @@ def autorowcol(n):
         15: (4, 4),
         16: (4, 4),
     }
-    if n <= 16:
-        return nmap[n][0], nmap[n][1]
+    if nplots <= 16:
+        return nmap[nplots][0], nmap[nplots][1]
     else:
-        nx = np.floor(np.sqrt(n)) + 1
+        nx = np.floor(np.sqrt(nplots)) + 1
         return nx, nx
 
 
@@ -108,7 +102,7 @@ class Toy(Protocol):
     Run a set of cells with defined parameters to show excitability patterns. 
     Note that cells from Rothman and Manis are run at 22C; others at various
     temperatures depending on how they were initially measured and defined.
-    
+
     """
 
     def __init__(self):
@@ -142,7 +136,8 @@ class Toy(Protocol):
 
     def run(self):
         sre = re.compile(
-            "(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
+            r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
+            # r"(?P<cell>\w+)(?:[, ]*)(?P<type>[\w-]*)(?:[, ]*)(?P<species>[\w-]*)"
         )  # regex for keys in cell types
         self.celltypes = OrderedDict(
             [
@@ -192,10 +187,10 @@ class Toy(Protocol):
                     "Granule, GRC, Mouse",
                     (cells.Granule, "GRC", "mouse", (-0.05, 0.05, 9), 34),
                 ),
-                # (
-                #     "SGC, sgc-bm, Mouse",
-                #     (cells.SGC, "sgc-bm", "mouse", (-0.2, 0.6, 9), 34),
-                # ),
+                (
+                    "SGC, sgc-bm, Mouse",
+                    (cells.SGC, "sgc-bm", "mouse", (-0.2, 0.6, 9), 34),
+                ),
                 (
                     "SGC, sgc-a, Mouse",
                     (cells.SGC, "sgc-a", "mouse", (-0.2, 0.6, 9), 34),
@@ -246,8 +241,8 @@ class Toy(Protocol):
 
         row = 0
         col = 0
-        labelStyle = {"color": "#000", "font-size": "9pt", "weight": "normal"}
-        tickStyle = pg.QtGui.QFont("Arial", 9, pg.QtGui.QFont.Weight.Light)
+        label_style = {"color": "#000", "font-size": "9pt", "weight": "normal"}
+        tick_style = pg.QtGui.QFont("Arial", 9, pg.QtGui.QFont.Weight.Light)
         self.iv = IVCurve()  # use standard IVCurve here...
         for n, name in enumerate(self.celltypes.keys()):
             nrn_cell = netcells[
@@ -259,7 +254,6 @@ class Toy(Protocol):
             )  # convert to pulse format for IVCurve
             temperature = self.celltypes[name][4]
             nrn_cell.set_temperature(float(temperature))
-            ninjs = len(injcmds)
             pl[name] = self.win.addPlot(
                 labels={"left": "V (mV)", "bottom": "Time (ms)"}
             )
@@ -280,6 +274,9 @@ class Toy(Protocol):
                 temp=float(temperature),
             )
             for k in range(len(self.iv.voltage_traces)):
+                # print(self.iv.voltage_traces[k])
+                # print(self.iv.time_values)
+                # print()
                 pl[name].plot(
                     self.iv.time_values,
                     self.iv.voltage_traces[k],
@@ -293,7 +290,7 @@ class Toy(Protocol):
                 unitNames={"x": "ms", "y": "mV"},
             )
 
-            text = f"{int(temperature):2d}\u00b0C {np.min(self.iv.current_cmd):.2f}-{ np.max(self.iv.current_cmd):.2f} nA"
+            text = f"{int(temperature):2d}\u00b0C {np.min(self.iv.current_cmd):.2f}-{np.max(self.iv.current_cmd):.2f} nA"
 
             ti = pg.TextItem(text, anchor=(1, 0))
             ti.setFont(pg.QtGui.QFont("Arial", 9))
@@ -305,8 +302,10 @@ class Toy(Protocol):
             nrn_cell = netcells[name]
             nrn_cell.vm0 = nrn_cell.soma.v
             pars = nrn_cell.compute_rmrintau(auto_initialize=False)
+            mohm = "\u03a9"
             print(
-                f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} M\ohm  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
+                f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} {mohm}  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
+                f"{nrn_cell.status['name']:>16s} [{name:>24s}]   *** Rin = {pars['Rin']:6.1f} {mohm}  Tau = {pars['tau']:6.1f} ms   Vm = {pars['v']:6.1f} mV"
             )
 
 
@@ -316,6 +315,7 @@ def main():
     t.win.show()
     if sys.flags.interactive == 0:
         pg.QtWidgets.QApplication.exec()
+
 
 if __name__ == "__main__":
     main()

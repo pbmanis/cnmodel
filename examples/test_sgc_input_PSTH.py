@@ -12,7 +12,7 @@ from neuron import h
 from cnmodel.protocols import Protocol
 from cnmodel import cells
 from cnmodel.util import sound
-from cnmodel.util import custom_init
+from cnmodel.util.pynrnutilities import custom_init
 import cnmodel.util.pynrnutilities as PU
 from cnmodel import data
 
@@ -94,26 +94,25 @@ def makeSynapses(post_cell, info):
         pre_cells[-1].set_sound_stim(
             info["stim"], seed=info["seed"] + nsgc, simulator=info["simulator"]
         )
-    # print('makesyn ok')
+
     return {'pre_cells':pre_cells, 'synapses': synapses, 'xmtr':xmtr}
 
     
 def runNeuron(post_cell, info, psx):
 
-    # print('runNeuron entry')
     Vm = h.Vector()
     Vm.record(post_cell.soma(0.5)._ref_v)
     rtime = h.Vector()
     rtime.record(h._ref_t)
-    h.tstop = 1e3 * info["run_duration"]  # duration of a run
+    tstop = 1e3 * info["run_duration"]  # duration of a run
     h.celsius = info["temp"]
     h.dt = info["dt"]
     post_cell.cell_initialize()
     info["init"]()
     h.t = 0.0
-    while h.t < h.tstop:
-        h.fadvance()
-    # print('runNeuron exit')
+    h.batch_run(tstop, h.dt)
+    # while h.t < h.tstop:
+    #     h.fadvance()
     pre_trains = [psx['pre_cells'][k]._spiketrain for k in range(len(psx['pre_cells']))]
     # print(psx['xmtr'].keys())
     # print([psx['xmtr'][k].to_python() for k in list(psx['xmtr'].keys())])
@@ -134,33 +133,6 @@ def runTrial(cell, info):
     # setupNeuron(post_cell, info)
     res = runNeuron(post_cell, info, psx)
     return(res)
-
-
-# # dask delayed routines for parallelism
-# @dask.delayed
-# def buildCell_dask(cell):
-#     return buildCell(cell)
-#
-# @dask.delayed
-# def makeSynapses_dask(post_cell, info):
-#     return makeSynapses(post_cell, info)
-#
-# @dask.delayed
-# def runNeuron_dask(post_cell, info,  psx): # , rtime, Vm):
-#     return runNeuron(post_cell, info, psx)
-#
-#
-# @dask.delayed
-# def setupNeuron_dask(post_cell, info):
-#     return setupNeuron(post_cell, info)
-#
-# @dask.delayed
-# def runTrial_dask(cell, info):
-#     return runTrial(cell, info)
-#     # post_cell = buildCell_dask(cell)
-#     # psx = makeSynapses_dask(post_cell, info)
-#     # return runNeuron_dask(post_cell, info, psx)
-#
     
     
 class SGCInputTestPSTH(Protocol):
@@ -176,7 +148,7 @@ class SGCInputTestPSTH(Protocol):
         self.fMod = 100.0  # mod freq, Hz
         self.dMod = 0.0  # % mod depth, Hz
         self.dbspl = 50.0
-        self.simulator = "cochlea"
+        self.simulator = "py3" # "cochlea"
         self.sr = 2  # set SR group
 
     def set_cell(self, cell="bushy"):
@@ -301,6 +273,7 @@ class SGCInputTestPSTH(Protocol):
             start_time = timeit.default_timer()
             for nr in range(self.nrep):
                 info["seed"] = seed + 3 * self.n_sgc * nr
+                info["rep_no"] = nr
                 res = runTrial(self.cell, info)
                 # res contains: {'time': time, 'vm': Vm, 'xmtr': xmtr, 'pre_cells': pre_cells, 'post_cell': post_cell}
                 self.pre_cells[nr] = res["pre_cells"]
@@ -314,7 +287,7 @@ class SGCInputTestPSTH(Protocol):
 
         if parallelmode in ['mp', 'multiprocessing']:
             results = {}
-            workers = None  # use all available
+            workers = mp.Parallelize.suggestedWorkerCount()  # use suggested # 
             tot_runs = self.nrep
             tasks = []
             for nr in range(self.nrep):
@@ -323,6 +296,7 @@ class SGCInputTestPSTH(Protocol):
             with mp.Parallelize(enumerate(tasks), results=results, workers=workers) as tasker:
                 for i, task in tasker:
                     info["seed"] = seed + 3 * self.n_sgc * i
+                    info["rep_no"] = i
                     repres = runTrial(self.cell, info)
                     tasker.results[i] = repres
             # get time of run before display
@@ -524,7 +498,7 @@ if __name__ == "__main__":
             "dstellate",
             "octopus",
             "tuberculoventral",
-            "pyramida",
+            "pyramidal",
         ],
         help="Select target cell",
     )
@@ -594,7 +568,7 @@ if __name__ == "__main__":
     prot.set_db(args.dbspl)
     prot.set_sr(args.srgroup)
     
-    prot.run(stimulus=args.stimulus, reps=args.nrep, simulator='cochlea', parallelmode=args.parallelmode)
+    prot.run(stimulus=args.stimulus, reps=args.nrep, simulator='py3', parallelmode=args.parallelmode)
     prot.show()
 
     import sys

@@ -11,13 +11,36 @@ arm64/**
 *.log
 .DS_Store
 
+# C compilation outputs:
+*.o
+#NMODL cpp files
+*.cpp
 # specific directories and files:
 cnmodel_venv/
+.venv/
 # cnmodel_venv/** # virutal environment
 cnmodel/mechanisms/*.c
 cnmodel/mechanisms/*.o
 cnmodel/an_model/model/*.mexmaci64
 cnmodel/an_model/cache/**  # everything in the AN cache
+cnmodel/arm64
+cnmodel/mechanisms/arm64
+cnmodel/mechanisms/i386
+cnmodel/mechanisms/x86_64
+cnmodel/i386
+cnmodel/x86_64
+cnmodel/cnmodel_pbm.egg-info/
+cnmodel_pbm.egg-info/
+cnmodel/__pycache__/
+tests/__pycache__/
+docs/_build/
+doc/build/
+doc/html/
+*.h5
+*.hdf5
+
+pyzbc2014*
+
 cochleae
 dask-worker-space/
 # Jupyter Notebook

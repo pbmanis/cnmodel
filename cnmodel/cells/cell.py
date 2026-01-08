@@ -5,9 +5,8 @@ import scipy.optimize
 from collections import OrderedDict
 import neuron
 from neuron import h
-from ..util import nstomho, mho2ns
-from ..util import custom_init
-from ..util import Params
+from cnmodel.util.pynrnutilities import nstomho, mho2ns, custom_init
+from cnmodel.util.Params import Params
 from .. import synapses
 from .. import data
 from .. import morphology
@@ -225,7 +224,7 @@ class Cell(object):
                 self.morphology = morphology.SwcReader(morphology_file)
             else:
                 raise ValueError(
-                    "Unknown morphology file type [must be .hoc, .hocx, or .swc], got %s",
+                    "Unknown morphology file type [must be .hoc, .hocx, or .swc], got %s; try running read_swc_cells first",
                     morphology_file,
                 )
         elif isinstance(morphology_file, morphology.Morphology):
@@ -595,12 +594,15 @@ class Cell(object):
         Initialize this cell to it's "rmp" under current conditions
         All sections in the cell are set to the same value
         """
+        # print("cell.py: cell initialize")
         if vrange is None and self.vrange is None:
             vrange = [-90.0, -50.0]
         if self.vrange is not None:
             vrange = self.vrange
+        # print("     vrange, vm0: ", vrange, self.vm0)
         if self.vm0 is None:
             self.vm0 = self.find_i0(showinfo=showinfo, vrange=vrange, **kwargs)
+            # print("Found vm0: ", self.vm0)
         for part in self.all_sections.keys():
             for sec in self.all_sections[part]:
                 sec.v = self.vm0
@@ -1102,11 +1104,9 @@ class Cell(object):
                 sec.v = V
         h.celsius = self.status["temperature"]
         h.t = 0.0
-        # print(self.mechanisms)
         h.finitialize(V)
         h.fcurrent()
         self.ix = {}
-
         if "na" in self.mechanisms:
             # print dir(self.soma().na)
             try:
@@ -1209,7 +1209,7 @@ class Cell(object):
                 self.i_currents, vrange[0], vrange[1], maxiter=10000
             )
         except:
-            print("find i0 failed:")
+            print("Find i0 failed:")
             # print(self.ix)
             i0 = self.i_currents(V=vrange[0])
             i1 = self.i_currents(V=vrange[1])
@@ -1318,23 +1318,23 @@ class Cell(object):
         # 1e-8*np.pi*soma.diam*soma.L
         # somaarea = np.sum([1e-8 * np.pi * s.L * s.diam for s in soma_sections])
         self.somaarea = 0.0  # units are um2
-        print("soma sections: ", soma_sections)
+        # print("soma sections: ", soma_sections)
         for sec in soma_sections:
             # print(f"   segment: {i:d} area={seg.area():.3f}")
-            print("sec: ", sec)
-            print("self.areamethod: ", self.area_method)
+            # print("sec: ", sec)
+            # print("self.areamethod: ", self.area_method)
             if self.area_method == "segment":
                 for seg in sec.allseg():
-                    print("seg area: ", seg.area())
+                    # print("seg area: ", seg.area())
                     self.somaarea += seg.area()
             elif self.area_method == "pt3d":
-                print("sec.n3d(): ", sec.n3d())
+                # print("sec.n3d(): ", sec.n3d())
                 for i in range(sec.n3d()):
-                    print("sec arc, diam: ", sec.arc3d(i), sec.diam3d(i))
+                    # print("sec arc, diam: ", sec.arc3d(i), sec.diam3d(i))
                     self.somaarea += np.pi * sec.arc3d(i) * sec.diam3d(i)
             else:
                 raise ValueError(f"Area method {self.ara_method:s} is not valid for area computations [cnmodel.cells.py]")
-        print("self.somaarea = ", self.somaarea)
+        # print("self.somaarea = ", self.somaarea)
         # print(f'{name:s} area: {area:.3f} ')
         gsum = 0.0  # total condutance in us/cm2
         for sec in soma_sections:

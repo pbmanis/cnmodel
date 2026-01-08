@@ -41,6 +41,8 @@ The parameters of the distribution, as well as the release latency,
 are controlled by an exponential function whose parameters are initialized at
 run time. 
 10/19/2011 Paul B. Manis, UNC Chapel Hill
+12/2/2025 Paul B. Manis, UNC Chapel Hill 
+change to work with Neuron9 - void* nrn_random_arg becomes Rand* nrn_random_arg
 
 ENDCOMMENT
 
@@ -154,8 +156,8 @@ ASSIGNED {
 
 : Function prototypes needed to assign RNG function pointers
 VERBATIM
-double nrn_random_pick(void* r);
-void* nrn_random_arg(int argpos);
+double nrn_random_pick(int* r);
+Rand* nrn_random_arg(int argpos);
 ENDVERBATIM
 
 : Return a pick from uniform distribution.

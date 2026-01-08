@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 import os
-from Cython.Build import cythonize
+# from Cython.Build import cythonize
 
 
 path = os.path.join(os.path.dirname(__file__), 'cnmodel')
@@ -42,7 +42,7 @@ setup(name='cnmodel',
       data_files=[('mechs', ['x86_64/*', 'arm64/*'])],  # includes the current compiled mechanisms
 #      cmdclass={'makeneuron': 'Build_Nmodl'},
       classifiers = [
-             "Programming Language :: Python :: 3.7+",
+             "Programming Language :: Python :: 3.13+",
              "Development Status ::  Beta",
              "Environment :: Console",
              "Intended Audience :: Neuroscientists, computational",

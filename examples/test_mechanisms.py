@@ -35,21 +35,19 @@ with this routine. the list "nottestablemechs" in the file defines mechanisms pr
 with cnmodel that cannot be run with this program.
 
 """
-import sys
 import argparse
-from pathlib import Path
-import platform
-from neuron import h
-from neuron import nrn
 import gc
-import numpy as np
+import platform
+import sys
+from pathlib import Path
 
-# import scipy as sp
-import cnmodel.util
+import numpy as np
 import pyqtgraph as pg
-import pyqtgraph.exporters
-from pyqtgraph.Qt import QtCore, QtGui
+from neuron import h, nrn
+
+import cnmodel.util.nrnutils as nrnutils
 import cnmodel.util.pynrnutilities as Util
+from cnmodel import MODFILE_PATH
 
 nottestablemechs = [
     "cadyn",
@@ -59,7 +57,7 @@ nottestablemechs = [
     "Mechanism",
     "capmp",
     "capump",
-    "cl_ion",n
+    "cl_ion",
     "extracellular",
     "fastpas",
     "k_ion",
@@ -118,6 +116,7 @@ tdurs = {
 
 known = list(tdurs.keys())  # all the "known files"
 machine = platform.machine()  # determine where to fine
+print("machine: ", machine)
 if machine == "x86_64":
     modfilepath = Path("x86_64")
 elif machine == "arm64":
@@ -127,6 +126,8 @@ elif machine == "i386": # hopefully not!
 else:
     raise ValueError(f"Cannot find mechanism library for machine type: {machine:s}")
 
+modfilepath = Path(MODFILE_PATH) 
+print("modfilepath: ", modfilepath)
 modfiles = list(modfilepath.glob("*.o"))
 modfiles = sorted([mf.stem for mf in modfiles])
 print("modfiles: ", modfiles)
@@ -169,30 +170,22 @@ class ChannelKinetics:
         #     modfile2 = args[1]
         doKinetics = False
         self.app = pg.mkQApp()
-        self.win = pg.GraphicsView()
+        self.win = pg.GraphicsLayoutWidget()
+        self.win.setBackground("k")
         self.win.setWindowTitle(f"VC Plots for {args:s}")
         self.win.resize(900, 600)
-        # cw = QtGui.QWidget()
-        # self.win.setCentralWidget(cw)
-        # self.gridLayout = QtGui.QGridLayout()
-        # cw.setLayout(self.gridLayout)
-        # self.gridLayout.setContentsMargins(9, 9, 4, 4)
-        # self.gridLayout.setSpacing(1)
+
         self.p1 = self.win.addPlot(title="I (VC)")
-        # self.gridLayout.addWidget(self.p1, 0, 0, 1, 1)
         self.p2 = self.win.addPlot(title="I_ss, I_max")
-        # self.gridLayout.addWidget(self.p2, 0, 1, 1, 1)
         self.p2mh = self.win.addPlot(title="act, inact")
 
         self.win.nextRow()
         self.p3 = self.win.addPlot(title="V command")
-        # self.gridLayout.addWidget(self.p3, 1, 0, 1, 1)
         self.p5 = self.win.addPlot(title="I_min")
-        # self.gridLayout.addWidget(self.p5, 1, 1, 1, 1)
         self.p6 = self.win.addPlot(title="Inact")
         self.win.show()
 
-        QtGui.QApplication.processEvents()
+        pg.QtWidgets.QApplication.processEvents()
         #
         # self.tdur is a table of durations for the pulse and post-pulse for each channel type (best to highlight features
         # on appropriate time scales)
@@ -225,15 +218,15 @@ class ChannelKinetics:
         tdelay = 5.0
         if modfile in list(remap.keys()):
             modfile = remap[modfile]
-        Channel = cnmodel.util.Mechanism(modfile)
-        leak = cnmodel.util.Mechanism("leak")
+        Channel = nrnutils.Mechanism(modfile)
+        leak = nrnutils.Mechanism("leak")
         if modfile == "nacsh":
             Channel.set_parameters({"gbar": 6e3})  # weird units from Kole paper
         else:
             Channel.set_parameters({"gbar": 1})
         leak.set_parameters({"gbar": 1e-12})
 
-        self.soma = cnmodel.util.Section(L=10, diam=10, mechanisms=[Channel, leak])
+        self.soma = nrnutils.Section(L=10, diam=10, mechanisms=[Channel, leak])
         if modfile == "bkpjk":
             ca_init = 100e-6
             self.soma().cai = ca_init

@@ -6,3 +6,4 @@ except:
     MATLAB_FOUND = False
 
 from .cache import get_spiketrain
+import cnmodel.an_model.test_cache

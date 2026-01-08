@@ -11,9 +11,9 @@ import neuron
 
 import cnmodel
 import cnmodel.cells as cells
-from cnmodel.util import UserTester
+from cnmodel.util.user_tester import UserTester
 from cnmodel.protocols import SynapseTest
-from cnmodel.util import reset
+from cnmodel.util.pynrnutilities import reset
 
 #
 # Synapse tests

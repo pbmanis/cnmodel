@@ -11,21 +11,22 @@ n_frequencies or n_levels, or reduce the number of selected output cells (see
 cells_per_band).
  
 """
-
-import os, sys, time
+import os
 import pickle
-from collections import OrderedDict
+import sys
+import time
 import timeit
-import numpy as np
-import scipy.stats
+from collections import OrderedDict
 
-from neuron import h
+import numpy as np
 import pyqtgraph as pg
-import pyqtgraph.multiprocess as mp
+from neuron import h
+from pyqtgraph import multiprocess as mp
+
 # from pyqtgraph.Qt import QtGui, QtCore
 from cnmodel import populations
-from cnmodel.util import sound, random_seed
 from cnmodel.protocols import Protocol
+from cnmodel.util import random_seed, sound
 
 
 class CNSoundStim(Protocol):
@@ -158,7 +159,7 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.baseline = baseline  # (start, stop)
         self.response = response  # (start, stop)
 
-        self.ctrl = pg.QtGui.QWidget()
+        self.ctrl = pg.QtWidgets.QWidget()
         self.layout = pg.QtWidgets.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.ctrl.setLayout(self.layout)
@@ -650,12 +651,13 @@ def main():
                 tasks.append((f, db, i))
 
     results = {}
-    workers = 1 if not parallel else None
+    
+    workers = 1 if not parallel else mp.Parallelize.suggestedWorkerCount()
     tot_runs = len(fvals) * len(levels) * nreps
     with mp.Parallelize(
         enumerate(tasks),
         results=results,
-        progressDialog="Running parallel simulation..",
+        progressDialog="Running parallel simulation.. (may take a while)",
         workers=workers,
     ) as tasker:
         for i, task in tasker:

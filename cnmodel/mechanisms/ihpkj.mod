@@ -6,7 +6,7 @@ NEURON {
     SUFFIX hpkj
 	NONSPECIFIC_CURRENT i
 	RANGE gbar, gh, eh
-	GLOBAL ninf, ntau
+	RANGE ninf, ntau
 }
 
 UNITS {

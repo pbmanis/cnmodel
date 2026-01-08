@@ -9,6 +9,7 @@ __author__ = "pbmanis"
 
 
 import sys
+from pathlib import Path
 import numpy as np
 import timeit
 
@@ -24,6 +25,8 @@ class F5:
         # build plotting area
         #
         self.filename = filename
+        assert Path(filename).is_file()
+
         self.iv = IVCurve()  # use standard IVCurve here...
         self.temperature = 34
         self.initdelay = 150.0
@@ -78,6 +81,7 @@ class F5:
             self.layout.addLayout(row=nr1 + 2, col=i)
 
         self.plots["p1"] = self.layout.addPlot(
+            title="Voltage",
             row=1,
             col=1,
             rowspan=6,
@@ -85,6 +89,7 @@ class F5:
             labels={"left": "V (mV)", "bottom": "Time (ms)"},
         )
         self.plots["p2"] = self.layout.addPlot(
+            title="Current",
             row=7,
             col=1,
             rowspan=1,
@@ -104,7 +109,7 @@ class F5:
                 pen=pg.mkPen("k", width=0.75),
             )
         self.plots["p1"].setRange(
-            xRange=(0.0, np.sum(self.durs) - self.initdelay), yRange=(-160.0, 40.0)
+            xRange=(0.0, np.sum(self.durs) - self.initdelay), # yRange=(-160.0, 40.0)
         )
         self.plots["p2"].setRange(
             xRange=(0.0, np.sum(self.durs) - self.initdelay), yRange=(-1, 1)
@@ -134,11 +139,14 @@ class F5:
 
 
 if __name__ == "__main__":
+    print("Not functioning")
+    exit()
     # if len(sys.argv) > 1  and sys.argv[1] == '5':
     fig5 = F5("examples/LC_bushy.hoc", lc_cell=True)
     # else:
-    #     fn = ('/Users/pbmanis/Desktop/Python/VCNModel/VCN_Cells/VCN_c{0:02d}/Morphology/VCN_c{0:02d}.hoc'.format(int(sys.argv[1])))
-    #     fig5 = F5(fn)
+        # fn = ('/Users/pbmanis/Desktop/Python/VCNModel/VCN_Cells/VCN_c{0:02d}/Morphology/VCN_c{0:02d}.hoc'.format(int(sys.argv[1])))
+        # fn = ('/Users/pbmanis/Desktop/Python/VCNModel/VCN_Cells/VCN_c{0:02d}/Morphology/VCN_c{0:02d}.hoc'.format(int(sys.argv[1])))
+        # fig5 = F5(fn)
     start_time = timeit.default_timer()
     fig5.run()
     elapsed = timeit.default_timer() - start_time

@@ -45,5 +45,5 @@ def test_parallel():
 
 
 if __name__ == '__main__':
-    #test_cache()
-    test_locking()
+    test_cache()
+    #test_locking()
