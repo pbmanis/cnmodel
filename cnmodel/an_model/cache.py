@@ -45,7 +45,13 @@ def get_spiketrain(cf, sr, stim, seed, verbose=False, **kwds):
     is little chance the cache would be re-used.
     
     """
-    filename = get_cache_filename(cf=cf, sr=sr, seed=seed, stim=stim, **kwds)
+    if isinstance(sr, int):
+        filename = get_cache_filename(cf=cf, sr=sr, seed=seed, stim=stim, **kwds)
+    elif isinstance(sr, str):
+        fiber_type_map = {'lsr':0, 'msr':1, 'hsr':2}
+        if sr not in fiber_type_map:
+            raise ValueError("Invalid fiber type string: %s" % sr)
+        filename = get_cache_filename(cf=cf, sr=fiber_type_map[sr], seed=seed, stim=stim, **kwds)
     subdir = os.path.dirname(filename)
     
     if not os.path.exists(subdir):
@@ -123,6 +129,7 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
     sr : int
         Spontaneous rate group of the fiber: 
         0=low, 1=mid, 2=high.
+        or str: 'lsr', 'msr', 'hsr'
     stim : Sound instance
         Stimulus sound to be presented on each repetition
     seed : int >= 0
@@ -136,13 +143,22 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
         'cihc', and 'implnt'. 
         'simulator' is used to set the simulator ('matlab' or 'cochlea')
     """
-    
+
     for k in ['pin', 'CF', 'fiberType', 'noiseType']:
         if k in kwds:
             raise TypeError("Argument '%s' is not allowed here." % k)
     
     ihc_kwds = dict(pin=stim.sound, CF=cf, nrep=1, tdres=stim.dt, 
                     reptime=stim.duration*2, cohc=1, cihc=1, species=1)
+
+    if simulator in ['MATLAB', 'matlab']:
+        fiber_type_map = {'lsr':0, 'msr':1, 'hsr':2}
+        sr = fiber_type_map[sr] if isinstance(sr, str) else sr
+    elif simulator in ['py3']:
+        fiber_type_map = {0:'lsr', 1:'msr', 2:'hsr'}
+        sr = fiber_type_map[sr] if isinstance(sr, int) else sr
+    else:
+        raise ValueError("Simulator must be specified as either 'matlab' or 'py3'; found <%s> of type %s")
     syn_kwds = dict(CF=cf, nrep=1, tdres=stim.dt, fiberType=sr, noiseType=1, implnt=0)
     # copy any given keyword args to the correct model function
     for kwd in kwds:
@@ -158,6 +174,7 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
         raise TypeError("Invalid keyword arguments: %s" % list(kwds.keys()))
     
     if simulator in ['MATLAB', 'matlab']:
+
         seed_rng(seed)
         vihc = model_ihc(_transfer=False, **ihc_kwds) 
         m, v, psth = model_synapse(vihc, _transfer=False, **syn_kwds)
@@ -165,30 +182,30 @@ def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
         times = np.argwhere(psth).ravel()
         return times * stim.dt
     
-    elif (simulator in ['cochlea']) and HAVE_COCHLEA:
-        fs = int(0.5+1./stim.dt)  # need to avoid roundoff error
-        srgrp = [0,0,0] # H, M, L (but input is 1=L, 2=M, H = 3)
-        srgrp[2-sr] = 1
-        sp = cochlea.run_zilany2014(
-                stim.sound,
-                fs=fs,
-                anf_num=srgrp,
-                cf=cf,
-                seed=seed,
-                species='cat')
-        return np.array(sp.spikes.values[0])
+    # elif (simulator in ['cochlea']) and HAVE_COCHLEA:
+    #     fs = int(0.5+1./stim.dt)  # need to avoid roundoff error
+    #     srgrp = [0,0,0] # H, M, L (but input is 1=L, 2=M, H = 3)
+    #     srgrp[2-sr] = 1
+    #     sp = cochlea.run_zilany2014(
+    #             stim.sound,
+    #             fs=fs,
+    #             anf_num=srgrp,
+    #             cf=cf,
+    #             seed=seed,
+    #             species='cat')
+    #     return np.array(sp.spikes.values[0])
     
     elif simulator in ['py3']:
         if not HAVE_PYZBC2014:
             raise ImportError("The 'pyzbc2014' package is required for the 'py3' simulator.")
-        fiberType = 'hsr' if sr == 2 else ('msr' if sr == 1 else 'lsr')
+        
         powerlaw = 'approx'  # approximate power-law implementation
         noiseType = 'fresh'  # variable fGn
         vihc = zbc.sim_ihc_zbc2014(stim.sound, cf, 1, int(0.5+1./stim.dt),
                                          cohc=ihc_kwds['cohc'], cihc=ihc_kwds['cihc'],
                                          species='cat')
         an_drive = zbc.sim_anrate_zbc2014(vihc, cf, 1, int(0.5+1./stim.dt),
-                                                 fiberType, powerlaw, noiseType)
+                                                 sr, powerlaw, noiseType)
         # generate spikes from the instantaneous rate
         spikes = zbc.sim_spike_generator_zbc2014(an_drive, fs=int(0.5+1./stim.dt),
                                                        totalstim=stim.duration, nrep=1)
