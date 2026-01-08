@@ -224,7 +224,7 @@ class Cell(object):
                 self.morphology = morphology.SwcReader(morphology_file)
             else:
                 raise ValueError(
-                    "Unknown morphology file type [must be .hoc, .hocx, or .swc], got %s",
+                    "Unknown morphology file type [must be .hoc, .hocx, or .swc], got %s; try running read_swc_cells first",
                     morphology_file,
                 )
         elif isinstance(morphology_file, morphology.Morphology):
