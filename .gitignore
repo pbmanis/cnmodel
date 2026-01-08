@@ -2,3 +2,5 @@
 i386
 x86_64
 *.mexmaci64
+cnmodel/an_model/cache/*  # ignore all of the cached AN files
+
