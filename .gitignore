@@ -12,6 +12,7 @@ cnnmodel/mexmaci64/*
 cnmodel/mechanisms/arm64/*
 cnmodel/mechanisms/x86_64/*
 cnmodel/mechanisms/i386/*
+cnmodel_pbm.egg-info/*
 
 
 
