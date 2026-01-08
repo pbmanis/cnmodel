@@ -14,6 +14,8 @@ python test_an_model.py
 
 (Adapted from makeANF_CF_RI.m)
 """
+import argparse
+import sys
 import time
 import numpy as np
 import pyqtgraph as pg
@@ -23,46 +25,34 @@ from pyzbc2014 import pyzbc2014
 
 zbc = pyzbc2014.pyzbc2014()
 
-def test_an_model():
+def test_an_model(fibertype:str='hsr', cf:float=16e3, dbspl:float=30., noiseType=0, species=1   ):
+    assert fibertype in ['hsr', 'msr', 'lsr'], "Invalid fiber type: %s" % fibertype
+    assert species in ['cat', 'human', 'human_glasberg'], "Invalid species: %s" % species
+
+
     # model fiber parameters
-    CF    = 16e3   # CF in Hz   
+    CF    = cf # 16e3   # CF in Hz   
     cohc  = 1.0    # normal ohc function
     cihc  = 1.0    # normal ihc function
-    species = 1    # 1 for cat (2 for human with Shera et al. tuning 3 for human with Glasberg & Moore tuning)
+    # species = species    # 1 for cat (2 for human with Shera et al. tuning 3 for human with Glasberg & Moore tuning)
     noiseType = 0  # 1 for variable fGn (0 for fixed fGn)
-    fiberType = 3  # spontaneous rate (in spikes/s) of the fiber BEFORE refractory effects "1" = Low "2" = Medium "3" = High
+    fiberType = fibertype  # spontaneous rate (in spikes/s) of the fiber BEFORE refractory effects "1" = Low "2" = Medium "3" = High
     implnt = 0     # "0" for approximate or "1" for actual implementation of the power-law functions in the Synapse
-    if fiberType == 1:
-        sr = 'lsr'
-    elif fiberType == 2:
-        sr = 'msr'
-    elif fiberType == 3:
-        sr = 'hsr'
-    else:
-        raise ValueError("Invalid fiberType: %d" % fiberType)
+
     if noiseType == 0:
         noisetype = 'none'
     elif noiseType == 1:
         noisetype = 'fresh'
     else:
         raise ValueError("Invalid noiseType: %d" % noiseType)
-    if species == 1:
-        species_str = 'cat'
-    elif species == 2:
-        species_str = 'human'
-    elif species == 3:
-        species_str = 'human_glasberg'
-    else:
-        raise ValueError("Invalid species: %d" % species)
-    # stimulus parameters
+
     F0 = CF     # stimulus frequency in Hz
     Fs = 100e3  # sampling rate in Hz (must be 100, 200 or 500 kHz)
-    # T  = 150e-3  # stimulus duration in seconds
     pdur = 0.3  # pip duration
     pstart = [0.1]  # pip start times
     T = pstart[-1] + pdur + 0.1  # total stimulus duration
     rt = 2.5e-3 # rise/fall time in seconds
-    stimdb = 30 # stimulus intensity in dB SPL
+    stimdb = dbspl # stimulus intensity in dB SPL
 
     # PSTH parameters
     nrep = 1           # number of stimulus repetitions (e.g., 50)
@@ -72,17 +62,16 @@ def test_an_model():
                          pip_duration=pdur, pip_start=pstart, ramp_duration=rt)
     t = stim.time
     pin = stim.sound
-    db = stim.measure_dbspl(rt, T-rt)
+    db = stim.measure_dbspl(pstart[-1]+rt, pdur-rt) # only measure during steady state portion of pip
 
 
     an_model.seed_rng(34978)
     start = time.time()
     # vihc = an_model.model_ihc(pin, CF, nrep, 1/Fs, T+1e-3, cohc, cihc, species) # , _transfer=False) 
-    vihc = zbc.sim_ihc_zbc2014(pin, CF, nrep, Fs, cohc, cihc, species=species_str)
+    vihc = zbc.sim_ihc_zbc2014(pin, CF, nrep, Fs, cohc, cihc, species=species)
     print("IHC time:", time.time() - start)
     start = time.time()
 #    m, v, psth = an_model.model_synapse(vihc, CF, nrep, 1/Fs, fiberType, noiseType, implnt)
-    fiberType = 'hsr'
     powerlaw = 'true'
     noiseType = 'fresh'
 
@@ -92,7 +81,7 @@ def test_an_model():
     win = pg.GraphicsLayoutWidget()
     win.setWindowTitle('AN Model Test')
     win.resize(800, 800)
-    p1 = win.addPlot(title='Input Stimulus (%0.1f dBSPL)' % db)
+    p1 = win.addPlot(title=f'Species: {species} Freq: {CF} Hz Level {db:0.1f} dBSPL, Fiber: {fibertype}')
     p1.plot(t, pin)
 
     p2 = win.addPlot(col=0, row=1, title='IHC voltage')
@@ -119,7 +108,7 @@ def test_an_model():
 
     for nr in range(nreps):
         if nr == 0:
-            ihcout = zbc.sim_ihc_zbc2014(pin, cf=CF, nrep=1, species=species_str)
+            ihcout = zbc.sim_ihc_zbc2014(pin, cf=CF, nrep=1, species=species)
             anout = zbc.sim_anrate_zbc2014(
                 ihcout, cf=CF, fibertype=fiberType, nrep=1, noisetype=noisetype
             )
@@ -151,5 +140,66 @@ def test_an_model():
         pg.QtWidgets.QApplication.exec()
     
 if __name__ == "__main__":
-    import sys
-    test_an_model()
+    parser = argparse.ArgumentParser(description="test an model basics")
+
+    parser.add_argument(
+        "--species",
+        type=str,
+        choices=["cat", "human", "human_glasberg"],
+        default="cat",
+        help="Species",
+    )
+    parser.add_argument(
+        "-S",
+        "--stimulus",
+        type=str,
+        choices=["tone", "noise", "SAM", "clicks"],
+        default="tone",
+        help="stimulus type",
+    )
+    parser.add_argument(
+        "--dB",
+        "--dBSPL",
+        type=float,
+        default=30.,
+        help="Sound pressure level, SPL",
+    )
+    parser.add_argument(
+        "-f",
+        "--fibertype",
+        type=str,
+        choices=["hsr", "msr", "lsr"],
+        default="hsr",
+        help="Fiber type (spontaneous rate) hsr, msr, lsr",
+    )
+    parser.add_argument(
+        "--dmod",
+        type=float,
+        default=100.,
+        help="Modulation depth for SAM (percent)",
+    )
+    parser.add_argument(
+        "--fmod",
+        type=float,
+        default=200.0,
+        help="Modulation Frequency for SAM (Hz)",
+    )
+    parser.add_argument(
+        "--CF",
+        type=float,
+        default=16000.,
+        help="Carrier Frequency for SAM (Hz)",
+    )
+    
+    parser.add_argument(
+        "--RI",
+        action="store_true",
+        default=False,
+        dest="RI",
+        help="Run Rate-intensity with these parameters",
+    )
+
+    args = parser.parse_args()
+    fibertype = args.fibertype
+
+    test_an_model(fibertype=args.fibertype, noiseType=1, species=args.species, cf=args.CF, dbspl=args.dB)
