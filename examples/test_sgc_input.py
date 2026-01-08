@@ -52,12 +52,12 @@ class SGCInputTest(Protocol):
             synapse.terminal.relsite.Dep_Flag = False
         self['t'] = h._ref_t
         
-        h.tstop = 200.0 # duration of a run
+        # h.tstop = 200.0 # duration of a run
         h.celsius = temp
         h.dt = dt
         
         custom_init()
-        h.run()
+        h.batch_run(200., h.dt)
 
     def show(self):
         self.win = pg.GraphicsLayoutWidget()

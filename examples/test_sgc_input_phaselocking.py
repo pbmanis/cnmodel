@@ -62,12 +62,16 @@ class SGCInputTestPL(Protocol):
         self.stimulus = args.stimulus
         self.run_duration = 1.0  # in seconds
         self.pip_duration = 0.8  # in seconds
-        self.pip_start = [0.02]  # in seconds
+        self.pip_start = [0.1]  # in seconds
         self.Fs = 100e3  # in Hz
         self.f0 = args.CF  # stimulus in Hz
         self.cf = args.CF  # SGCs in Hz
         self.fMod = args.fmod  # mod freq, Hz
         self.dMod = args.dmod  # % mod depth, percentage
+        self.simulator = args.simulator
+        self.fibertype = args.fibertype
+
+
         if dB is None:
             self.dbspl = args.dB
         else:
@@ -123,7 +127,7 @@ class SGCInputTestPL(Protocol):
         j = 0
         for k in range(self.n_sgc):
             seed = seed + k
-            preCell = cells.DummySGC(cf=self.cf, sr=2)
+            preCell = cells.DummySGC(cf=self.cf, sr=self.fibertype, simulator=self.simulator)
             synapse = preCell.connect(postCell)
             for i in range(synapse.terminal.n_rzones):
                 self["xmtr%03d" % j] = synapse.terminal.relsite._ref_XMTR[i]
@@ -137,12 +141,12 @@ class SGCInputTestPL(Protocol):
         # self['prevm'] = preCell.soma(0.5)._ref_v
         self["t"] = h._ref_t
         postCell.cell_initialize()
-        h.tstop = 1e3 * self.run_duration  # duration of a run
+        tstop = 1e3 * self.run_duration  # duration of a run
         h.celsius = temp
         h.dt = dt
 
         self.custom_init()
-        h.run()
+        h.batch_run(tstop, h.dt)
 
     def window_spikes(self, spiketrain):
         phasewin = [
@@ -193,9 +197,12 @@ class SGCInputTestPL(Protocol):
         )
         
 
-    def show(self):
+    def show(
+        self):
         self.compute_vs()
         self.win = pg.GraphicsLayoutWidget()
+
+        self.win.setWindowTitle(f'Species: {self.species} Freq: {self.cf} Hz Level {self.dbspl:0.1f} dBSPL, Fiber: {self.fibertype} simulator: {self.simulator} Cell: {self.cell}')
         p1 = self.win.addPlot(title="stim", row=0, col=0)
         p1.plot(self.stim.time * 1000, self.stim.sound)
         p1.setXLink(p1)
@@ -276,6 +283,12 @@ def main():
         help="stimulus type",
     )
     parser.add_argument(
+        "--CF",
+        type=float,
+        default=16000.,
+        help="Carrier Frequency for tone or SAM (Hz)",
+    )
+    parser.add_argument(
         "--dB",
         "--dBSPL",
         type=float,
@@ -294,12 +307,6 @@ def main():
         default=200.0,
         help="Modulation Frequency for SAM (Hz)",
     )
-    parser.add_argument(
-        "--CF",
-        type=float,
-        default=16000.,
-        help="Carrier Frequency for SAM (Hz)",
-    )
     
     parser.add_argument(
         "--RI",
@@ -307,6 +314,22 @@ def main():
         default=False,
         dest="RI",
         help="Run Rate-intensity with these parameters",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--fibertype",
+        type=str,
+        choices=["hsr", "msr", "lsr"],
+        default="hsr",
+        help="Fiber type (spontaneous rate) hsr, msr, lsr",
+    )
+    parser.add_argument(
+        "--simulator",
+        type=str,
+        choices=["py3", "matlab"],
+        default="py3",
+        help="Simulator to use for AN model",
     )
 
     args = parser.parse_args()
