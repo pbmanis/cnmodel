@@ -19,9 +19,9 @@ import numpy as np
 import pyqtgraph as pg
 from cnmodel import an_model
 from cnmodel.util import sound
-import pyzbc2014
+from pyzbc2014 import pyzbc2014
 
-
+zbc = pyzbc2014.pyzbc2014()
 
 def test_an_model():
     # model fiber parameters
@@ -78,7 +78,7 @@ def test_an_model():
     an_model.seed_rng(34978)
     start = time.time()
     # vihc = an_model.model_ihc(pin, CF, nrep, 1/Fs, T+1e-3, cohc, cihc, species) # , _transfer=False) 
-    vihc = pyzbc2014.sim_ihc_zbc2014(pin, CF, nrep, Fs, cohc, cihc, species=species_str)
+    vihc = zbc.sim_ihc_zbc2014(pin, CF, nrep, Fs, cohc, cihc, species=species_str)
     print("IHC time:", time.time() - start)
     start = time.time()
 #    m, v, psth = an_model.model_synapse(vihc, CF, nrep, 1/Fs, fiberType, noiseType, implnt)
@@ -86,7 +86,7 @@ def test_an_model():
     powerlaw = 'true'
     noiseType = 'fresh'
 
-    an_drive = pyzbc2014.sim_anrate_zbc2014(vihc, CF, nrep, Fs, fiberType, powerlaw, noiseType)
+    an_drive = zbc.sim_anrate_zbc2014(vihc, CF, nrep, Fs, fiberType, powerlaw, noiseType)
     print("Syn time:", time.time() - start)
 
     win = pg.GraphicsLayoutWidget()
@@ -119,11 +119,11 @@ def test_an_model():
 
     for nr in range(nreps):
         if nr == 0:
-            ihcout = pyzbc2014.sim_ihc_zbc2014(pin, cf=CF, nrep=1, species=species_str)
-            anout = pyzbc2014.sim_anrate_zbc2014(
+            ihcout = zbc.sim_ihc_zbc2014(pin, cf=CF, nrep=1, species=species_str)
+            anout = zbc.sim_anrate_zbc2014(
                 ihcout, cf=CF, fibertype=fiberType, nrep=1, noisetype=noisetype
             )
-        spiketimes = pyzbc2014.sim_spike_generator_zbc2014(anout, fs=Fs, totalstim=total_stim, nrep=1)
+        spiketimes = zbc.sim_spike_generator_zbc2014(anout, fs=Fs, totalstim=total_stim, nrep=1)
         spiketimes = spiketimes[spiketimes > 0.0]
         spikes.append(spiketimes)
         stim_spikes = spiketimes[(spiketimes > pstart[0]) & (spiketimes < pstart[0] + pdur)]
