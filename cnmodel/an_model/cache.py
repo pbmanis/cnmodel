@@ -118,7 +118,7 @@ def get_cache_filename(cf, sr, seed, stim, **kwds):
     return filename
 
 
-def generate_spiketrain(cf, sr, stim, seed, simulator=None, **kwds):
+def generate_spiketrain(cf, sr, stim, seed, simulator='py3', **kwds):
     """ Generate a new spike train from the auditory nerve model. Returns an 
     array of spike times in seconds.
     
