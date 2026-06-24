@@ -23,7 +23,7 @@ logging.info(f"cnmodel: Loading NEURON mechanisms from {libpath2}")
 import neuron
 try:
     neuron.h.MultiSiteSynapse  # already loaded — skip
-    print("cnmodel: NEURON mechanisms already loaded.")
+    # print("cnmodel: NEURON mechanisms already loaded.")
 except AttributeError:
     try:
         neuron.h.nrn_load_dll(str(libpath2))

@@ -58,10 +58,9 @@ class CurrentClamp(Protocol):
         # GO
         h.dt = dt
         h.celsius = temp
-        h.tstop = tend
         cell.initialize()
         h.frecord_init()
-        while h.t < h.tstop:
+        while h.t < tend:
             h.fadvance()
             
 

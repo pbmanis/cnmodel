@@ -94,21 +94,32 @@ class MSOBinauralTest(Protocol):
 
         self['t'] = h._ref_t
         
-        h.tstop = self.rundur*1e3 # duration of a run
+        _tstop = self.rundur*1e3 # duration of a run
         h.celsius = temp
         h.dt = dt
-        
-        custom_init()
+
+        custom_init(dur=10.)  # 10 ms warmup is sufficient; default 50 ms is overkill
         # confirm that all cells are ok
         for cg in self.all_cells:
             for c in cg:
                 c.check_all_mechs()
-        ts = 0
-        while h.t < h.tstop:
-            if ts == 0 or (h.t-ts) > 10:
-                print(f"{h.t:8.3f} ms {int(100*h.t/h.tstop):d}%\r", end="")
-                ts = h.t
-            h.fadvance()
+
+        n_chunks = 20
+        chunk_ms = _tstop / n_chunks
+        pg.mkQApp()
+        header = f"MSO Simulation:  {_tstop:.0f} ms  |  dt = {h.dt} ms  |  {n_chunks} chunks"
+        with pg.ProgressDialog(header, minimum=0, maximum=n_chunks,
+                                cancelText="Cancel", wait=0) as dlg:
+            dlg.setWindowTitle("MSO Binaural Simulation")
+            for i in range(n_chunks):
+                h.batch_run((i + 1) * chunk_ms, h.dt)
+                dlg.setValue(i + 1)
+                dlg.setLabelText(
+                    f"{header}\n"
+                    f"Time: {h.t:.1f} / {_tstop:.0f} ms"
+                )
+                if dlg.wasCanceled():
+                    break
             
 
     def show(self):

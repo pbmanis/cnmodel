@@ -121,10 +121,8 @@ def run_democlamp(cell, dend, vsteps=[-60,-70,-60], tsteps=[10,50,100]):
             VClamp.amp2 = VX
             #            vec['VCmd'].play(VClamp.amp2, h.dt, 0, sec=cell)
 
-            h.tstop = tend
-            h.init()
             h.finitialize(-60)
-            h.run()
+            h.batch_run(tend, h.dt)
             vc = np.asarray(vec['Vsoma'])
             tc = np.asarray(vec['time'])
             

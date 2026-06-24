@@ -115,22 +115,9 @@ tdurs = {
 }
 
 known = list(tdurs.keys())  # all the "known files"
-machine = platform.machine()  # determine where to fine
-print("machine: ", machine)
-if machine == "x86_64":
-    modfilepath = Path("x86_64")
-elif machine == "arm64":
-    modfilepath = Path("arm64")
-elif machine == "i386": # hopefully not!
-    modfilepath = Path("i386")
-else:
-    raise ValueError(f"Cannot find mechanism library for machine type: {machine:s}")
-
-modfilepath = Path(MODFILE_PATH) 
-print("modfilepath: ", modfilepath)
-modfiles = list(modfilepath.glob("*.o"))
-modfiles = sorted([mf.stem for mf in modfiles])
-print("modfiles: ", modfiles)
+machine = platform.machine()
+modfilepath = Path(MODFILE_PATH)
+modfiles = sorted([mf.stem for mf in modfilepath.glob("*.o")])
 # remap maps from known name to modfile name
 remap = {
     "nav11": "inav11",
@@ -150,8 +137,6 @@ for k in known:
         availmech.append(remap[k])
     else:
         notavail.append(k)
-print("avail: ", sorted(availmech))
-print("not availmedh: ", notavail)
 
 class ChannelKinetics:
     def __init__(self, args, export=False):
@@ -161,11 +146,9 @@ class ChannelKinetics:
                 modfile.append(arg)  # must be string, not list...
         else:
             modfile.append(args)  # 'CaPCalyx'
-        print("modfile: ", modfile)
         colors = ["w", "r", "g", "y", "c", "m", "b"]
         if len(modfile) > len(colors):
-            print("Too many modfiles... keep it simple!")
-            exit()
+            raise ValueError("Too many modfiles to plot at once (max %d)" % len(colors))
         # if isinstance(args, list) and len(args) > 1:
         #     modfile2 = args[1]
         doKinetics = False
@@ -265,10 +248,6 @@ class ChannelKinetics:
         self.vcPost.dur3 = tstep[1]
         self.vcPost.amp3 = clampV
         self.vcPost.rs = 1e-9
-        print("soma: ", self.soma, end=" ")
-        # print(dir(self.vcPost))
-        # print(' vcpost sec: ', self.vcPost.Section())
-
         if modfile[0:2] == "ih":
             stimamp = np.linspace(-140, -40, num=21, endpoint=True)
         else:
@@ -276,13 +255,6 @@ class ChannelKinetics:
         self.ivss = np.zeros((2, stimamp.shape[0]))
         self.ivmin = np.zeros((2, stimamp.shape[0]))
         self.ivmax = np.zeros((2, stimamp.shape[0]))
-        print(
-            (
-                "I range = %6.1f-%6.1f, T = %4.1f"
-                % (np.min(stimamp), np.max(stimamp), h.celsius)
-            )
-        )
-        print(tdelay, tstep)
         for i, V in enumerate(stimamp):
             self.vcPost.dur1 = tdelay
             self.vcPost.amp1 = clampV
@@ -294,9 +266,9 @@ class ChannelKinetics:
             self.vec["V"].record(self.soma()._ref_v, sec=self.soma)
             self.vec["time"].record(h._ref_t)
             #            print
-            h.tstop = self.vcPost.dur1 + self.vcPost.dur2 + self.vcPost.dur3
+            _tstop = self.vcPost.dur1 + self.vcPost.dur2 + self.vcPost.dur3
             h.finitialize(v_init)
-            h.run()
+            h.batch_run(_tstop, h.dt)
             self.t = np.array(self.vec["time"])
             self.ichan = np.array(self.vec["IChan"])
             self.v = np.array(self.vec["V"])
@@ -352,9 +324,9 @@ class ChannelKinetics:
             self.vec["V"].record(self.soma()._ref_v, sec=self.soma)
             self.vec["time"].record(h._ref_t)
             #            print
-            h.tstop = self.vcPost.dur1 + self.vcPost.dur2 + self.vcPost.dur3
+            _tstop = self.vcPost.dur1 + self.vcPost.dur2 + self.vcPost.dur3
             h.finitialize(v_init)
-            h.run()
+            h.batch_run(_tstop, h.dt)
             self.t = np.array(self.vec["time"])
             self.ichan = np.array(self.vec["IChan"])
             self.v = np.array(self.vec["V"])
@@ -400,9 +372,9 @@ class ChannelKinetics:
             self.vec["V"].record(self.soma()._ref_v, sec=self.soma)
             self.vec["time"].record(h._ref_t)
             #            print
-            h.tstop = self.vcPost.dur1 + self.vcPost.dur2 + self.vcPost.dur3
+            _tstop = self.vcPost.dur1 + self.vcPost.dur2 + self.vcPost.dur3
             h.finitialize(v_init)
-            h.run()
+            h.batch_run(_tstop, h.dt)
             self.t = np.array(self.vec["time"])
             self.ichan = np.array(self.vec["IChan"])
             self.v = np.array(self.vec["V"])
@@ -435,10 +407,8 @@ class ChannelKinetics:
             fm[0, :], Po, symbol="s", symbolSize=4.0, pen=pg.mkPen(color_inact)
         )
 
-        print(export)
         if export:
             exporter = pg.exporters.MatplotlibExporter(self.p1)
-            print("exporting: " + "%s_traces.svg" % modfile)
             exporter.export(fileName="%s_traces.pdf" % modfile)
             exporter = pg.exporters.MatplotlibExporter(self.p3)
             exporter.export("%s_command.pdf" % modfile)

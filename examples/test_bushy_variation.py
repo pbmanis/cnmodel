@@ -24,7 +24,7 @@ from cnmodel.protocols import iv_curve
 from cnmodel import cells
 from cnmodel.util import sound
 from cnmodel.util.pynrnutilities import custom_init
-from cnmodel.util import make_pulse
+from cnmodel.util.stim import make_pulse
 import cnmodel.util.pynrnutilities as PU
 from cnmodel import data
 
@@ -68,13 +68,13 @@ class RunTrial:
         Vm.record(post_cell.soma(0.5)._ref_v)
         rtime = h.Vector()
         rtime.record(h._ref_t)
-        h.tstop = 1e3 * info["run_duration"]  # duration of a run
+        _tstop = 1e3 * info["run_duration"]  # duration of a run
         h.celsius = info["temp"]
         h.dt = info["dt"]
         post_cell.cell_initialize()
         info["init"]()
         h.t = 0.0
-        h.run()
+        h.batch_run(_tstop, h.dt)
         return {
             "time": np.array(rtime),
             "vm": Vm.to_python(),
@@ -439,7 +439,6 @@ class Variations(Protocol):
         self.temp = temp
 
         self.make_cells(cf, temp, dt)
-        print(dir(self.pre_cells[0]))
         seed = 0
         j = 0
         synapses = []
@@ -521,9 +520,8 @@ class Variations(Protocol):
             self.post_cells[m].soma(0.5).v = self.post_cells[m].vm0
         h.dt = 0.02
         h.t = 0  # run a bit to find true stable rmp
-        h.tstop = 20.0
         h.batch_save()
-        h.batch_run(h.tstop, h.dt, "v.dat")
+        h.batch_run(20.0, h.dt, "v.dat")
 
         # order matters: don't set these up until we need to
         self["t"] = h._ref_t
@@ -539,9 +537,8 @@ class Variations(Protocol):
         h.finitialize()  # init and instantiate recordings
         print("running")
         h.t = 0.0
-        h.tstop = 200.0
-        h.batch_run(h.tstop, h.dt, "v.dat")
-        # while h.t < h.tstop:  # get data (do not use h.run() - try it and see why!)
+        h.batch_run(200.0, h.dt, "v.dat")
+        # while h.t < 200.0:  # get data (do not use h.run() - try it and see why!)
         #      h.fadvance()
 
     def runIV(self, parallelize):
@@ -690,18 +687,17 @@ class Variations(Protocol):
                         post_cell.soma(0.5).v = post_cell.vm0
                         h.dt = 0.02
                         h.t = 0  # run a bit to find true stable rmp
-                        h.tstop = 20.0
                         h.batch_save()
-                        h.batch_run(h.tstop, h.dt, "v.dat")
+                        h.batch_run(20.0, h.dt, "v.dat")
                         self["t"] = h._ref_t
                         # set up recordings
                         self["v_post%02d" % j] = post_cell.soma(0.5)._ref_v
                         h.finitialize()  # init and instantiate recordings
                         print("running %d" % i)
                         h.t = 0.0
-                        h.tstop = rundur * 1000.0  # rundur is in seconds.
+                        _tstop = rundur * 1000.0  # rundur is in seconds.
                         post_cell.check_all_mechs()  # make sure no further changes were introduced before run.
-                        h.batch_run(h.tstop, h.dt, "v.dat")
+                        h.batch_run(_tstop, h.dt, "v.dat")
                         v_reps.append(self["v_post%02d" % j])
                         i_reps.append(0.0 * self["v_post%02d" % j])
                         p_reps.append(pre_cells[0]._stvec.to_python())

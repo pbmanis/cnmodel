@@ -36,6 +36,7 @@ class CNSoundStim(Protocol):
         self.seed = seed
         self.temp = temp
         self.dt = dt
+        self._ss_state = None  # cached steady-state; populated on first run
         #        self.synapsetype = synapsetype  # simple or multisite
 
         # Seed now to ensure network generation is stable
@@ -92,6 +93,10 @@ class CNSoundStim(Protocol):
         # inputs for the dstellate population (level 2) creates presynaptic cells in the
         # sgc population.
 
+    def custom_init(self, vinit=-60.):
+        from cnmodel.util.pynrnutilities import custom_init as _custom_init
+        _custom_init(v_init=vinit, dur=10.)  # 10 ms warmup; 50 ms default is overkill
+
     def run(self, stim, seed):
         """Run the network simulation with *stim* as the sound source and a unique
         *seed* used to configure the random number generators.
@@ -114,18 +119,23 @@ class CNSoundStim(Protocol):
                 self[cell] = cell.soma(0.5)._ref_v
         self["t"] = h._ref_t
 
-        h.tstop = stim.duration * 1000
+        _tstop = stim.duration * 1000
         h.celsius = self.temp
         h.dt = self.dt
 
-        self.custom_init()
-        last_update = time.time()
-        while h.t < h.tstop:
-            h.fadvance()
-            now = time.time()
-            if now - last_update > 1.0:
-                print("%0.2f / %0.2f" % (h.t, h.tstop))
-                last_update = now
+        h.ParallelContext().set_maxstep(10)
+        if self._ss_state is None:
+            # First run: initialise to steady state and cache it
+            self.custom_init()
+            self._ss_state = h.SaveState()
+            self._ss_state.save()
+        else:
+            # Subsequent runs: restore cached steady state (skips 400 fadvance steps)
+            h.finitialize(-60.)
+            self._ss_state.restore()
+            h.fcurrent()
+
+        h.batch_run(_tstop, h.dt)
 
         # record vsoma and spike times for all cells
         vec = {}

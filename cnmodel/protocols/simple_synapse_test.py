@@ -2,7 +2,8 @@
 from neuron import h
 import pyqtgraph as pg
 
-import cnmodel.util as util
+from cnmodel.util.stim import make_pulse
+from cnmodel.util.pynrnutilities import custom_init
 from .protocol import Protocol
 from .. import cells
 
@@ -54,7 +55,7 @@ class SimpleSynapseTest(Protocol):
         }
         if stim_params is not None:
             stim.update(stim_params)
-        (secmd, maxt, tstims) = util.make_pulse(stim)
+        (secmd, maxt, tstims) = make_pulse(stim)
         self.stim = stim
 
         if tstop is None:
@@ -71,7 +72,6 @@ class SimpleSynapseTest(Protocol):
         #
         # Run simulation
         #
-        h.tstop = tstop # duration of a run
         h.celsius = temp
         h.dt = dt
         self.temp = temp
@@ -82,8 +82,8 @@ class SimpleSynapseTest(Protocol):
             self['t'] = h._ref_t
             self['v_soma'] = post_cell.soma(0.5)._ref_v
             self['i_soma'] = vccontrol._ref_i
-            util.custom_init()
-            h.run()
+            custom_init()
+            h.batch_run(tstop, dt)
 
     def show(self):
         self.app=pg.mkQApp()

@@ -162,7 +162,7 @@ class Decorator():
                         try:
                             setattr(cell.hr.get_section(sec), vshift_setup, vshift)  # set shift magnitude
                         except:
-                            print(dir(cell.hr.get_section(sec)))
+                            print("Decorator:_biophys:: avail sections directory: ",dir(cell.hr.get_section(sec)))
                             raise ValueError (f'cannot set mechanism attribute %s  ... %s ' % (vshift_setup, vshift))
                         # print('\033[1;31;40m Vshift set to : \033[0m', vshift, vshift_setup)
                     

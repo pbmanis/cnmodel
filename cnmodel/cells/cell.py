@@ -677,11 +677,7 @@ class Cell(object):
                 erev = eval("section().ek")
             if m in ["hcno", "ihvcn", "hcnobo", "ihpyr", "ihpyr_adj", "iphyrlc"]:
                 erev = eval("section()." + m + ".eh")
-            # if m in ["GRC_CA"]:
-            #     print(dir(eval("section()." + m)))
-            #     erev = eval("section()." + m + ".eca")
-            print(f"{m:>12s} : {gx:7.3e} mho/cm2  {erev:>5.1f} mV")
-            # print('{0:>12s} : <no gbar> '.format(m))
+            # print(f"{m:>12s} : {gx:7.3e} mho/cm2  {erev:>5.1f} mV")
         print("-" * 32)
 
     def print_all_mechs(self):

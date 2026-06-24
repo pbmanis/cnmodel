@@ -103,9 +103,9 @@ class PopulationTest(Protocol):
         h.dt = self.dt
         custom_init(v_init=post_cell.vm0)
         h.t = 0.
-        h.tstop = 200.0
+        _tstop = 200.0
         current_t = 0.
-        while h.t < h.tstop:
+        while h.t < _tstop:
             h.fadvance()
             if h.t - current_t >= 10.0:
                 current_t = h.t

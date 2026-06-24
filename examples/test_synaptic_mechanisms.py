@@ -8,7 +8,7 @@ import datetime
 print(platform.node())
 
 from neuron import h
-from cnmodel.util import reset
+from cnmodel.util.pynrnutilities import reset
 
 """
 Test routine to look carefully at NMDA_KAMPA nmda_states during a run.
@@ -95,7 +95,6 @@ def test_max_open_probability(fn=None, savetype=False):
     # NMDAS = dict.fromkeys(nmda_statenames, np.zeros(npts))
     # NMDAS['t'] = np.zeros(npts)
     xmtrs = {"nmda": h.Vector(), "ampa": h.Vector()}
-    # print(dir(term))
     xmtrs["nmda"].record(h.ref(term.XMTR[nzone]))
     xmtrs["ampa"].record(h.ref(term.XMTR[azone]))
     NSM = {}  # {k: nmda_states[i] for i, k in enumerate(nmda_statenames)}
@@ -165,7 +164,6 @@ def test_max_open_probability(fn=None, savetype=False):
 def plot(fn=None, which="nmda"):
     with open(fn, "rb") as fh:
         sdata = pickle.load(fh)
-    print(dir(PH))
     P = PH.Plotter(
         (4, 3), figsize=(8, 10)
         

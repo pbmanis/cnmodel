@@ -169,6 +169,7 @@ def custom_init(v_init:float = -60.,
     old_cvode_state = h.CVode().active()
     h.CVode().active(False)  # turn off variable step integrator
     h.dt = dt
+    h.ParallelContext().set_maxstep(10)  # NEURON 9: required before fadvance when NetCons exist
     while (h.t < t0 + dur):
         h.fadvance()
     

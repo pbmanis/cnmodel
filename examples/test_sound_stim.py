@@ -16,6 +16,7 @@ fastest for retrieval of pre-computed trains. Note that changing the value
 of "seed" will force a recomputation of the spike trains.
 """
 
+import argparse
 import sys
 import numpy as np
 import time
@@ -62,7 +63,7 @@ def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=False):
         simulator = "matlab"
     else:
         simulator = "py3"
-    for sr in 1, 2, 3:
+    for sr in 0, 1, 2:
         spikes = {}
         for rep in range(reps):
             spikes[rep] = []
@@ -89,23 +90,16 @@ def sound_stim(seed, reps=10, pip_duration:float = 0.5, useMatlab=False):
 
 
 def runtest():
-    usematlab = False
-    if len(sys.argv) > 0:
-        if len(sys.argv) == 1:
-            print(
-                'Call requires argument, must be either "matlab" or "cochlea" or "py3"; default is "py3"'
-            )
-            exit()
-        flag = sys.argv[1]
-        if flag not in ["matlab", "cochlea", "py3"]:
-            print('Flag must be either "matlab" or "cochlea" or "py3"; default is "py3"')
-            exit()
-        if flag in ["cochlea" or "py3"]:
-            usematlab = False
-    if usematlab:
-        print("Running with matlab simulator")
-    else:
-        print("Running with a python simulator")
+    parser = argparse.ArgumentParser(description="Sound stimulation spike-train test")
+    parser.add_argument(
+        "--simulator",
+        type=str,
+        choices=["py3", "matlab"],
+        default="py3",
+        help="AN simulator backend (default: py3)",
+    )
+    args = parser.parse_args()
+    usematlab = args.simulator == "matlab"
     reps = 10
     pip_duration = 0.5 # seconds
     result = sound_stim(seed, reps=reps, pip_duration=pip_duration, useMatlab=usematlab)
@@ -114,7 +108,7 @@ def runtest():
     p1 = win.addPlot(title="Rate-level function")
     p1.setLabel("bottom", "Tone level (dB SPL)")
     p1.setLabel("left", "Firing Rate (sp/s)")
-    group = {1: "HSR", 2: "MSR", 3: "LSR"}
+    group = {0: "LSR", 1: "MSR", 2: "HSR"}
     p1.addLegend()
     for i, x in enumerate(result.keys()):  # across srs
         for r in range(reps):

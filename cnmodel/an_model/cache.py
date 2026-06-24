@@ -45,13 +45,15 @@ def get_spiketrain(cf, sr, stim, seed, verbose=False, **kwds):
     is little chance the cache would be re-used.
     
     """
-    if isinstance(sr, int):
-        filename = get_cache_filename(cf=cf, sr=sr, seed=seed, stim=stim, **kwds)
+    if isinstance(sr, (int, np.integer)):
+        filename = get_cache_filename(cf=cf, sr=int(sr), seed=seed, stim=stim, **kwds)
     elif isinstance(sr, str):
         fiber_type_map = {'lsr':0, 'msr':1, 'hsr':2}
         if sr not in fiber_type_map:
             raise ValueError("Invalid fiber type string: %s" % sr)
         filename = get_cache_filename(cf=cf, sr=fiber_type_map[sr], seed=seed, stim=stim, **kwds)
+    else:
+        raise ValueError("sr must be int or str ('lsr'/'msr'/'hsr'), got %r" % sr)
     subdir = os.path.dirname(filename)
     
     if not os.path.exists(subdir):
@@ -151,14 +153,17 @@ def generate_spiketrain(cf, sr, stim, seed, simulator='py3', **kwds):
     ihc_kwds = dict(pin=stim.sound, CF=cf, nrep=1, tdres=stim.dt, 
                     reptime=stim.duration*2, cohc=1, cihc=1, species=1)
 
+    if simulator is None:
+        simulator = detect_simulator()
+
     if simulator in ['MATLAB', 'matlab']:
         fiber_type_map = {'lsr':0, 'msr':1, 'hsr':2}
         sr = fiber_type_map[sr] if isinstance(sr, str) else sr
     elif simulator in ['py3']:
         fiber_type_map = {0:'lsr', 1:'msr', 2:'hsr'}
-        sr = fiber_type_map[sr] if isinstance(sr, int) else sr
+        sr = fiber_type_map[sr] if isinstance(sr, (int, np.integer)) else sr
     else:
-        raise ValueError("Simulator must be specified as either 'matlab' or 'py3'; found <%s> of type %s")
+        raise ValueError("Simulator must be 'matlab' or 'py3'; got %r" % simulator)
     syn_kwds = dict(CF=cf, nrep=1, tdres=stim.dt, fiberType=sr, noiseType=1, implnt=0)
     # copy any given keyword args to the correct model function
     for kwd in kwds:
@@ -166,9 +171,6 @@ def generate_spiketrain(cf, sr, stim, seed, simulator='py3', **kwds):
             ihc_kwds[kwd] = kwds.pop(kwd)
         if kwd in syn_kwds:
             syn_kwds[kwd] = kwds.pop(kwd)
-
-    if simulator is None:
-        simulator = detect_simulator()
 
     if len(kwds) > 0:
         raise TypeError("Invalid keyword arguments: %s" % list(kwds.keys()))
