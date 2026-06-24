@@ -55,7 +55,7 @@ receptor excitatory postsynaptic currents. Neuroscience. 2010 Feb
 -----------------------------------------------------------------------------
 ENDCOMMENT
 
-INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)}
+: INDEPENDENT {t FROM 0 TO 1 WITH 1 (ms)} : neuron 9 may not like
 
 NEURON {
 THREADSAFE
@@ -175,6 +175,20 @@ INITIAL {
 }
 
 BREAKPOINT {
+    : Compute POINTER-dependent rates here so NEURON 9 reads XMTR correctly
+    rb     = Rb    * (1e3) * XMTR
+    rbMg   = RbMg  * (1e3) * XMTR
+    rmb    = Rmb   * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction       /25 (mV))
+    rmu    = Rmu               * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction)/25 (mV))
+    rmc1b  = Rmc1b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction       /25 (mV))
+    rmc1u  = Rmc1u             * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction)/25 (mV))
+    rmc2b  = Rmc2b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction       /25 (mV))
+    rmc2u  = Rmc2u             * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction)/25 (mV))
+    rmd1b  = Rmd1b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction       /25 (mV))
+    rmd1u  = Rmd1u             * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction)/25 (mV))
+    rmd2b  = Rmd2b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction       /25 (mV))
+    rmd2u  = Rmd2u             * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction)/25 (mV))
+
     SOLVE kstates METHOD sparse
 
     g = gmax * Open / MaxOpen
@@ -183,26 +197,13 @@ BREAKPOINT {
 
 KINETIC kstates {
 
-    rb     = Rb * (1e3) * XMTR
-    rbMg   = RbMg * (1e3) * XMTR
-    rmb    = Rmb * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction /25 (mV))
-    rmu    = Rmu * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction) /25 (mV))
-    rmc1b  = Rmc1b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction /25 (mV))
-    rmc1u  = Rmc1u * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction) /25 (mV))
-    rmc2b  = Rmc2b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction /25 (mV))
-    rmc2u  = Rmc2u * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction) /25 (mV))
-    rmd1b  = Rmd1b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction /25 (mV))
-    rmd1u  = Rmd1u * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction) /25 (mV))
-    rmd2b  = Rmd2b * mg * (1e3) * exp((v-40+vshift) * valence * memb_fraction /25 (mV))
-    rmd2u  = Rmd2u * exp((-1)*(v-40+vshift) * valence * (1-memb_fraction) /25 (mV))
-
-    ~ U    <-> Cl    (rb*qfac,Ru*qfac)
-    ~ Cl   <-> Open  (Ro*qfac,Rc*qfac)
-    ~ Cl   <-> D1    (Rd1*qfac,Rr1*qfac)
-    ~ D1   <-> D2    (Rd2*qfac,Rr2*qfac)
-    ~ Open <-> OMg   (rmb*qfac,rmu*qfac)
-    ~ UMg  <-> ClMg  (rbMg*qfac,RuMg*qfac)
-    ~ ClMg <-> OMg   (RoMg*qfac,RcMg*qfac)
+    ~ U    <-> Cl    (rb*qfac,   Ru*qfac)
+    ~ Cl   <-> Open  (Ro*qfac,   Rc*qfac)
+    ~ Cl   <-> D1    (Rd1*qfac,  Rr1*qfac)
+    ~ D1   <-> D2    (Rd2*qfac,  Rr2*qfac)
+    ~ Open <-> OMg   (rmb*qfac,  rmu*qfac)
+    ~ UMg  <-> ClMg  (rbMg*qfac, RuMg*qfac)
+    ~ ClMg <-> OMg   (RoMg*qfac, RcMg*qfac)
     ~ ClMg <-> D1Mg  (Rd1Mg*qfac,Rr1Mg*qfac)
     ~ D1Mg <-> D2Mg  (Rd2Mg*qfac,Rr2Mg*qfac)
     ~ U    <-> UMg   (rmc1b*qfac,rmc1u*qfac)
