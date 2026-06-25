@@ -1,6 +1,3 @@
-from __future__ import print_function
-#!/usr/bin/python
-#
 # utilities for NEURON, in Python
 # Module neuron for cnmodel
 
@@ -169,6 +166,13 @@ def custom_init(v_init:float = -60.,
     old_cvode_state = h.CVode().active()
     h.CVode().active(False)  # turn off variable step integrator
     h.dt = dt
+    # Occasional bug causing problems with parallel execution:
+    # NEURON: MultiSiteSynapse[75] :Event arrived out of order. Must call ParallelContext.set_maxstep AFTER assigning minimum NetCon.delay
+    # Claude fixed 2026-06-25: finitialize at t0 resets _tsav for all mechanisms
+    # (including MultiSiteSynapse) before the warmup fadvance loop. Without this,
+    # _tsav retains the positive end-time from the previous run; any event delivered
+    # during warmup at t < 0 triggers "Events arrived out of order" (_tsav > t).
+    h.finitialize(v_init)
     h.ParallelContext().set_maxstep(10)  # NEURON 9: required before fadvance when NetCons exist
     while (h.t < t0 + dur):
         h.fadvance()
@@ -181,6 +185,11 @@ def custom_init(v_init:float = -60.,
     # else:
     h.fcurrent()  # recalculate currents
     h.finitialize(v_init)
+    # Claude fixed 2026-06-25: call set_maxstep AFTER finitialize so NEURON
+    # knows all NetCon delays before the actual run. The earlier call (before
+    # the warmup fadvance loop) is required for the warmup; this one ensures
+    # the correct order for batch_run: finitialize → set_maxstep → run.
+    h.ParallelContext().set_maxstep(10)
     # print(f"custom init completed: {time.time() - stime:0.2f} sec")
 
     # OLD VERSION:
