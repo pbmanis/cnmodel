@@ -29,6 +29,9 @@ dependencies = [
     "sounddevice==0.4.4",
 ]
 
+[project.scripts]
+cnmodel_examples = "examples.examples_gui:main"
+
 [build-system]
 requires = ["setuptools>=70", "hatchling", "wheel"]
 build-backend = "hatchling.build" #"setuptools.build_meta"
@@ -61,6 +64,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
+packages = ["cnmodel", "examples"]
 artifacts = [
     '*.so',
     '*.dylib',
