@@ -11,12 +11,14 @@ n_frequencies or n_levels, or reduce the number of selected output cells (see
 cells_per_band).
  
 """
+import argparse
 import os
 import pickle
 import sys
-import time
 import timeit
 from collections import OrderedDict
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict
 
 import numpy as np
 import pyqtgraph as pg
@@ -29,69 +31,176 @@ from cnmodel.protocols import Protocol
 from cnmodel.util import random_seed, sound
 
 
+CELLTYPES = ["bushy", "tstellate", "dstellate", "pyramidal", "tuberculoventral"]
+
+
+# ---------------------------------------------------------------------------
+# Stimulus type registry
+# ---------------------------------------------------------------------------
+
+@dataclass
+class StimDef:
+    """Describes one stimulus type: how to build it and label it."""
+    name: str                           # identifier used in cache keys
+    label: str                          # display string in GUI
+    factory: Callable                   # factory(stimpar, f0, dbspl, seed, **extra) → Sound
+    extra: Dict[str, Any] = field(default_factory=dict)  # type-specific params
+
+
+def _tone_pip_factory(stimpar, f0, dbspl, seed, **kw):
+    return sound.TonePip(
+        rate=100e3,
+        duration=stimpar["dur"],
+        f0=f0,
+        dbspl=dbspl,
+        ramp_duration=2.5e-3,
+        pip_duration=stimpar["pip"],
+        pip_start=stimpar["start"],
+    )
+
+
+def _bl_noise_factory(stimpar, f0, dbspl, seed, octave_width=1.0, **kw):
+    return sound.BandlimitedNoisePip(
+        rate=100e3,
+        duration=stimpar["dur"],
+        center_freq=f0,
+        dbspl=dbspl,
+        ramp_duration=2.5e-3,
+        pip_duration=stimpar["pip"],
+        pip_start=stimpar["start"],
+        seed=seed,
+        octave_width=octave_width,
+    )
+
+
+def _wb_noise_factory(stimpar, f0, dbspl, seed, **kw):
+    stim = sound.NoisePip(
+        rate=100e3,
+        duration=stimpar["dur"],
+        dbspl=dbspl,
+        ramp_duration=2.5e-3,
+        pip_duration=stimpar["pip"],
+        pip_start=stimpar["start"],
+        seed=seed,
+    )
+    stim.opts['f0'] = f0  # store centre frequency so _stim_freq() returns a valid value
+    return stim
+
+
+STIM_DEFS: Dict[str, StimDef] = {
+    "tone_pip":          StimDef("tone_pip",          "Tone Pip",           _tone_pip_factory),
+    "bandlimited_noise": StimDef("bandlimited_noise", "Band-Limited Noise", _bl_noise_factory),
+    "wideband_noise":    StimDef("wideband_noise",    "Wide-Band Noise",    _wb_noise_factory),
+}
+
+
 class CNSoundStim(Protocol):
-    def __init__(self, seed, temp=34.0, dt=0.025, synapsetype="simple"):
+    def __init__(self, seed, temp=34.0, dt=0.025, synapsetype="simple", celltype="bushy", cf=16e3):
         Protocol.__init__(self)
 
         self.seed = seed
         self.temp = temp
         self.dt = dt
-        self._ss_state = None  # cached steady-state; populated on first run
-        #        self.synapsetype = synapsetype  # simple or multisite
+        self.celltype = celltype
 
         # Seed now to ensure network generation is stable
         random_seed.set_seed(seed)
-        # Create cell populations.
-        # This creates a complete set of _virtual_ cells for each population. No
-        # cells are instantiated at this point.
+
+        # SGC population is always present
         self.sgc = populations.SGC(model="dummy")
-        self.bushy = populations.Bushy()
-        self.dstellate = populations.DStellate()
-        self.tstellate = populations.TStellate()
-        self.tuberculoventral = populations.Tuberculoventral()
-
-        pops = [
-            self.sgc,
-            self.dstellate,
-            self.tuberculoventral,
-            self.tstellate,
-            self.bushy,
-        ]
-        self.populations = OrderedDict([(pop.type, pop) for pop in pops])
-
         # set synapse type to use in the sgc population - simple is fast, multisite is slower
-        # (eventually, we could do this for all synapse types..)
         self.sgc._synapsetype = synapsetype
 
-        # Connect populations.
-        # This only defines the connections between populations; no synapses are
-        # created at this stage.
-        self.sgc.connect(
-            self.bushy, self.dstellate, self.tuberculoventral, self.tstellate
-        )
-        self.dstellate.connect(
-            self.bushy, self.tstellate
-        )  # should connect to dstellate as well?
-        self.tuberculoventral.connect(self.bushy, self.tstellate)
-        self.tstellate.connect(self.bushy)
-
-        # Select cells to record from.
-        # At this time, we actually instantiate the selected cells.
-        frequencies = [16e3]
+        frequencies = [cf]
         cells_per_band = 1
-        for f in frequencies:
-            bushy_cell_ids = self.bushy.select(cells_per_band, cf=f, create=True)
+        self._build_network(celltype, frequencies, cells_per_band)
 
-        # Now create the supporting circuitry needed to drive the cells we selected.
-        # At this time, cells are created in all populations and automatically
-        # connected with synapses.
-        self.bushy.resolve_inputs(depth=2)
-        # self.tstellate.resolve_inputs(depth=2)
-        # Note that using depth=2 indicates the level of recursion to use when
-        # resolving inputs. For example, resolving inputs for the bushy cell population
-        # (level 1) creates presynaptic cells in the dstellate population, and resolving
-        # inputs for the dstellate population (level 2) creates presynaptic cells in the
-        # sgc population.
+    def _build_network(self, celltype, frequencies, cells_per_band):
+        """Build network topology for the given target cell type.
+
+        Sets self.target (the recorded population), self.recording_pops
+        (all pops to record Vm from), self.pre_pops (upstream pops for raster),
+        and self.populations (ordered dict used by the visualiser).
+        """
+        if celltype == "bushy":
+            self.dstellate = populations.DStellate()
+            self.tstellate = populations.TStellate()
+            self.tuberculoventral = populations.Tuberculoventral()
+            self.bushy = populations.Bushy()
+            self.target = self.bushy
+
+            self.sgc.connect(self.bushy, self.dstellate, self.tuberculoventral, self.tstellate)
+            self.dstellate.connect(self.bushy, self.tstellate)
+            self.tuberculoventral.connect(self.bushy, self.tstellate)
+            self.tstellate.connect(self.bushy)
+
+            pops = [self.sgc, self.dstellate, self.tuberculoventral, self.tstellate, self.bushy]
+            self.pre_pops = [self.sgc, self.dstellate, self.tuberculoventral]
+            self.recording_pops = [self.bushy, self.dstellate, self.tstellate, self.tuberculoventral]
+
+        elif celltype == "tstellate":
+            self.dstellate = populations.DStellate()
+            self.tuberculoventral = populations.Tuberculoventral()
+            self.tstellate = populations.TStellate()
+            self.target = self.tstellate
+
+            self.sgc.connect(self.tstellate, self.dstellate, self.tuberculoventral)
+            self.dstellate.connect(self.tstellate)
+            self.tuberculoventral.connect(self.tstellate)
+
+            pops = [self.sgc, self.dstellate, self.tuberculoventral, self.tstellate]
+            self.pre_pops = [self.sgc, self.dstellate, self.tuberculoventral]
+            self.recording_pops = [self.tstellate, self.dstellate, self.tuberculoventral]
+
+        elif celltype == "dstellate":
+            self.dstellate = populations.DStellate()
+            self.target = self.dstellate
+
+            self.sgc.connect(self.dstellate)
+
+            pops = [self.sgc, self.dstellate]
+            self.pre_pops = [self.sgc]
+            self.recording_pops = [self.dstellate]
+
+        elif celltype == "pyramidal":
+            self.dstellate = populations.DStellate()
+            self.tuberculoventral = populations.Tuberculoventral()
+            self.pyramidal = populations.Pyramidal()
+            self.target = self.pyramidal
+
+            self.sgc.connect(self.pyramidal, self.dstellate, self.tuberculoventral)
+            self.dstellate.connect(self.pyramidal, self.tuberculoventral)  # Claude fixed 2026-06-25: DS→TV was missing
+            self.tuberculoventral.connect(self.pyramidal)
+
+            pops = [self.sgc, self.dstellate, self.tuberculoventral, self.pyramidal]
+            self.pre_pops = [self.sgc, self.dstellate, self.tuberculoventral]
+            self.recording_pops = [self.pyramidal, self.dstellate, self.tuberculoventral]
+
+        elif celltype == "tuberculoventral":
+            self.dstellate = populations.DStellate()
+            self.tuberculoventral = populations.Tuberculoventral()
+            self.target = self.tuberculoventral
+
+            self.sgc.connect(self.tuberculoventral, self.dstellate)
+            self.dstellate.connect(self.tuberculoventral)
+
+            pops = [self.sgc, self.dstellate, self.tuberculoventral]
+            self.pre_pops = [self.sgc, self.dstellate]
+            self.recording_pops = [self.tuberculoventral, self.dstellate]
+
+        else:
+            raise ValueError(
+                f"Unknown celltype {celltype!r}. Choose from: {CELLTYPES}"
+            )
+
+        self.populations = OrderedDict([(pop.type, pop) for pop in pops])
+
+        # Instantiate selected target cells and resolve supporting circuitry.
+        for f in frequencies:
+            self.target.select(cells_per_band, cf=f, create=True)
+
+        # depth=2: resolve inputs for the target (level 1) and their inputs (level 2)
+        self.target.resolve_inputs(depth=2)
 
     def custom_init(self, vinit=-60.):
         from cnmodel.util.pynrnutilities import custom_init as _custom_init
@@ -113,7 +222,7 @@ class CNSoundStim(Protocol):
         self.sgc.set_sound_stim(stim, parallel=False)
 
         # set up recording vectors
-        for pop in self.bushy, self.dstellate, self.tstellate, self.tuberculoventral:
+        for pop in self.recording_pops:
             for ind in pop.real_cells():
                 cell = pop.get_cell(ind)
                 self[cell] = cell.soma(0.5)._ref_v
@@ -123,17 +232,10 @@ class CNSoundStim(Protocol):
         h.celsius = self.temp
         h.dt = self.dt
 
-        h.ParallelContext().set_maxstep(10)
-        if self._ss_state is None:
-            # First run: initialise to steady state and cache it
-            self.custom_init()
-            self._ss_state = h.SaveState()
-            self._ss_state.save()
-        else:
-            # Subsequent runs: restore cached steady state (skips 400 fadvance steps)
-            h.finitialize(-60.)
-            self._ss_state.restore()
-            h.fcurrent()
+        # Claude fixed 2026-06-25: set_maxstep moved inside custom_init to run
+        # AFTER finitialize (correct NEURON order: finitialize → set_maxstep → run).
+        # The earlier pre-finitialize call inside custom_init handles the warmup fadvance.
+        self.custom_init()
 
         h.batch_run(_tstop, h.dt)
 
@@ -160,6 +262,12 @@ class CNSoundStim(Protocol):
         return vec
 
 
+def _stim_freq(stim) -> float:
+    """Return the x-axis frequency for any stim type (tone f0 or noise center_freq)."""
+    opts = stim.opts
+    return float(opts.get("f0") or opts.get("center_freq") or 0.0)
+
+
 class NetworkSimDisplay(pg.QtWidgets.QSplitter):
     def __init__(self, prot, results, baseline, response):
         pg.QtWidgets.QSplitter.__init__(self, pg.QtCore.Qt.Orientation.Horizontal)
@@ -179,33 +287,38 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.layout.addWidget(self.nv)
         self.nv.cell_selected.connect(self.nv_cell_selected)
 
+        self.stim_type_combo = pg.QtWidgets.QComboBox()
+        self.layout.addWidget(self.stim_type_combo)
         self.stim_combo = pg.QtWidgets.QComboBox()
         self.layout.addWidget(self.stim_combo)
         self.trial_combo = pg.QtWidgets.QComboBox()
         self.layout.addWidget(self.trial_combo)
-        self.results = OrderedDict()
-        self.stim_order = []
-        freqs = set()
-        levels = set()
-        max_iter = 0
-        for k, v in list(results.items()):
-            f0, dbspl, iteration = k
-            max_iter = max(max_iter, iteration)
-            stim, result = v
-            key = "f0: %0.0f  dBspl: %0.0f" % (f0, dbspl)
-            self.results.setdefault(key, [stim, {}])
-            self.results[key][1][iteration] = result
-            self.stim_order.append((f0, dbspl))
-            freqs.add(f0)
-            levels.add(dbspl)
-            self.stim_combo.addItem(key)
-        self.freqs = sorted(list(freqs))
-        self.levels = sorted(list(levels))
-        self.iterations = max_iter + 1
-        self.trial_combo.addItem("all trials")
-        for i in range(self.iterations):
-            self.trial_combo.addItem(str(i))
 
+        # Group incoming results by stimulus type.
+        # Raw key structure: (stim_name, f0, dbspl, iteration)
+        self.all_results: Dict[str, OrderedDict] = {}
+        for k, v in list(results.items()):
+            sname, f0, dbspl, iteration = k
+            stim, result = v
+            stype_res = self.all_results.setdefault(sname, OrderedDict())
+            label = "f0: %0.0f  dBspl: %0.0f" % (f0, dbspl)
+            stype_res.setdefault(label, [stim, {}])
+            stype_res[label][1][iteration] = result
+
+        for sname in self.all_results:
+            display = STIM_DEFS[sname].label if sname in STIM_DEFS else sname
+            self.stim_type_combo.addItem(display, sname)
+
+        # Placeholder attributes — filled by stim_type_selected() below.
+        self.results = OrderedDict()
+        self.stim_order: list = []
+        self.freqs: list = []
+        self.levels: list = []
+        self.iterations = 1
+        self._df = 0.25
+        self._dl = 10.0
+
+        self.stim_type_combo.currentIndexChanged.connect(self.stim_type_selected)
         self.stim_combo.currentIndexChanged.connect(self.stim_selected)
         self.trial_combo.currentIndexChanged.connect(self.trial_selected)
 
@@ -216,10 +329,29 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
 
         self.tuning_img = pg.ImageItem()
         self.tuning_plot.addItem(self.tuning_img)
+        # Claude fixed 2026-06-25: diverging colormap — cool→black→hot centered at 0 (spontaneous)
+        self.tuning_cmap = pg.ColorMap(
+            pos=np.array([0.0, 0.3, 0.5, 0.7, 1.0]),
+            color=np.array([
+                [  0,   0, 160, 255],   # deep blue  (max decrease below spont)
+                [  0, 200, 220, 255],   # cyan        (moderate decrease)
+                [  0,   0,   0, 255],   # black       (no change = spontaneous)
+                [220,  80,   0, 255],   # orange      (moderate increase)
+                [255, 240,   0, 255],   # yellow      (max increase above spont)
+            ], dtype=np.uint8),
+        )
+        self.tuning_img.setColorMap(self.tuning_cmap)
+        self.tuning_cbar = pg.ColorBarItem(
+            interactive=False,
+            colorMap=self.tuning_cmap,
+            label="Net rate (sp/s)  [black = spont]",
+        )
+        self.tuning_cbar.setImageItem(self.tuning_img, insert_in=self.tuning_plot.plotItem)
 
-        df = np.log10(self.freqs[1]) - np.log10(self.freqs[0])
-        dl = self.levels[1] - self.levels[0]
-        self.stim_rect = pg.QtWidgets.QGraphicsRectItem(pg.QtCore.QRectF(0, 0, df, dl))
+        # Rect sized to one pixel; size updated by stim_type_selected().
+        self.stim_rect = pg.QtWidgets.QGraphicsRectItem(
+            pg.QtCore.QRectF(0, 0, self._df, self._dl)
+        )
         self.stim_rect.setPen(pg.mkPen("c"))
         self.stim_rect.setZValue(20)
         self.tuning_plot.addItem(self.stim_rect)
@@ -230,20 +362,23 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.pw = pg.GraphicsLayoutWidget()
         self.addWidget(self.pw)
 
-        self.stim_plot = self.pw.addPlot()
+        self.stim_plot = self.pw.addPlot(row=0, col=0)
         self.pw.ci.layout.setRowFixedHeight(0, 100)
-
-        self.pw.nextRow()
-        self.cell_plot = self.pw.addPlot(labels={"left": "Vm"})
-
-        self.pw.nextRow()
+        self.cell_plot = self.pw.addPlot(row=1, col=0, labels={"left": "Vm"})
         self.input_plot = self.pw.addPlot(
-            labels={"left": "input #", "bottom": "time"}, title="Input spike times"
+            row=2, col=0,
+            labels={"left": "input #", "bottom": "time"}, title="Input spike times",
         )
         self.input_plot.setXLink(self.cell_plot)
         self.stim_plot.setXLink(self.cell_plot)
+        self.ri_plot = self.pw.addPlot(
+            row=0, col=1, rowspan=3,
+            labels={"left": "Rate (sp/s)", "bottom": "Level (dB SPL)"},
+            title="Rate-Intensity",
+        )
+        self.pw.ci.layout.setColumnFixedWidth(1, 200)
 
-        self.stim_selected()
+        self.stim_type_selected()
 
     def update_stim_plot(self):
         stim = self.selected_stim
@@ -264,18 +399,14 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
             return
 
         pop_colors = {
-            "dstellate": "y",
-            "tuberculoventral": "r",
             "sgc": "g",
+            "dstellate": "y",
             "tstellate": "b",
+            "tuberculoventral": "r",
+            "bushy": "w",
+            "pyramidal": "m",
         }
-        pop_symbols = {
-            "dstellate": "x",
-            "tuberculoventral": "+",
-            "sgc": "t",
-            "tstellate": "o",
-        }
-        pop_order = [self.prot.sgc, self.prot.dstellate, self.prot.tuberculoventral]
+        pop_order = self.prot.pre_pops
         trials = self.selected_trials()
         for pop in pop_order:
             pre_inds = rec["connections"].get(pop, [])
@@ -283,7 +414,10 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
                 # iterate over all trials
                 for j in trials:
                     result = self.selected_results[j]
-                    spikes = result[(pop.type, preind)][1]
+                    rkey = (pop.type, preind)
+                    if rkey not in result:
+                        continue
+                    spikes = result[rkey][1]
                     y = np.ones(len(spikes)) * i + j / (
                         2.0 * len(self.selected_results)
                     )
@@ -308,10 +442,13 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.cell_plot.setTitle(
             "%s %d   %s" % (pop.type, cell_ind, str(self.stim_combo.currentText()))
         )
+        key = (pop.type, cell_ind)
         trials = self.selected_trials()
         for i in trials:
             result = self.selected_results[i]
-            y = result[(pop.type, cell_ind)][0]
+            if key not in result:
+                continue
+            y = result[key][0]
             if y is not None:
                 p = self.cell_plot.plot(
                     self.selected_results[0]["t"],
@@ -327,44 +464,98 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
     def tuning_plot_clicked(self, event):
         spos = event.scenePos()
         stimpos = self.tuning_plot.plotItem.vb.mapSceneToView(spos)
-        x = 10 ** stimpos.x()
+        # stimpos is already in log10(Hz) / dB space (tuning_plot has logMode x=True)
+        log_x = stimpos.x()
         y = stimpos.y()
 
+        # Find the stim point nearest the click in (log-freq, dB) space
         best = None
+        best_dist = float("inf")
         for stim, result in list(self.results.values()):
-            f0 = stim.opts["f0"]
+            f0 = _stim_freq(stim)
             dbspl = stim.opts["dbspl"]
-            if x < f0 or y < dbspl:
-                continue
-            if best is None:
+            dist = (log_x - np.log10(f0)) ** 2 + (y - dbspl) ** 2
+            if dist < best_dist:
                 best = stim
-                continue
-            if f0 > best.opts["f0"] or dbspl > best.opts["dbspl"]:
-                best = stim
-                continue
+                best_dist = dist
 
         if best is None:
             return
-        self.select_stim(best.opts["f0"], best.opts["dbspl"])
+        self.select_stim(_stim_freq(best), best.opts["dbspl"])
 
     def nv_cell_selected(self, nv, cell):
         self.select_cell(*cell)
 
     def stim_selected(self):
         key = str(self.stim_combo.currentText())
+        if not key or key not in self.results:
+            return
         results = self.results[key]
         self.selected_results = results[1]
         self.selected_stim = results[0]
         self.update_stim_plot()
         self.update_raster_plot()
         self.update_cell_plot()
+        self.update_ri_plot()
 
-        self.stim_rect.setPos(np.log10(results[0].opts["f0"]), results[0].opts["dbspl"])
+        # Centre the rect on the stim point (image pixels are also centred on stim points)
+        self.stim_rect.setPos(
+            np.log10(_stim_freq(results[0])) - self._df / 2,
+            results[0].opts["dbspl"] - self._dl / 2,
+        )
 
     def trial_selected(self):
         self.update_raster_plot()
         self.update_cell_plot()
         self.update_tuning()
+
+    def stim_type_selected(self):
+        """Switch to the currently selected stimulus type and rebuild dependent widgets."""
+        sname = self.stim_type_combo.currentData()
+        if sname is None or sname not in self.all_results:
+            return
+
+        self.results = self.all_results[sname]
+
+        freqs: set = set()
+        levels: set = set()
+        max_iter = 0
+        for _, (stim, iters) in self.results.items():
+            freqs.add(_stim_freq(stim))
+            levels.add(stim.opts["dbspl"])
+            for it in iters:
+                max_iter = max(max_iter, it)
+
+        self.freqs = sorted(freqs)
+        self.levels = sorted(levels)
+        self.iterations = max_iter + 1
+        self._df = (
+            (np.log10(self.freqs[1]) - np.log10(self.freqs[0]))
+            if len(self.freqs) > 1 else 0.15  # matches single-freq pixel width in update_tuning
+        )
+        self._dl = (self.levels[1] - self.levels[0]) if len(self.levels) > 1 else 10.0
+        self.stim_order = [
+            (_stim_freq(stim), stim.opts["dbspl"])
+            for _, (stim, _) in self.results.items()
+        ]
+
+        # Rebuild stim_combo without triggering stim_selected mid-update.
+        self.stim_combo.blockSignals(True)
+        self.stim_combo.clear()
+        for label in self.results:
+            self.stim_combo.addItem(label)
+        self.stim_combo.blockSignals(False)
+
+        # Rebuild trial_combo.
+        self.trial_combo.blockSignals(True)
+        self.trial_combo.clear()
+        self.trial_combo.addItem("all trials")
+        for i in range(self.iterations):
+            self.trial_combo.addItem(str(i))
+        self.trial_combo.blockSignals(False)
+
+        self.stim_rect.setRect(pg.QtCore.QRectF(0, 0, self._df, self._dl))
+        self.stim_selected()
 
     def selected_trials(self):
         if self.trial_combo.currentIndex() == 0:
@@ -406,22 +597,26 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
 
         # first get lists of all frequencies and levels in the matrix
         for stim, vec in list(self.results.values()):
-            fvals.add(stim.key()["f0"])
+            fvals.add(_stim_freq(stim))
             lvals.add(stim.key()["dbspl"])
         fvals = sorted(list(fvals))
         lvals = sorted(list(lvals))
 
         # Get spontaneous rate statistics
+        key = (pop.type, ind)
         spont_spikes = 0
         spont_time = 0
         for stim, iterations in list(self.results.values()):
             for vec in list(iterations.values()):
-                spikes = vec[(pop.type, ind)][1]
+                if key not in vec:
+                    self.tuning_img.setImage(np.zeros((1, 1)))
+                    return
+                spikes = vec[key][1]
                 spont_spikes += (
                     (spikes >= self.baseline[0]) & (spikes < self.baseline[1])
                 ).sum()
                 spont_time += self.baseline[1] - self.baseline[0]
-        spont_rate = spont_spikes / spont_time
+        spont_rate = spont_spikes / spont_time if spont_time > 0 else 0.0
 
         # next count the number of spikes for the selected cell at each point in the matrix
         matrix = np.zeros((len(fvals), len(lvals)))
@@ -429,26 +624,156 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         for stim, iteration in list(self.results.values()):
             for i in trials:
                 vec = iteration[i]
-                spikes = vec[(pop.type, ind)][1]
+                if key not in vec:
+                    continue
+                spikes = vec[key][1]
                 n_spikes = (
                     (spikes >= self.response[0]) & (spikes < self.response[1])
                 ).sum()
-                i = fvals.index(stim.key()["f0"])
+                i = fvals.index(_stim_freq(stim))
                 j = lvals.index(stim.key()["dbspl"])
                 matrix[i, j] += n_spikes - spont_rate * (
                     self.response[1] - self.response[0]
                 )
         matrix /= self.iterations
 
-        # plot and scale the matrix image
-        # note that the origin (lower left) of each image pixel indicates its actual test freq/level.
-        self.tuning_img.setImage(matrix)
-        self.tuning_img.resetTransform()
-        self.tuning_img.setPos(np.log10(min(fvals)), min(lvals))
-        # self.tuning_img.setScale(
-        #     (np.log10(max(fvals)) - np.log10(min(fvals))) / (len(fvals) - 1),
-        #     (max(lvals) - min(lvals)) / (len(lvals) - 1),
-        # )
+        # Convert net spikes/trial → net rate (sp/s) for display
+        response_dur_s = (self.response[1] - self.response[0]) / 1000.0
+        rate_matrix = matrix / response_dur_s
+
+        # Scale and position the image so each pixel occupies its correct
+        # (log10-freq, dB) region. sx / sy = size of one pixel in data units.
+        # For single-frequency (noise) stimuli, use a fixed pixel width of 0.15 log10
+        # decades (~15 % of a ±0.5-decade visible window) so the column is visible.
+        sx = (np.log10(fvals[-1]) - np.log10(fvals[0])) / (len(fvals) - 1) if len(fvals) > 1 else 0.15
+        sy = (lvals[-1] - lvals[0]) / (len(lvals) - 1) if len(lvals) > 1 else 1.0
+        tr = pg.QtGui.QTransform()
+        tr.scale(sx, sy)
+        self.tuning_img.setImage(rate_matrix)
+        self.tuning_img.setTransform(tr)
+        # Shift by -sx/2, -sy/2 so pixel CENTRES align with stim data points,
+        # matching the stim_rect centred positioning in stim_selected().
+        self.tuning_img.setPos(np.log10(fvals[0]) - sx / 2, lvals[0] - sy / 2)
+        # For single-frequency stimuli, centre the x-axis view on the CF.
+        if len(fvals) == 1:
+            self.tuning_plot.setXRange(
+                np.log10(fvals[0]) - 0.5,
+                np.log10(fvals[0]) + 0.5,
+                padding=0,
+            )
+        # Claude fixed 2026-06-25: symmetric range so 0 (spontaneous) is always the midpoint
+        # of the diverging colormap (maps to black).
+        sym_max = max(float(abs(rate_matrix.min())), float(rate_matrix.max()), 1.0)
+        self.tuning_cbar.setLevels(values=(-sym_max, sym_max))
+        try:
+            self.tuning_cbar.axis.setTicks([
+                [(-sym_max, f'{-sym_max:.0f}'), (0, '0\n(spont)'), (sym_max, f'+{sym_max:.0f}')],
+            ])
+        except Exception:
+            pass
+        self.update_ri_plot()
+
+    def update_ri_plot(self):
+        """Rate-intensity function for the selected cell.
+
+        For tone pip: uses the currently selected stimulus frequency.
+        For noise types: uses the nearest test frequency to the cell's actual CF.
+        Spontaneous rate is estimated from the pre-stimulus baseline across ALL trials
+        and ALL stimulus conditions (maximum statistical power).
+        """
+        self.ri_plot.clear()
+        if self.selected_cell is None:
+            return
+
+        pop, ind = self.selected_cell
+        key = (pop.type, ind)
+        trials = self.selected_trials()
+        all_trials = list(range(self.iterations))
+
+        cell_cf = float(pop._cells[ind]['cf'])
+
+        fvals = sorted(set(_stim_freq(s) for s, _ in self.results.values()))
+        lvals = sorted(set(s.key()["dbspl"] for s, _ in self.results.values()))
+        if not fvals or not lvals:
+            return
+
+        # Determine which test frequency to use for the RI plot.
+        sname = self.stim_type_combo.currentData()
+        if (sname == "tone_pip"
+                and getattr(self, 'selected_stim', None) is not None):
+            cf_test = _stim_freq(self.selected_stim)
+        else:
+            cf_arr = np.array(fvals)
+            cf_idx = int(np.argmin(np.abs(cf_arr - cell_cf)))
+            cf_test = fvals[cf_idx]
+
+        response_dur_s = (self.response[1] - self.response[0]) / 1000.0
+        baseline_dur_s = (self.baseline[1] - self.baseline[0]) / 1000.0
+
+        # Spontaneous rate: pool baseline spikes across ALL results and ALL trials
+        # for the most stable estimate (pre-stimulus rate is stimulus-independent).
+        spont_n = spont_tr = 0
+        for _, (stim, iteration) in self.results.items():
+            for i in all_trials:
+                if i not in iteration:
+                    continue
+                vec = iteration[i]
+                if key not in vec:
+                    continue
+                spikes = vec[key][1]
+                spont_n += ((spikes >= self.baseline[0]) & (spikes < self.baseline[1])).sum()
+                spont_tr += 1
+        mean_spont = (spont_n / spont_tr / baseline_dur_s) if spont_tr > 0 else 0.0
+
+        # Response rate vs level at cf_test.
+        ri_rates = []
+        valid_levels = []
+        for lv in lvals:
+            res_key = "f0: %0.0f  dBspl: %0.0f" % (cf_test, lv)
+            if res_key not in self.results:
+                continue
+            stim, iteration = self.results[res_key]
+            n_resp = n_tr = 0
+            for i in trials:
+                if i not in iteration:
+                    continue
+                vec = iteration[i]
+                if key not in vec:
+                    continue
+                spikes = vec[key][1]
+                n_resp += ((spikes >= self.response[0]) & (spikes < self.response[1])).sum()
+                n_tr += 1
+            if n_tr > 0:
+                ri_rates.append(n_resp / n_tr / response_dur_s)
+                valid_levels.append(lv)
+
+        if not valid_levels:
+            return
+
+        self.ri_plot.plot(
+            valid_levels, ri_rates,
+            pen=pg.mkPen('w', width=2),
+            symbol='o', symbolBrush='w', symbolSize=6,
+        )
+        if mean_spont > 0:
+            self.ri_plot.addLine(
+                y=mean_spont,
+                pen=pg.mkPen('y', style=pg.QtCore.Qt.PenStyle.DashLine, width=1),
+            )
+
+        ymax = max(max(ri_rates) if ri_rates else 0.0, mean_spont) * 1.15
+        self.ri_plot.setYRange(0, max(ymax, 1.0), padding=0)
+
+        if sname == "tone_pip":
+            self.ri_plot.setTitle(
+                "%s %d   f0: %.0f Hz" % (pop.type, ind, cf_test),
+                size="9pt",
+            )
+        else:
+            self.ri_plot.setTitle(
+                "%s %d   CF: %.0f Hz" % (pop.type, ind, cell_cf),
+                size="9pt",
+            )
 
 
 class NetworkTree(pg.QtWidgets.QTreeWidget):
@@ -496,29 +821,47 @@ class NetworkVisualizer(pg.PlotWidget):
 
         self.selected = pg.ScatterPlotItem()
         self.selected.setZValue(20)
+        # pyqtgraph's GraphicsScene.sendClickEvent() calls mouseClickEvent() on
+        # items by z-order regardless of Qt's acceptedMouseButtons. self.selected
+        # sits on top of self.cells and its spots cover every highlighted cell
+        # (including presynaptic cells shown in red). Without this override,
+        # clicking any highlighted cell hits self.selected first, which accepts
+        # the event, and self.cells never receives it.
+        # Claude fixed 2026-06-24: override mouseClickEvent to always ignore.
+        self.selected.mouseClickEvent = lambda ev: ev.ignore()
         self.addItem(self.selected)
 
         self.connections = pg.PlotCurveItem()
+        self.connections.setAcceptedMouseButtons(pg.QtCore.Qt.MouseButton.NoButton)
         self.addItem(self.connections)
 
         # first assign positions of all cells
+        pop_brushes = {
+            "sgc": pg.mkBrush(80, 200, 80),
+            "dstellate": pg.mkBrush(200, 200, 0),
+            "tstellate": pg.mkBrush(80, 80, 220),
+            "tuberculoventral": pg.mkBrush(200, 60, 60),
+            "bushy": pg.mkBrush(0, 200, 220),
+            "pyramidal": pg.mkBrush(180, 80, 220),
+        }
         cells = []
         for y, pop in enumerate(self.pops.values()):
             pop.cell_spots = []
             pop.fwd_connections = {}
+            brush = pop_brushes.get(pop.type, pg.mkBrush("w"))
             for i, cell in enumerate(pop._cells):
                 pos = (np.log10(cell["cf"]), y)
                 real = cell["cell"] != 0
                 if not real:
                     pop.cell_spots.append(None)
                     continue
-                brush = pg.mkBrush("b") if real else pg.mkBrush(255, 255, 255, 30)
                 spot = {
                     "x": pos[0],
                     "y": pos[1],
-                    "symbol": "o" if real else "x",
+                    "size": 12,
+                    "symbol": "o",
                     "brush": brush,
-                    "pen": None,
+                    "pen": pg.mkPen("w", width=1),
                     "data": (pop, i),
                 }
                 cells.append(spot)
@@ -546,7 +889,7 @@ class NetworkVisualizer(pg.PlotWidget):
                         prepop.fwd_connections[j].append((pop, i))
                         spot2 = prepop.cell_spots[j]
                         if spot2 is None:
-                            return
+                            continue  # Claude fixed 2026-06-24: was `return`, which exited __init__ early
                         p2 = spot2["x"], spot2["y"]
                         con_x.extend([p1[0], p2[0]])
                         con_y.extend([p1[1], p2[1]])
@@ -583,17 +926,25 @@ class NetworkVisualizer(pg.PlotWidget):
         if rec["connections"] != 0:
             for prepop, preinds in list(rec["connections"].items()):
                 for preind in preinds:
-                    spot = prepop.cell_spots[preind].copy()
-                    spot["size"] = 15
-                    spot["brush"] = pg.mkBrush((255, 0, 0, 75))  # 'r'
-                    spots.append(spot)
+                    # Claude fixed 2026-06-24: guard against None (virtual/uninstantiated cell)
+                    s = prepop.cell_spots[preind]
+                    if s is None:
+                        continue
+                    s = s.copy()
+                    s["size"] = 15
+                    s["brush"] = pg.mkBrush((255, 0, 0, 75))
+                    spots.append(s)
 
         # display postsynaptic cells
         for postpop, postind in pop.fwd_connections.get(i, []):
-            spot = postpop.cell_spots[postind].copy()
-            spot["size"] = 15
-            spot["brush"] = pg.mkBrush((0, 255, 0, 75))  # 'g'
-            spots.append(spot)
+            # Claude fixed 2026-06-24: guard against None (virtual/uninstantiated cell)
+            s = postpop.cell_spots[postind]
+            if s is None:
+                continue
+            s = s.copy()
+            s["size"] = 15
+            s["brush"] = pg.mkBrush((0, 255, 0, 75))
+            spots.append(s)
 
         self.selected.setData(spots)
         self.selected.show()
@@ -602,24 +953,67 @@ class NetworkVisualizer(pg.PlotWidget):
 
 
 def main():
-    app = pg.mkQApp()
-    # pg.dbg()  # enables the debugger, but we don't need it.
+    parser = argparse.ArgumentParser(description="CN network physiology simulation")
+    parser.add_argument(
+        "--celltype",
+        choices=CELLTYPES,
+        default="bushy",
+        help="Target cell type (default: bushy)",
+    )
+    parser.add_argument(
+        "--simulator",
+        choices=["py3", "matlab"],
+        default=None,
+        help="AN spike-train simulator (default: auto-detect)",
+    )
+    parser.add_argument(
+        "--ignore-cache",
+        action="store_true",
+        help="Ignore cached results and rerun simulations",
+    )
+    parser.add_argument("--fmin", type=float, default=4000.,
+                        help="Minimum frequency (Hz, default 4000)")
+    parser.add_argument("--fmax", type=float, default=32000.,
+                        help="Maximum frequency (Hz, default 32000)")
+    parser.add_argument("--octave-spacing", type=float, default=0.25,
+                        help="Octave spacing between test frequencies (default 0.25)")
+    parser.add_argument("--db-min", type=float, default=20.,
+                        help="Minimum sound level (dB SPL, default 20)")
+    parser.add_argument("--db-max", type=float, default=100.,
+                        help="Maximum sound level (dB SPL, default 100)")
+    parser.add_argument("--db-step", type=float, default=10.,
+                        help="Sound level step size (dB, default 10)")
+    parser.add_argument("--execution", choices=["parallel", "serial"], default="parallel",
+                        help="Run simulations in parallel or serial (default: parallel)")
+    parser.add_argument("--cf", type=float, default=16000.,
+                        help="Characteristic frequency of the target cell (Hz, default 16000)")
+    parser.add_argument(
+        "--stim-types",
+        nargs="+",
+        choices=list(STIM_DEFS.keys()),
+        default=["tone_pip"],
+        metavar="TYPE",
+        help="One or more stimulus types to run: %s (default: tone_pip)"
+             % ", ".join(STIM_DEFS.keys()),
+    )
+    parser.add_argument(
+        "--noise-octave-width",
+        type=float,
+        default=1.0,
+        help="Bandwidth for band-limited noise in octaves (default: 1.0)",
+    )
+    args = parser.parse_args()
 
-    # Create a sound stimulus and use it to generate spike trains for the SGC
-    # population
-    stims = []
-    parallel = True
+    pg.mkQApp()
+
+    parallel = (args.execution == "parallel")
 
     nreps = 1
-    fmin = 4e3
-    fmax = 32e3
-    octavespacing = 1 / 4.0
-    # octavespacing = 1.
-    n_frequencies = int(np.log2(fmax / fmin) / octavespacing) + 1
+    n_frequencies = int(np.log2(args.fmax / args.fmin) / args.octave_spacing) + 1
     fvals = (
         np.logspace(
-            np.log2(fmin / 1000.0),
-            np.log2(fmax / 1000.0),
+            np.log2(args.fmin / 1000.0),
+            np.log2(args.fmax / 1000.0),
             num=n_frequencies,
             endpoint=True,
             base=2,
@@ -627,12 +1021,11 @@ def main():
         * 1000.0
     )
 
-    n_levels = 11
-    # n_levels = 3
-    levels = np.linspace(20, 100, n_levels)
+    n_levels = int(round((args.db_max - args.db_min) / args.db_step)) + 1
+    levels = np.linspace(args.db_min, args.db_max, n_levels)
 
-    print(("Frequencies:", fvals / 1000.0))
-    print(("Levels:", levels))
+    print(("Frequencies (kHz):", fvals / 1000.0))
+    print(("Levels (dB SPL):", levels))
 
     syntype = "multisite"
     path = os.path.dirname(__file__)
@@ -641,29 +1034,43 @@ def main():
         os.mkdir(cachepath)
 
     seed = 34657845
-    prot = CNSoundStim(seed=seed, synapsetype=syntype)
-    i = 0
+    prot = CNSoundStim(seed=seed, synapsetype=syntype, celltype=args.celltype, cf=args.cf)
 
     start_time = timeit.default_timer()
 
-    # stimpar = {'dur': 0.06, 'pip': 0.025, 'start': [0.02], 'baseline': [10, 20], 'response': [20, 45]}
     stimpar = {
-        "dur": 0.2,
-        "pip": 0.04,
-        "start": [0.1],
-        "baseline": [50, 100],
-        "response": [100, 140],
+        # "dur": 0.35,        # Claude fixed 2026-06-25: was 350 ms (100 pre + 100 pip + 150 post)
+        "dur": 0.25,        # 250 ms total: 100 ms pre + 100 ms pip + 50 ms post
+        "pip": 0.1,         # 100 ms pip
+        "start": [0.1],     # pip starts at 100 ms
+        "baseline": [50, 100],   # 50 ms pre-stimulus window (ms)
+        "response": [100, 200],  # 100 ms response window matching pip duration (ms)
     }
+
+    # Noise stimuli run only at the target CF (no frequency sweep).
+    _stim_freqs: Dict[str, np.ndarray] = {
+        "tone_pip":          fvals,
+        "bandlimited_noise": np.array([args.cf]),
+        "wideband_noise":    np.array([args.cf]),
+    }
+    # Type-specific extra parameters forwarded to each factory.
+    _stim_extra: Dict[str, Dict[str, Any]] = {
+        "tone_pip":          {},
+        "bandlimited_noise": {"octave_width": args.noise_octave_width},
+        "wideband_noise":    {},
+    }
+
     tasks = []
-    for f in fvals:
-        for db in levels:
-            for i in range(nreps):
-                tasks.append((f, db, i))
+    for sname in args.stim_types:
+        for f in _stim_freqs[sname]:
+            for db in levels:
+                for i in range(nreps):
+                    tasks.append((sname, float(f), db, i))
 
     results = {}
-    
+
     workers = 1 if not parallel else mp.Parallelize.suggestedWorkerCount()
-    tot_runs = len(fvals) * len(levels) * nreps
+    tot_runs = len(tasks)
     with mp.Parallelize(
         enumerate(tasks),
         results=results,
@@ -671,37 +1078,32 @@ def main():
         workers=workers,
     ) as tasker:
         for i, task in tasker:
-            f, db, iteration = task
-            stim = sound.TonePip(
-                rate=100e3,
-                duration=stimpar["dur"],
-                f0=f,
-                dbspl=db,  # dura 0.2, pip_start 0.1 pipdur 0.04
-                ramp_duration=2.5e-3,
-                pip_duration=stimpar["pip"],
-                pip_start=stimpar["start"],
-            )
+            sname, f, db, iteration = task
+            sdef = STIM_DEFS[sname]
+            extra = _stim_extra[sname]
+            stim = sdef.factory(stimpar, f, db, iteration, **extra)
 
-            print(f"=== Start run {i+1:5d}/{tot_runs:5d} === ", end="")
+            # Stable extra-param suffix so different configurations get separate caches.
+            extra_str = "".join("_%s=%s" % (k, v) for k, v in sorted(extra.items()))
+            print(f"=== Start run {i+1:5d}/{tot_runs:5d} ({sname}) === ", end="")
             cachefile = os.path.join(
                 cachepath,
-                "seed=%d_f0=%f_dbspl=%f_syntype=%s_iter=%d.pk"
-                % (seed, f, db, syntype, iteration),
+                "seed=%d_stim=%s_f0=%f_dbspl=%f_syntype=%s_celltype=%s%s_iter=%d.pk"
+                % (seed, sname, f, db, syntype, args.celltype, extra_str, iteration),
             )
-            if "--ignore-cache" in sys.argv or not os.path.isfile(cachefile):
+            if args.ignore_cache or not os.path.isfile(cachefile):
                 result = prot.run(stim, seed=i)
                 pickle.dump(result, open(cachefile, "wb"))
             else:
                 print("  (Loading cached results)", end="")
                 result = pickle.load(open(cachefile, "rb"))
-            tasker.results[(f, db, iteration)] = (stim, result)
+            tasker.results[(sname, f, db, iteration)] = (stim, result)
             print(f"  --- finished run {i+1:5d}/{tot_runs:5d} ---")
 
-    # get time of run before display
     elapsed = timeit.default_timer() - start_time
     print(
-        "Elapsed time for %d stimuli: %f  (%f sec per stim), synapses: %s"
-        % (len(tasks), elapsed, elapsed / len(tasks), prot.bushy._synapsetype)
+        "Elapsed time for %d stimuli: %f  (%f sec per stim), celltype: %s, synapses: %s"
+        % (len(tasks), elapsed, elapsed / len(tasks), args.celltype, prot.sgc._synapsetype)
     )
 
     nd = NetworkSimDisplay(
@@ -711,6 +1113,7 @@ def main():
 
     if sys.flags.interactive == 0:
         pg.QtWidgets.QApplication.exec()
+
 
 if __name__ == "__main__":
     main()
