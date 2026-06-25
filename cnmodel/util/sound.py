@@ -5,6 +5,7 @@ from __future__ import division
 import numpy as np
 import scipy
 import scipy.io.wavfile
+import scipy.signal
 import resampy
 
 def create(type, **kwds):
@@ -258,6 +259,53 @@ class NoisePip(Sound):
         o = self.opts
         return pipnoise(self.time, o['ramp_duration'], o['rate'],
                         o['dbspl'], o['pip_duration'], o['pip_start'], o['seed'])
+
+
+class BandlimitedNoisePip(Sound):
+    """One or more cosine-ramped noise pips band-limited to a specified octave width.
+
+    Parameters are the same as NoisePip with two additions:
+
+    center_freq : float
+        Centre frequency of the bandpass filter in Hz.
+    octave_width : float
+        Full bandwidth expressed in octaves. The filter edges are placed at
+        center_freq / 2^(octave_width/2) and center_freq * 2^(octave_width/2).
+        If None or <= 0 the signal is left unfiltered (wideband).
+    """
+    def __init__(self, **kwds):
+        for k in ['rate', 'duration', 'dbspl', 'pip_duration', 'pip_start',
+                  'ramp_duration', 'seed', 'center_freq']:
+            if k not in kwds:
+                raise TypeError("Missing required argument '%s'" % k)
+        kwds.setdefault('octave_width', 1.0)
+        if kwds['pip_duration'] < kwds['ramp_duration'] * 2:
+            raise ValueError("pip_duration must be greater than (2 * ramp_duration).")
+        if kwds['seed'] < 0:
+            raise ValueError("Random seed must be integer > 0")
+        Sound.__init__(self, **kwds)
+
+    def generate(self):
+        o = self.opts
+        # Generate broadband noise pip at the requested level
+        wave = pipnoise(self.time, o['ramp_duration'], o['rate'],
+                        o['dbspl'], o['pip_duration'], o['pip_start'], o['seed'])
+
+        bw = o['octave_width']
+        cf = o['center_freq']
+        nyq = o['rate'] / 2.0
+        if bw is not None and bw > 0 and cf > 0:
+            half = bw / 2.0
+            f_lo = cf / (2.0 ** half)
+            f_hi = cf * (2.0 ** half)
+            f_lo = max(f_lo, 1.0)     # avoid sub-Hz cutoffs
+            f_hi = min(f_hi, nyq * 0.999)  # avoid Nyquist aliasing
+            sos = scipy.signal.butter(4, [f_lo / nyq, f_hi / nyq],
+                                      btype='bandpass', output='sos')
+            wave = scipy.signal.sosfiltfilt(sos, wave)
+
+        return wave
+
 
 class ClickTrain(Sound):
     """ One or more clicks (rectangular pulses).
