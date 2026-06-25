@@ -83,13 +83,13 @@ the CF of the postsynaptic cell.
 ----------------------------------------------------------------------------------------------
                   bushy       tstellate   dstellate   octopus     pyramidal    tuberculoventral
 sgc               0.05 [1]    0.1 [1]     0.4 [1]     0.5 [5]     0.1 [1]      0.1 [1]
-dstellate         0.208 [2]   0.347 [2]   0.5 [1]     0           0.2 [1]      0.2 [1]      
+dstellate         0.208 [2]   0.347 [2]   0.5 [1]     0           0.2 [1]      0.4 [1]      
 tstellate         0.1 [4]     0.1 [4]     0           0           0            0    
 tuberculoventral  0.069 [3]   0.111 [3]   0           0           0.15 [1]     0    
 pyramidal         0           0           0           0           0            0    
 ----------------------------------------------------------------------------------------------
 
-[1] Guess based on axonal / dendritic morphology.
+[1] Guess based on axonal / dendritic morphology. Widened from 0.2 to 0.4 6/25/2026 pbm
 
 [2] Calculated from Campagnola & Manis 2014 fig. 7C
     Distribution widths are given in stdev(octaves), so we multiply by ln(2) to
@@ -193,13 +193,13 @@ the CF of the postsynaptic cell.
                   bushy       tstellate   dstellate   octopus     pyramidal    tuberculoventral   mso
 sgc               0.05 [1]    0.1 [1]     0.4 [1]     0.5 [5]     0.1 [1]      0.1 [1]            0
 bushy             0           0           0           0           0            0                  0.05 [6]
-dstellate         0.208 [2]   0.347 [2]   0.5 [1]     0           0.2 [1]      0.2 [1]            0
+dstellate         0.208 [2]   0.347 [2]   0.5 [1]     0           0.2 [1]      0.4 [1]            0
 tstellate         0.1 [4]     0.1 [4]     0           0           0            0                  0
 tuberculoventral  0.069 [3]   0.111 [3]   0           0           0.15 [1]     0                  0
 pyramidal         0           0           0           0           0            0                  0
 --------------------------------------------------------------------------------------------------------
 
-[1] Guess based on axonal / dendritic morphology.
+[1] Guess based on axonal / dendritic morphology.  WIdened from 0.2 6/25/2026 pbm
 
 [2] Calculated from Campagnola & Manis 2014 fig. 7C (Using mouse data on guinea pig cells)
     Distribution widths are given in stdev(octaves), so we multiply by ln(2) to
