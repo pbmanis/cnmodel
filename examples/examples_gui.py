@@ -204,13 +204,40 @@ EXAMPLES: List[Dict] = [
         "description": "MSO cell synaptic input test (no parameters).",
         "params":      [],
     },
-    # ── test_physiology (no args) ─────────────────────────────────────────────
+    # ── test_physiology ───────────────────────────────────────────────────────
     {
         "label":           "test_physiology",
         "script":          "test_physiology.py",
         "simulator_aware": True,
-        "description": "Physiology / firing-property tests (no parameters).",
-        "params":      [],
+        "description": "Network physiology simulation with configurable target cell type.",
+        "params": [
+            _p("Cell type",     "--celltype",       "list",  "bushy",
+               "Target cell type in the CN network",
+               ["bushy", "tstellate", "dstellate", "pyramidal", "tuberculoventral"]),
+            _p("CF (Hz)",       "--cf",             "float", 16000.,
+               "Characteristic frequency of the target cell (Hz)"),
+            _p("F min (Hz)",    "--fmin",            "float", 4000.,
+               "Minimum test frequency (Hz)"),
+            _p("F max (Hz)",    "--fmax",            "float", 32000.,
+               "Maximum test frequency (Hz)"),
+            _p("Oct. spacing",  "--octave-spacing",  "float", 0.25,
+               "Octave spacing between test frequencies"),
+            _p("dB min",        "--db-min",          "float", 20.,
+               "Minimum sound level (dB SPL)"),
+            _p("dB max",        "--db-max",          "float", 100.,
+               "Maximum sound level (dB SPL)"),
+            _p("dB step",       "--db-step",         "float", 10.,
+               "Sound level step size (dB)"),
+            _p("Execution",     "--execution",       "list",  "parallel",
+               "Parallel or serial execution", ["parallel", "serial"]),
+            _p("Stim type",     "--stim-types",      "list",  "tone_pip",
+               "Stimulus type to simulate",
+               ["tone_pip", "bandlimited_noise", "wideband_noise"]),
+            _p("Noise oct. BW", "--noise-octave-width", "float", 1.0,
+               "Octave bandwidth for band-limited noise (default 1.0)"),
+            _p("Ignore cache",  "--ignore-cache",    "bool",  False,
+               "Bypass cache and rerun all simulations"),
+        ],
     },
     # ── test_populations ──────────────────────────────────────────────────────
     {
@@ -365,6 +392,13 @@ def build_command(script: str, params: List[Dict],
             if val:
                 optional.append(argname)
 
+        elif ptype == "multistr":
+            # Each whitespace-separated token becomes its own argument after the flag.
+            tokens = str(val).split()
+            if tokens:
+                optional.append(argname)
+                optional.extend(tokens)
+
         elif ptype in ("float", "int", "str", "list"):
             sval = str(val).strip()
             if not sval:
@@ -480,6 +514,10 @@ class ExamplesGUI(QtWidgets.QMainWindow):
             elif p["ptype"] == "int":
                 d["type"]  = "int"
                 d["value"] = int(p["default"])
+            elif p["ptype"] == "multistr":
+                # Space-separated list of tokens — rendered as a plain text field.
+                d["type"]  = "str"
+                d["value"] = str(p["default"])
             else:  # str
                 d["type"]  = "str"
                 d["value"] = str(p["default"])
