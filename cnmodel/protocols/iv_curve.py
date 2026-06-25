@@ -277,8 +277,11 @@ class IVCurve(Protocol):
         h.celsius = self.cell.status["temperature"]
         self.cell.cell_initialize()
         h.dt = self.dt  # make sure step size is correct
-        custom_init(v_init=self.cell.vm0)
-        h.finitialize()  # needed to reset time to -
+        # Claude fixed 2026-06-24: h.SaveState.restore() asserts on PlayRec index
+        # mismatch because self.vec = {} drops h.Vector references each call,
+        # which changes NEURON's internal PlayRec list between save() and restore().
+        # Always run the short (10 ms) warmup instead of caching steady state.
+        custom_init(v_init=self.cell.vm0, dur=10.)  # 10 ms is enough; 50 ms default is overkill
         h.batch_run(self.tend, self.dt)
         # while h.t < self.tend:
         #     h.fadvance()
