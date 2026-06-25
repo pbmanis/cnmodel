@@ -93,6 +93,10 @@ BREAKPOINT {
 UNITSOFF
 
 INITIAL {
+    : Initialize vNa before rates() so minf2/hinf2 use
+    : the correct voltage rather than a stale 0 or NaN from a prior run.
+    : Without this, m2 and h2 start at wrong values (or NaN), causing gna=NaN.
+    vNa = v + vshift
     rates(v)
     m = minf
     h = hinf
