@@ -82,12 +82,36 @@ class FileLock(object):
                 if e.errno != errno.EEXIST:
                     raise 
                 if (time.time() - start_time) >= self.timeout:
+                    # Claude fixed 2026-06-25: check if locking PID is still alive.
+                    # A crashed parallel worker leaves a stale .lock file; without
+                    # this check every subsequent worker also times out and crashes.
                     try:
-                        pid = open(self.lockfile).read()
+                        pid_str = open(self.lockfile).read().strip()
+                        pid = int(pid_str)
                     except Exception:
-                        pid = '[error reading lockfile: %s]' % sys.exc_info()[0]
-                    raise FileLockException("Timeout occured. (%s is locked by pid %s)" %
-                                            (self.lockfile, pid))
+                        pid_str = 'unknown'
+                        pid = None
+
+                    is_alive = False
+                    if pid is not None:
+                        try:
+                            os.kill(pid, 0)   # signal 0 = existence check
+                            is_alive = True   # process exists and we can signal it
+                        except ProcessLookupError:
+                            is_alive = False  # ESRCH: process is dead
+                        except PermissionError:
+                            is_alive = True   # EPERM: exists, no permission to signal
+
+                    if is_alive:
+                        raise FileLockException("Timeout occured. (%s is locked by live pid %s)" %
+                                                (self.lockfile, pid_str))
+                    else:
+                        # Stale lock from a dead process — remove it and retry.
+                        try:
+                            os.unlink(self.lockfile)
+                        except OSError:
+                            pass
+                        start_time = time.time()  # reset timeout after clearing stale lock
                 time.sleep(self.delay)
         
         self.is_locked = True
