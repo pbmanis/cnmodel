@@ -349,43 +349,6 @@ class SGCInputTestPSTH(Protocol):
                 self.vms[nr] = res[nr]["vm"]
                 # self.synapses[nr] = res[nr]["synapses"]
                 
-        # if parallelmode == 'dask':
-        #     # this does not work...
-        #     # dask does not allow neuron section objects cannot be pickled to be passed between
-        #     # elements of the task.
-        #     # import dask.multiprocessing
-        #     # dask.config.set(scheduler='processes')
-        #     from dask.distributed import Client, LocalCluster
-        #     cluster = LocalCluster()
-        #     client = Client(cluster) #client = Client() # Client(cluster) # client = Client('127.0.0.1:8786')
-        #     start_time = timeit.default_timer()
-        #     def _tasks(nrep, nsgc, info, cell):
-        #         res = []
-        #         for nr in range(nrep):
-        #             info["seed"] = seed + 3 * nsgc * nr
-        #             # repres = runTrial_dask(self.cell, info)
-        #             post_cell = buildCell_dask(cell)
-        #             psx = makeSynapses_dask(post_cell, info)
-        #             # nvars = setupNeuron_dask(post_cell, info)
-        #             repres = runNeuron_dask(post_cell, info, psx) # , nvars['rtime'], nvars['Vm'])
-        #             res.append(repres)
-        #         return(res)
-        #
-        #     res = dask.compute(_tasks(self.nrep, self.n_sgc, info, self.cell))# , scheduler='single-threaded')
-        #     elapsed = timeit.default_timer() - start_time
-        #     print(f"Parallel Elapsed time for {self.nrep:d} stimuli: {elapsed:f} secs")
-        #     # res = results
-        #     res = res[0]
-        #     for nr in range(self.nrep):
-        #         # print('nr: ', nr)
-        #         # print(res[nr])
-        #         self.pre_cells[nr] = res[nr]["pre_cells"]
-        #         self.time[nr] = res[nr]["time"]
-        #         self.xmtrs[nr] = res[nr]["xmtr"] # {k: v.to_python() for k, v in list(res[nr]["xmtr"].items())}
-        #         self.vms[nr] = res[nr]["vm"]
-        #         # self.synapses[nr] = res[nr]["synapses"]
-        #
-
 
     def show(self):
         self.win = pg.GraphicsLayoutWidget()
