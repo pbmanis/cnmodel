@@ -31,6 +31,7 @@ class Population(object):
         self._post_connections = []  # populations this one connects to
         self._pre_connections = []  # populations connecting to this one
         self._synapsetype = synapsetype
+        self._synapsetype_per_pre = {}  # {pre_pop.type string → synapse type string}
         # fields are a numpy record array with information about each cell in the 
         # population
         fields = [
@@ -153,8 +154,11 @@ class Population(object):
         pre_cells = pop.select(size=size, create=False, **dist)
         for j in pre_cells:
             pre_cell = pop.get_cell(j)
-            # use default settings for connecting these. 
-            pre_cell.connect(cell, type=self._synapsetype)
+            # use default settings for connecting these.
+            # Claude fixed 2026-06-26: per-pre-population synapse type override
+            # pre_cell.connect(cell, type=self._synapsetype)
+            syn_type = self._synapsetype_per_pre.get(pop.type, self._synapsetype)
+            pre_cell.connect(cell, type=syn_type)
         return pre_cells
 
     def connection_stats(self, pop, cell_rec):

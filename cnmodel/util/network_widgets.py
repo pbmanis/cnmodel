@@ -116,31 +116,45 @@ class NetworkControlPanel(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Configure Network — then click Run Simulation")
-        self.resize(740, 520)
+        self.setWindowTitle("Configure Network — Build, then Run Simulation")
+        self.resize(760, 560)
 
-        self._syn_handles: dict = {}   # {(pre, post): [(setter, orig), ...]}
-        self._row_widgets: dict = {}   # {(pre, post): (QCheckBox, QDoubleSpinBox)}
+        self._prot = None                  # set by set_synapse_types()
+        self._syn_handles: dict = {}       # {(pre, post): [(setter, orig), ...]}
+        self._row_widgets: dict = {}       # {(pre, post): (QCheckBox, QDoubleSpinBox)}
+        self._syn_type_widgets: dict = {}  # {(pre_type, post_type): QComboBox}
 
         root = QtWidgets.QVBoxLayout(self)
         self.tabs = QtWidgets.QTabWidget()
         root.addWidget(self.tabs)
 
         self._build_conv_tab()
-        self._build_iso_tab()
+        self._build_syntype_tab()   # tab 1 — must be configured before Build Network
+        self._build_iso_tab()       # tab 2 — populated after Build Network fires
 
-        # Button bar
-        btn_bar = QtWidgets.QDialogButtonBox()
-        run_btn = btn_bar.addButton(
-            "Run Simulation", QtWidgets.QDialogButtonBox.ButtonRole.AcceptRole
+        # Button bar: Build Network → Run Simulation | Cancel
+        btn_row = QtWidgets.QHBoxLayout()
+
+        self._build_btn = QtWidgets.QPushButton("Build Network")
+        self._build_btn.setToolTip(
+            "Apply the synapse type choices above and create NEURON synapses.\n"
+            "This must be clicked before running simulations."
         )
-        cancel_btn = btn_bar.addButton(
-            "Cancel", QtWidgets.QDialogButtonBox.ButtonRole.RejectRole
-        )
-        run_btn.setDefault(True)
-        btn_bar.accepted.connect(self.accept)
-        btn_bar.rejected.connect(self.reject)
-        root.addWidget(btn_bar)
+        self._build_btn.clicked.connect(self._on_build_network)
+        btn_row.addWidget(self._build_btn)
+
+        btn_row.addStretch()
+
+        self._run_btn = QtWidgets.QPushButton("Run Simulation")
+        self._run_btn.setEnabled(False)   # enabled after Build Network
+        self._run_btn.clicked.connect(self.accept)
+        btn_row.addWidget(self._run_btn)
+
+        cancel_btn = QtWidgets.QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        btn_row.addWidget(cancel_btn)
+
+        root.addLayout(btn_row)
 
     # ── Tab builders ──────────────────────────────────────────────────────────
 
@@ -155,6 +169,32 @@ class NetworkControlPanel(QtWidgets.QDialog):
         )
         lay.addWidget(self.conv_table)
         self.tabs.addTab(w, "Convergence Table")
+
+    def _build_syntype_tab(self):
+        w = QtWidgets.QWidget()
+        lay = QtWidgets.QVBoxLayout(w)
+
+        note = QtWidgets.QLabel(
+            "Choose the synapse implementation for each pre→post connection.\n"
+            "•  multisite — stochastic release zones with short-term plasticity (default).\n"
+            "•  simple    — single Exp2Syn, no depression or facilitation.\n"
+            "Click ‘Build Network’ to apply these choices and create NEURON synapses."
+        )
+        note.setWordWrap(True)
+        lay.addWidget(note)
+
+        self.syntype_table = QtWidgets.QTableWidget()
+        self.syntype_table.setColumnCount(2)
+        self.syntype_table.setHorizontalHeaderLabels(["Connection", "Synapse type"])
+        hdr = self.syntype_table.horizontalHeader()
+        hdr.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.syntype_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+        lay.addWidget(self.syntype_table)
+
+        self.tabs.addTab(w, "Synapse Types")
 
     def _build_iso_tab(self):
         w = QtWidgets.QWidget()
@@ -190,9 +230,101 @@ class NetworkControlPanel(QtWidgets.QDialog):
         btn_row.addStretch()
         lay.addLayout(btn_row)
 
+        # Claude added 2026-06-26: Na-zero checkbox for conductance diagnostics
+        na_row = QtWidgets.QHBoxLayout()
+        self._na_zero_chk = QtWidgets.QCheckBox(
+            "Zero Na channels on target cell (reveals subthreshold conductances)"
+        )
+        self._na_zero_chk.setToolTip(
+            "Sets all Na-channel gbar to 0 on target population cells before running.\n"
+            "Removes action potentials so pre-synaptic conductance waveforms are visible."
+        )
+        na_row.addWidget(self._na_zero_chk)
+        na_row.addStretch()
+        lay.addLayout(na_row)
+
+        # Claude added 2026-06-26: opt-in conductance recording (bypasses cache)
+        syn_g_row = QtWidgets.QHBoxLayout()
+        self._rec_syn_g_chk = QtWidgets.QCheckBox(
+            "Record synaptic conductances on target cell (debug; slower)"
+        )
+        self._rec_syn_g_chk.setToolTip(
+            "Before each run, attaches h.Vector recorders to every non-SGC\n"
+            "PSD conductance on target-population cells.  Results are shown\n"
+            "in the conductance panel.  Forces a fresh simulation (no cache)."
+        )
+        syn_g_row.addWidget(self._rec_syn_g_chk)
+        syn_g_row.addStretch()
+        lay.addLayout(syn_g_row)
+
         self.tabs.addTab(w, "Connection Isolation")
 
     # ── Public API ────────────────────────────────────────────────────────────
+
+    def set_synapse_types(self, prot):
+        """Populate the Synapse Types tab from the live network topology in *prot*.
+
+        Stores a reference to *prot* so that the 'Build Network' button can call
+        prot._resolve_network() when clicked.  Call before exec().
+        """
+        self._prot = prot
+        self._syn_type_widgets = {}
+        self.syntype_table.setRowCount(0)
+
+        for post_pop in prot.populations.values():
+            for pre_pop in post_pop._pre_connections:
+                key = (pre_pop.type, post_pop.type)
+                if key in self._syn_type_widgets:
+                    continue  # skip duplicates (same pair via multiple paths)
+
+                row = self.syntype_table.rowCount()
+                self.syntype_table.insertRow(row)
+
+                label = QtWidgets.QTableWidgetItem(
+                    f"{pre_pop.type.title()} → {post_pop.type.title()}"
+                )
+                label.setFlags(label.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+                self.syntype_table.setItem(row, 0, label)
+
+                combo = QtWidgets.QComboBox()
+                combo.addItems(["multisite", "simple"])
+                combo.setCurrentText("multisite")
+                self.syntype_table.setCellWidget(row, 1, combo)
+                self._syn_type_widgets[key] = combo
+
+        self.syntype_table.resizeColumnsToContents()
+
+    def _on_build_network(self):
+        """Apply synapse type choices, build NEURON synapses, populate gmax tab."""
+        if self._prot is None:
+            return
+
+        # Push per-pre synapse type overrides onto each post-population.
+        for (pre_type, post_type), combo in self._syn_type_widgets.items():
+            post_pop = self._prot.populations.get(post_type)
+            if post_pop is not None:
+                post_pop._synapsetype_per_pre[pre_type] = combo.currentText()
+
+        # Create all NEURON synapses with those types.
+        self._prot._resolve_network()
+
+        # Now that synapses exist, populate the Connection Isolation tab.
+        self.set_network(self._prot)
+
+        # Lock the synapse type widgets — can't change type after build.
+        for combo in self._syn_type_widgets.values():
+            combo.setEnabled(False)
+        self._build_btn.setEnabled(False)
+        self._build_btn.setText("Network Built ✓")
+
+        # Enable Run and switch view to Connection Isolation tab.
+        self._run_btn.setEnabled(True)
+        self._run_btn.setDefault(True)
+        self.tabs.setCurrentIndex(2)
+
+    def get_synapse_type_config(self) -> dict:
+        """Return {(pre_type, post_type): synapse_type_string} for all connections."""
+        return {key: combo.currentText() for key, combo in self._syn_type_widgets.items()}
 
     def update_table(self, species: str):
         """Populate the convergence table for *species*."""
@@ -341,9 +473,19 @@ class NetworkControlPanel(QtWidgets.QDialog):
             for key, (chk, spin) in self._row_widgets.items()
         }
 
+    def get_na_zero(self) -> bool:
+        """Return True if Na channels should be zeroed on the target cell."""
+        return self._na_zero_chk.isChecked()
+
+    def get_record_syn_conductance(self) -> bool:
+        """Return True if synaptic conductances should be recorded during the run."""
+        return self._rec_syn_g_chk.isChecked()
+
     def any_modified(self) -> bool:
-        """Return True if any connection differs from the default (1.0)."""
-        return any(
-            abs(v - 1.0) > 1e-9
-            for v in self.get_scale_config().values()
+        """Return True if anything differs from defaults (forces a fresh simulation)."""
+        return (
+            self._na_zero_chk.isChecked()
+            or self._rec_syn_g_chk.isChecked()
+            or any(c.currentText() != 'multisite' for c in self._syn_type_widgets.values())
+            or any(abs(v - 1.0) > 1e-9 for v in self.get_scale_config().values())
         )

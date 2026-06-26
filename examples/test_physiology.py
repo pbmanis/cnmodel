@@ -105,6 +105,7 @@ class CNSoundStim(Protocol):
         self.dt = dt
         self.celltype = celltype
         self.species = species
+        self.record_syn_conductance = False  # set from main() via control panel checkbox
 
         # Seed now to ensure network generation is stable
         random_seed.set_seed(seed)
@@ -116,14 +117,14 @@ class CNSoundStim(Protocol):
 
         frequencies = [cf]
         cells_per_band = 1
-        self._build_network(celltype, frequencies, cells_per_band, species=species)
+        self._build_topology(celltype, frequencies, cells_per_band, species=species)
 
-    def _build_network(self, celltype, frequencies, cells_per_band, species='mouse'):
-        """Build network topology for the given target cell type.
+    def _build_topology(self, celltype, frequencies, cells_per_band, species='mouse'):
+        """Create populations and symbolic connections for the given target cell type.
 
-        Sets self.target (the recorded population), self.recording_pops
-        (all pops to record Vm from), self.pre_pops (upstream pops for raster),
-        and self.populations (ordered dict used by the visualiser).
+        Sets self.target, self.recording_pops, self.pre_pops, and self.populations.
+        Does NOT call resolve_inputs(); call _resolve_network() after configuring
+        per-connection synapse types via _synapsetype_per_pre on each post-population.
         """
         if celltype == "bushy":
             self.dstellate = populations.DStellate(species=species)
@@ -198,11 +199,19 @@ class CNSoundStim(Protocol):
 
         self.populations = OrderedDict([(pop.type, pop) for pop in pops])
 
-        # Instantiate selected target cells and resolve supporting circuitry.
+        # Instantiate target cells now so the dialog can inspect real cell objects.
+        # resolve_inputs() is deferred to _resolve_network() so that synapse types
+        # can be configured before any NEURON synapse objects are created.
         for f in frequencies:
             self.target.select(cells_per_band, cf=f, create=True)
 
-        # depth=2: resolve inputs for the target (level 1) and their inputs (level 2)
+    def _resolve_network(self):
+        """Create NEURON synapses for all real target cells.
+
+        Call after _build_topology() and after any _synapsetype_per_pre overrides
+        have been set on post-populations.  depth=2 resolves inputs for the target
+        cells (level 1) and their pre-synaptic cells (level 2).
+        """
         self.target.resolve_inputs(depth=2)
 
     def custom_init(self, vinit=-60.):
@@ -235,12 +244,55 @@ class CNSoundStim(Protocol):
         h.celsius = self.temp
         h.dt = self.dt
 
-        # Claude fixed 2026-06-25: set_maxstep moved inside custom_init to run
-        # AFTER finitialize (correct NEURON order: finitialize → set_maxstep → run).
-        # The earlier pre-finitialize call inside custom_init handles the warmup fadvance.
+        # Claude fixed 2026-06-26: recording setup moved before custom_init so
+        # h.finitialize() (inside custom_init) resets these vectors at the same
+        # moment as t/Vm vectors, making all array lengths identical for plotting.
+        # Duck-typing on psd attributes avoids importing PSD subclasses here.
+        _syn_vecs: dict = {}  # (pre_type, pre_ind) -> list[h.Vector]
+        if self.record_syn_conductance:
+            for _tind in self.target.real_cells():
+                _tcell = self.target.get_cell(_tind)
+                for _inp in _tcell.inputs:
+                    _syn = _inp[0]
+                    _pre_cell = _syn.terminal.cell
+                    _pre_type = _pre_cell.celltype
+                    if _pre_type == "sgc":
+                        continue
+                    _pre_pop = self.populations.get(_pre_type)
+                    if _pre_pop is None:
+                        continue
+                    _pre_ind = int(_pre_pop.get_cell_index(_pre_cell))
+                    _key = (_pre_type, _pre_ind)
+                    _psd = _syn.psd
+                    _vecs: list = []
+                    if hasattr(_psd, "all_psd"):          # GlyPSD
+                        for _m in _psd.all_psd:
+                            _v = h.Vector()
+                            _v.record(_m._ref_g)
+                            _vecs.append(_v)
+                    elif hasattr(_psd, "ampa_psd"):       # GluPSD
+                        for _m in _psd.ampa_psd:
+                            _v = h.Vector()
+                            _v.record(_m._ref_g)
+                            _vecs.append(_v)
+                    elif hasattr(_psd, "syn"):             # Exp2PSD
+                        _v = h.Vector()
+                        _v.record(_psd.syn._ref_g)
+                        _vecs.append(_v)
+                    if _vecs:
+                        _syn_vecs[_key] = _vecs
+
+        # set_maxstep runs after finitialize (correct NEURON order); warmup fadvance is also inside.
         self.custom_init()
 
         h.batch_run(_tstop, h.dt)
+
+        # collect conductance traces (sum release zones → one array per pre-cell)
+        vec_syn_g: dict = {}
+        if self.record_syn_conductance:
+            for _key, _vecs in _syn_vecs.items():
+                # Claude fixed 2026-06-26: h.Vector must be converted via .to_python() before np.array()
+                vec_syn_g[_key] = sum(np.array(_v.to_python()) for _v in _vecs)
 
         # record vsoma and spike times for all cells
         vec = {}
@@ -262,6 +314,7 @@ class CNSoundStim(Protocol):
             cell = self.sgc.get_cell(ind)
             vec[("sgc", ind)] = [None, cell._spiketrain]
 
+        vec["syn_g"] = vec_syn_g   # empty dict when record_syn_conductance is False
         return vec
 
 
@@ -327,6 +380,8 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
 
         self.tuning_plot = pg.PlotWidget()
         self.tuning_plot.setLogMode(x=True, y=False)
+        self.tuning_plot.setLabel('bottom', 'Frequency (Hz)')
+        self.tuning_plot.setLabel('left', 'Level (dB SPL)')
         self.tuning_plot.scene().sigMouseClicked.connect(self.tuning_plot_clicked)
         self.layout.addWidget(self.tuning_plot)
 
@@ -358,6 +413,7 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.stim_rect.setPen(pg.mkPen("c"))
         self.stim_rect.setZValue(20)
         self.tuning_plot.addItem(self.stim_rect)
+        self._grid_items: list = []  # faint frequency/level grid; rebuilt by update_tuning()
 
         # self.network_tree = NetworkTree(self.prot)
         # self.layout.addWidget(self.network_tree)
@@ -374,12 +430,19 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         )
         self.input_plot.setXLink(self.cell_plot)
         self.stim_plot.setXLink(self.cell_plot)
+        # Claude changed 2026-06-26: rowspan=2 so ri_plot and g_plot share vertical space evenly
         self.ri_plot = self.pw.addPlot(
-            row=0, col=1, rowspan=3,
+            row=0, col=1, rowspan=2,
             labels={"left": "Rate (sp/s)", "bottom": "Level (dB SPL)"},
             title="Rate-Intensity",
         )
-        self.pw.ci.layout.setColumnFixedWidth(1, 200)
+        self.g_plot = self.pw.addPlot(
+            row=2, col=1, rowspan=1,
+            labels={"left": "Est. g (norm.)", "bottom": "Time (ms)"},
+            title="Estimated input conductance",
+        )
+        self.g_plot.setXLink(self.cell_plot)
+        self.pw.ci.layout.setColumnFixedWidth(1, 250)
 
         self.stim_type_selected()
 
@@ -500,6 +563,7 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.update_raster_plot()
         self.update_cell_plot()
         self.update_ri_plot()
+        self.update_g_plot()
 
         # Centre the rect on the stim point (image pixels are also centred on stim points)
         self.stim_rect.setPos(
@@ -511,6 +575,7 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.update_raster_plot()
         self.update_cell_plot()
         self.update_tuning()
+        self.update_g_plot()
 
     def stim_type_selected(self):
         """Switch to the currently selected stimulus type and rebuild dependent widgets."""
@@ -575,6 +640,7 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
         self.update_tuning()
         self.update_cell_plot()
         self.update_raster_plot()
+        self.update_g_plot()
 
     # def cell_curve_clicked(self, c):
     # if self.selected is not None:
@@ -604,6 +670,28 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
             lvals.add(stim.key()["dbspl"])
         fvals = sorted(list(fvals))
         lvals = sorted(list(lvals))
+
+        # Claude added 2026-06-26: faint grey grid at each (freq, level) point
+        for item in self._grid_items:
+            self.tuning_plot.removeItem(item)
+        self._grid_items = []
+        _grey_pen = pg.mkPen(color=(140, 140, 140, 160), width=1)
+        _lv0 = lvals[0] - 5
+        _lv1 = lvals[-1] + 5
+        _lf0 = np.log10(fvals[0]) - 0.1
+        _lf1 = np.log10(fvals[-1]) + 0.1
+        for _f in fvals:
+            _ln = pg.QtWidgets.QGraphicsLineItem(np.log10(_f), _lv0, np.log10(_f), _lv1)
+            _ln.setPen(_grey_pen)
+            _ln.setZValue(1)
+            self.tuning_plot.addItem(_ln)
+            self._grid_items.append(_ln)
+        for _lv in lvals:
+            _ln = pg.QtWidgets.QGraphicsLineItem(_lf0, _lv, _lf1, _lv)
+            _ln.setPen(_grey_pen)
+            _ln.setZValue(1)
+            self.tuning_plot.addItem(_ln)
+            self._grid_items.append(_ln)
 
         # Get spontaneous rate statistics
         key = (pop.type, ind)
@@ -777,6 +865,83 @@ class NetworkSimDisplay(pg.QtWidgets.QSplitter):
                 "%s %d   CF: %.0f Hz" % (pop.type, ind, cell_cf),
                 size="9pt",
             )
+
+    # Claude added 2026-06-26: actual synaptic conductance recorded during simulation
+    def update_g_plot(self):
+        """Plot recorded synaptic conductances for non-SGC inputs to the selected cell.
+
+        Conductance data is only present when 'Record synaptic conductances' was
+        checked in the control panel before the run.  When absent, a prompt is
+        shown instead of traces.
+        """
+        self.g_plot.clear()
+        if not self.selected_results:
+            return
+
+        # Check whether conductance data was collected this run
+        _sample = self.selected_results.get(0) or next(iter(self.selected_results.values()))
+        _syn_g_sample = _sample.get("syn_g", {})
+        if not _syn_g_sample:
+            self.g_plot.setTitle(
+                "Synaptic conductance  [enable 'Record synaptic conductances' in control panel]",
+                size="8pt",
+            )
+            return
+
+        if self.selected_cell is None:
+            self.g_plot.setTitle(
+                "Synaptic conductance  [click the target cell in the network diagram]",
+                size="8pt",
+            )
+            return
+
+        pop, ind = self.selected_cell
+        rec = pop._cells[ind]
+        if rec["connections"] == 0:
+            return
+
+        pop_colors = {
+            "sgc": "g", "dstellate": "y", "tstellate": "b",
+            "tuberculoventral": "r", "bushy": "w", "pyramidal": "m",
+        }
+
+        t = np.array(self.selected_results[0]["t"])
+        trials = self.selected_trials()
+
+        for pre_pop in self.prot.pre_pops:
+            if pre_pop.type == "sgc":
+                continue
+            pre_inds = rec["connections"].get(pre_pop, [])
+            # Claude fixed 2026-06-26: numpy array([0]) is falsy — must check length explicitly
+            if len(pre_inds) == 0:
+                continue
+            color = pop_colors.get(pre_pop.type, "w")
+
+            g_total = np.zeros(len(t))
+            n_contrib = 0
+            for preind in pre_inds:
+                key = (pre_pop.type, int(preind))
+                for j in trials:
+                    g_data = self.selected_results[j].get("syn_g", {})
+                    if key not in g_data:
+                        continue
+                    g_arr = g_data[key]
+                    if len(g_arr) == len(t):
+                        g_total += g_arr
+                        n_contrib += 1
+
+            if n_contrib == 0:
+                continue
+            g_avg = g_total / n_contrib
+            peak = float(np.abs(g_avg).max())
+            if peak > 0:
+                g_avg = g_avg / peak
+            self.g_plot.plot(
+                t, g_avg,
+                pen=pg.mkPen(color, width=1.5),
+                name=pre_pop.type,
+            )
+        self.g_plot.setTitle("Synaptic conductance (normalised)", size="9pt")
 
 
 class NetworkTree(pg.QtWidgets.QTreeWidget):
@@ -1052,11 +1217,30 @@ def main():
     # gmax values so they take effect when prot.run() is called below.
     net_dlg = NetworkControlPanel()
     net_dlg.update_table(args.species)
-    net_dlg.set_network(prot)
+    net_dlg.set_synapse_types(prot)  # populate Synapse Types tab; Build Network fires _resolve_network internally
     if net_dlg.exec() != pg.QtWidgets.QDialog.DialogCode.Accepted:
         print("Simulation cancelled.")
         return
     _conn_modified = net_dlg.any_modified()
+
+    # Claude added 2026-06-26: propagate conductance-recording flag to protocol
+    prot.record_syn_conductance = net_dlg.get_record_syn_conductance()
+
+    # Claude added 2026-06-26: zero Na channels on target cells when requested
+    if net_dlg.get_na_zero():
+        _NA_MECHS = ["nav11", "na", "nabu", "jsrna", "nacncoop", "nacn"]
+        _target_pop = prot.populations.get(args.celltype)
+        if _target_pop is not None:
+            for _cid in _target_pop.real_cells():
+                _cobj = _target_pop._cells[_cid]["cell"]
+                if _cobj == 0:
+                    continue
+                for _sec_list in _cobj.all_sections.values():
+                    for _sec in _sec_list:
+                        for _seg in _sec.allseg():
+                            for _mech in _NA_MECHS:
+                                if hasattr(_seg, _mech):
+                                    getattr(_seg, _mech).gbar = 0.0
 
     start_time = timeit.default_timer()
 
