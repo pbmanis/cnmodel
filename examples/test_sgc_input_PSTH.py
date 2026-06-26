@@ -71,17 +71,17 @@ def makeSynapses(post_cell, info):
     j = 0
     xmtr = {}
 
-    for nsgc, sgc in enumerate(range(info["n_sgc"])):
+    for _ in range(info["n_sgc"]):
         pre_cells.append(cells.DummySGC(cf=info["cf"], sr=info["sr"]))
-        if synapseType == "simple":
-            synapses.append(pre_cells[-1].connect(post_cell, type=synapseType))
+        if info["synapse_type"] == "simple":
+            synapses.append(pre_cells[-1].connect(post_cell, type=info["synapse_type"]))
             synapses[-1].terminal.netcon.weight[0] = info["gmax"]
-        elif synapseType == "multisite":
+        elif info["synapse_type"] == "multisite":
             synapses.append(
                 pre_cells[-1].connect(
                     post_cell,
                     post_opts={"AMPAScale": 1.0, "NMDAScale": 1.0},
-                    type=synapseType,
+                    type=info["synapse_type"],
                 )
             )
             for i in range(synapses[-1].terminal.n_rzones):
@@ -91,13 +91,24 @@ def makeSynapses(post_cell, info):
             synapses[
                 -1
             ].terminal.relsite.Dep_Flag = False  # no depression in these simulations
-        pre_cells[-1].set_sound_stim(
-            info["stim"], seed=info["seed"] + nsgc, simulator=info["simulator"]
-        )
+        # Claude fixed 2026-06-26: set_sound_stim moved to setStimuli(); called per rep
+        # so the same pre_cells can be reused across repetitions without recreating cells.
 
     return {'pre_cells':pre_cells, 'synapses': synapses, 'xmtr':xmtr}
 
-    
+
+def setStimuli(psx, info):
+    """Update the AN spike train seed on existing pre_cells for one repetition.
+
+    Call this once per repetition (after updating info["seed"]) instead of
+    recreating pre_cells and synapses from scratch each time.
+    """
+    for nsgc, pc in enumerate(psx['pre_cells']):
+        pc.set_sound_stim(
+            info["stim"], seed=info["seed"] + nsgc, simulator=info["simulator"]
+        )
+
+
 def runNeuron(post_cell, info, psx):
 
     Vm = h.Vector()
@@ -109,10 +120,15 @@ def runNeuron(post_cell, info, psx):
     h.dt = info["dt"]
     post_cell.cell_initialize()
     info["init"]()
-    h.t = 0.0
-    h.batch_run(tstop, h.dt)
-    # while h.t < h.tstop:
-    #     h.fadvance()
+    # Claude changed 2026-06-26: batch_run (no filename, no prior batch_save) leaves stale
+    # NetCon events in the queue in NEURON 9; the next rep's cell_initialize→finitialize hits
+    # "events out of order". fadvance loop avoids batch-mode side effects entirely.
+    # custom_init already sets h.t=0, so no explicit reset needed.
+    # TO REVERT: uncomment h.t/h.batch_run below and remove the while loop.
+    # h.t = 0.0
+    # h.batch_run(tstop, h.dt)
+    while h.t < tstop:
+        h.fadvance()
     pre_trains = [psx['pre_cells'][k]._spiketrain for k in range(len(psx['pre_cells']))]
     # print(psx['xmtr'].keys())
     # print([psx['xmtr'][k].to_python() for k in list(psx['xmtr'].keys())])
@@ -128,11 +144,12 @@ def runNeuron(post_cell, info, psx):
 
 
 def runTrial(cell, info):
+    # Used by parallel workers — each worker handles one rep so no accumulation occurs.
     post_cell = buildCell(cell)
-    psx = makeSynapses(post_cell, info )
-    # setupNeuron(post_cell, info)
+    psx = makeSynapses(post_cell, info)
+    setStimuli(psx, info)  # Claude fixed 2026-06-26: set stim separately from synapse setup
     res = runNeuron(post_cell, info, psx)
-    return(res)
+    return res
     
     
 class SGCInputTestPSTH(Protocol):
@@ -150,6 +167,7 @@ class SGCInputTestPSTH(Protocol):
         self.dbspl = 50.0
         self.simulator = "py3" # "cochlea"
         self.sr = 2  # set SR group
+        self.synapse_type = "simple"  # Claude fixed 2026-06-26: was module-level global
 
     def set_cell(self, cell="bushy"):
         self.cell = cell
@@ -165,6 +183,9 @@ class SGCInputTestPSTH(Protocol):
     
     def set_sr(self, srgroup=1):
         self.sr = srgroup
+
+    def set_synapse_type(self, syntype="simple"):
+        self.synapse_type = syntype
         
     def run(
         self,
@@ -173,9 +194,12 @@ class SGCInputTestPSTH(Protocol):
         seed=575982035,
         reps=10,
         stimulus="tone",
-        simulator="cochlea",
-        parallelmode='serial',
+        # Claude fixed 2026-06-26: was "cochlea"; default matches __init__ and CLI default
+        simulator="py3",
+        # Claude fixed 2026-06-26: default changed from 'serial' to 'mp'
+        parallelmode='mp',
     ):
+        self.simulator = simulator  # Claude fixed 2026-06-26: was never assigned, so info dict always used __init__ value
         self.stimulus = stimulus
         assert self.stimulus in ["tone", "SAM", "noise", "clicks"]  # cases available
         assert self.cell in [
@@ -268,36 +292,51 @@ class SGCInputTestPSTH(Protocol):
             "temp": temp,
             "dt": dt,
             "init": custom_init,
+            "synapse_type": self.synapse_type,
         }
         if parallelmode == 'serial':
             start_time = timeit.default_timer()
+            # Claude fixed 2026-06-26: build cell and synapses ONCE outside the rep loop.
+            # Creating new NEURON sections per rep accumulated them in NEURON's global
+            # section list, causing a Bus error (~rep 12) when finitialize iterated
+            # over partially-freed sections from previous reps.
+            post_cell = buildCell(self.cell)
+            psx = makeSynapses(post_cell, info)
             for nr in range(self.nrep):
                 info["seed"] = seed + 3 * self.n_sgc * nr
                 info["rep_no"] = nr
-                res = runTrial(self.cell, info)
-                # res contains: {'time': time, 'vm': Vm, 'xmtr': xmtr, 'pre_cells': pre_cells, 'post_cell': post_cell}
+                print(f"\r  rep {nr+1}/{self.nrep}", end="", flush=True)
+                setStimuli(psx, info)
+                res = runNeuron(post_cell, info, psx)
                 self.pre_cells[nr] = res["pre_cells"]
                 self.time[nr] = res["time"]
-                self.xmtrs[nr] = res['xmtr'] # {k: v.to_python() for k, v in list(res["xmtr"].items())}
+                self.xmtrs[nr] = res['xmtr']
                 self.vms[nr] = res["vm"]
-                # self.synapses[nr] = res["synapses"]
-                # self.xmtrs[nr] = self.xmtr
+            print()  # close the \r progress line
             elapsed = timeit.default_timer() - start_time
             print(f"Not Parallel Elapsed time for {self.nrep:d} stimuli: {elapsed:f} secs")
 
         if parallelmode in ['mp', 'multiprocessing']:
             results = {}
-            workers = mp.Parallelize.suggestedWorkerCount()  # use suggested # 
-            tot_runs = self.nrep
-            tasks = []
-            for nr in range(self.nrep):
-                tasks.append((nr))
+            workers = mp.Parallelize.suggestedWorkerCount()  # use suggested #
+            tasks = list(range(self.nrep))
             start_time = timeit.default_timer()
-            with mp.Parallelize(enumerate(tasks), results=results, workers=workers) as tasker:
+            # Claude fixed 2026-06-26: create cell once per worker (same root cause as
+            # serial-mode fix). Each worker handles several tasks sequentially; creating
+            # new NEURON sections per task accumulates them and causes Bus error.
+            # Mutable sentinel: forked worker creates its cell on the first task and
+            # reuses it for all subsequent tasks assigned to that worker.
+            _cell_ref: list = [None]
+            _psx_ref: list = [None]
+            with mp.Parallelize(enumerate(tasks), results=results, workers=workers, progressDialog='Running repetitions..') as tasker:
                 for i, task in tasker:
+                    if _cell_ref[0] is None:
+                        _cell_ref[0] = buildCell(self.cell)
+                        _psx_ref[0] = makeSynapses(_cell_ref[0], info)
                     info["seed"] = seed + 3 * self.n_sgc * i
                     info["rep_no"] = i
-                    repres = runTrial(self.cell, info)
+                    setStimuli(_psx_ref[0], info)
+                    repres = runNeuron(_cell_ref[0], info, _psx_ref[0])
                     tasker.results[i] = repres
             # get time of run before display
             elapsed = timeit.default_timer() - start_time
@@ -426,7 +465,7 @@ class SGCInputTestPSTH(Protocol):
         p5 = self.win.addPlot(
             title="xmtr", row=0, col=1, labels={"bottom": "T (ms)", "left": "gSyn"}
         )
-        if synapseType == "multisite":
+        if self.synapse_type == "multisite":
             # for nr in [0]:
             #     syn = self.synapses[nr]
             #     if syn is None:
@@ -507,9 +546,10 @@ if __name__ == "__main__":
         "--parallel",
         type=str,
         dest="parallelmode",
-        default="serial",
-        choices=["serial", "mp", "multiprocessing"], # , "dask"], # dask does not work with this... 
-        help="Select stimulus from ['serial', 'mp' or 'multiprocessing']",  #, 'dask']",
+        # Claude fixed 2026-06-26: default changed from 'serial' to 'mp'
+        default="mp",
+        choices=["serial", "mp", "multiprocessing"],
+        help="Select stimulus from ['serial', 'mp' or 'multiprocessing']",
     )
     
     parser.add_argument(
@@ -554,21 +594,38 @@ if __name__ == "__main__":
         default=2,
         help="SR group (1-high, 2-medium, 3-low)",
     )
+    # Claude fixed 2026-06-26: added --simulator and --temp; script was missing both
+    parser.add_argument(
+        "--simulator",
+        type=str,
+        dest="simulator",
+        default="py3",
+        choices=["py3", "matlab", "cochlea"],
+        help="AN model simulator",
+    )
+    parser.add_argument(
+        "--temp",
+        type=float,
+        dest="temp",
+        default=34.0,
+        help="Simulation temperature (°C)",
+    )
 
     args = parser.parse_args()
 
     cell = args.cell
-    synapseType = args.syntype
 
     print("cell type: ", cell)
     print('nrep: ', args.nrep)
     print('parallelmode: ', args.parallelmode)
     prot = SGCInputTestPSTH()
     prot.set_cell(cell)
+    prot.set_synapse_type(args.syntype)  # Claude fixed 2026-06-26: was module-level global
     prot.set_db(args.dbspl)
     prot.set_sr(args.srgroup)
-    
-    prot.run(stimulus=args.stimulus, reps=args.nrep, simulator='py3', parallelmode=args.parallelmode)
+    pg.mkQApp()  # Claude fixed 2026-06-26: must exist before mp.Parallelize creates ProgressDialog
+    # Claude fixed 2026-06-26: use args.simulator and args.temp instead of hardcoded values
+    prot.run(stimulus=args.stimulus, reps=args.nrep, simulator=args.simulator, temp=args.temp, parallelmode=args.parallelmode)
     prot.show()
 
     import sys
