@@ -31,7 +31,10 @@ cnmodel/
 - When fixing a bug, comment out the original line(s) rather than deleting,
   and add a comment `# Claude fixed YYYY-MM-DD: <reason>` on the replacement.
 - Use American, not British spellings.
-
+- Think before coding. State assumptions. If request is ambiguous, ask. If a simpler approach would work and exists, push back. Stop if you are confused, name what is unclear, and do not just pick one interpretation and run.
+- Simplicity first. Write minimum code that solves the problem. No speculative abstractions. No flexibility unless specifically requested. 
+- Make surgical changes. Touch only what the task requires. Do not refactor what is already working unless specifically asked. 
+- Turn vague instructions into verificable targets before writing a line. "Add validation" becomes "write tests for invalid inputs, then make them pass".
 
 ## Testing / running
 - No automated test suite covers the data pipeline end-to-end.
