@@ -130,12 +130,17 @@ EXAMPLES: List[Dict] = [
             _p("Rate-intensity","--RI",        "bool",  False,  "Run rate-intensity series"),
         ],
     },
-    # ── test_bushy_variation (no args) ────────────────────────────────────────
+    # ── test_bushy_variation ──────────────────────────────────────────────────
     {
-        "label":       "test_bushy_variation",
-        "script":      "test_bushy_variation.py",
-        "description": "Bushy cell variation across parameter space (no parameters).",
-        "params":      [],
+        "label":           "test_bushy_variation",
+        "script":          "test_bushy_variation.py",
+        "simulator_aware": True,
+        "description": "Bushy cell IV (panel a) or sound-driven PSTH (panel d).",
+        "params": [
+            _p("Panel", None, "list", "a",
+               "Figure panel: a = IV curves, d = sound-driven PSTHs",
+               ["a", "d"], positional=True),
+        ],
     },
     # ── test_ccstim (no args) ─────────────────────────────────────────────────
     {
@@ -214,6 +219,9 @@ EXAMPLES: List[Dict] = [
             _p("Cell type",     "--celltype",       "list",  "bushy",
                "Target cell type in the CN network",
                ["bushy", "tstellate", "dstellate", "pyramidal", "tuberculoventral"]),
+            _p("Species",       "--species",        "list",  "mouse",
+               "Species for cell parameters and connectivity",
+               ["mouse", "guineapig", "rat"]),
             _p("CF (Hz)",       "--cf",             "float", 16000.,
                "Characteristic frequency of the target cell (Hz)"),
             _p("F min (Hz)",    "--fmin",            "float", 4000.,
@@ -278,8 +286,10 @@ EXAMPLES: List[Dict] = [
                "Sound level (dB SPL)"),
             _p("SR group",     "--sr",       "int",   2,
                "AN SR group (1 = high, 2 = medium, 3 = low)"),
-            _p("Parallel",     "--parallel", "list",  "serial",
+            _p("Parallel",     "--parallel", "list",  "mp",
                "Execution mode", ["serial", "mp", "multiprocessing"]),
+            _p("Temperature",  "--temp",     "float", 34.0,
+               "Simulation temperature (°C)"),
         ],
     },
     # ── test_sgc_input_phaselocking ───────────────────────────────────────────
