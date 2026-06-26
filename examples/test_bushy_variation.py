@@ -12,6 +12,7 @@ b runs PSTHs to AN input (CF tones) across the same variations.
 
 """
 
+import argparse
 import sys
 import numpy as np
 import pyqtgraph as pg
@@ -633,8 +634,9 @@ class Variations(Protocol):
             fmod = 40.0
             dmod = 0.0
             stimulus = "tone"
-            #            with mp.Parallelize(enumerate(tasks), results=results, workers=nworker, progressDialog='processing in parallel..') as tasker:
-            with mp.Parallelize(enumerate(tasks), results=results, workers=nworker) as tasker:
+            # Claude fixed 2026-06-26: enable Qt progress dialog; old bare call commented below
+            with mp.Parallelize(enumerate(tasks), results=results, workers=nworker, progressDialog='Running sound simulations..') as tasker:
+            #            with mp.Parallelize(enumerate(tasks), results=results, workers=nworker) as tasker:
                 for i, x in tasker:
                     post_cell = cells.Bushy.create(species=species)
                     h.celsius = 34
@@ -693,7 +695,8 @@ class Variations(Protocol):
                         # set up recordings
                         self["v_post%02d" % j] = post_cell.soma(0.5)._ref_v
                         h.finitialize()  # init and instantiate recordings
-                        print("running %d" % i)
+                        # Claude fixed 2026-06-26: progress tracked by mp.Parallelize progressDialog above
+                        # print("running %d" % i)
                         h.t = 0.0
                         _tstop = rundur * 1000.0  # rundur is in seconds.
                         post_cell.check_all_mechs()  # make sure no further changes were introduced before run.
@@ -824,7 +827,7 @@ def clean_spiketimes(spikeTimes, mindT=0.7):
     return spikeTimes
 
 
-def showplots(name):
+def showplots(name, simulator="py3"):
     """
     Show traces from sound stimulation - without current injection
     """
@@ -894,7 +897,7 @@ def showplots(name):
         vs = PU.vector_strength(spikelists[i], stiminfo["fmod"])
         pre_vs = PU.vector_strength(prespikes[i], stiminfo["fmod"])
 
-    prot = Variations(runtype, runname, "cochlea")
+    prot = Variations(runtype, runname, simulator)
     if stiminfo["dmod"] > 0:
         stimulus = "SAM"
     else:
@@ -934,39 +937,39 @@ def showplots(name):
 
 
 if __name__ == "__main__":
-    runname = None
-    panel = None
-    if len(sys.argv) == 2:
-        panel = sys.argv[1]
-    if panel == "a":
+    parser = argparse.ArgumentParser(
+        description="Bushy cell variation: IV (panel a) or sound-driven PSTH (panel d)"
+    )
+    parser.add_argument(
+        "panel",
+        choices=["a", "d"],
+        help="Figure panel to generate: a = IV curves, d = sound-driven PSTHs",
+    )
+    parser.add_argument(
+        "--simulator",
+        choices=["py3", "matlab", "cochlea"],
+        default="py3",
+        help="AN spike-train simulator (default: py3)",
+    )
+    args = parser.parse_args()
+
+    if args.panel == "a":
         runtype = "IV"
         runname = "Figure6_IV"
-    elif panel == "d":
+    else:  # args.panel == "d"
         runtype = "sound"
         runname = "Figure6_AN"
-    else:
-        runtype = panel
-    if panel is None:
-        raise ValueError("Must specify figure panel to generate: 'a', 'd'")
-    if runtype in ["sound", "IV"]:
-        prot = Variations(runtype, runname, "cochlea")
-        if runtype == "IV":
-            start_time = timeit.default_timer()
-            prot.runIV(parallelize=True)
-            elapsed = timeit.default_timer() - start_time
-            print(("Elapsed time for IV simulations: %f" % (elapsed)))
-            showpicklediv(runname)
-        if runtype == "sound":
-            start_time = timeit.default_timer()
-            prot.runSound(parallelize=True)
-            elapsed = timeit.default_timer() - start_time
-            print(("Elapsed time for AN simulations: %f" % (elapsed)))
-            showplots(runname)
 
-    elif runtype in ["showiv"]:
+    prot = Variations(runtype, runname, args.simulator)
+    if runtype == "IV":
+        start_time = timeit.default_timer()
+        prot.runIV(parallelize=True)
+        elapsed = timeit.default_timer() - start_time
+        print(("Elapsed time for IV simulations: %f" % (elapsed)))
         showpicklediv(runname)
-
-    elif runtype in ["plots"]:
-        showplots(runname)
-    else:
-        print("run type should be one of sound, IV, showiv, plots")
+    elif runtype == "sound":
+        start_time = timeit.default_timer()
+        prot.runSound(parallelize=True)
+        elapsed = timeit.default_timer() - start_time
+        print(("Elapsed time for AN simulations: %f" % (elapsed)))
+        showplots(runname, simulator=args.simulator)
