@@ -29,6 +29,7 @@ from pyqtgraph import multiprocess as mp
 from cnmodel import populations
 from cnmodel.protocols import Protocol
 from cnmodel.util import random_seed, sound
+from cnmodel.util.network_widgets import NetworkControlPanel
 
 
 CELLTYPES = ["bushy", "tstellate", "dstellate", "pyramidal", "tuberculoventral"]
@@ -95,27 +96,29 @@ STIM_DEFS: Dict[str, StimDef] = {
 
 
 class CNSoundStim(Protocol):
-    def __init__(self, seed, temp=34.0, dt=0.025, synapsetype="simple", celltype="bushy", cf=16e3):
+    def __init__(self, seed, temp=34.0, dt=0.025, synapsetype="simple",
+                 celltype="bushy", cf=16e3, species='mouse'):
         Protocol.__init__(self)
 
         self.seed = seed
         self.temp = temp
         self.dt = dt
         self.celltype = celltype
+        self.species = species
 
         # Seed now to ensure network generation is stable
         random_seed.set_seed(seed)
 
         # SGC population is always present
-        self.sgc = populations.SGC(model="dummy")
+        self.sgc = populations.SGC(model="dummy", species=species)
         # set synapse type to use in the sgc population - simple is fast, multisite is slower
         self.sgc._synapsetype = synapsetype
 
         frequencies = [cf]
         cells_per_band = 1
-        self._build_network(celltype, frequencies, cells_per_band)
+        self._build_network(celltype, frequencies, cells_per_band, species=species)
 
-    def _build_network(self, celltype, frequencies, cells_per_band):
+    def _build_network(self, celltype, frequencies, cells_per_band, species='mouse'):
         """Build network topology for the given target cell type.
 
         Sets self.target (the recorded population), self.recording_pops
@@ -123,10 +126,10 @@ class CNSoundStim(Protocol):
         and self.populations (ordered dict used by the visualiser).
         """
         if celltype == "bushy":
-            self.dstellate = populations.DStellate()
-            self.tstellate = populations.TStellate()
-            self.tuberculoventral = populations.Tuberculoventral()
-            self.bushy = populations.Bushy()
+            self.dstellate = populations.DStellate(species=species)
+            self.tstellate = populations.TStellate(species=species)
+            self.tuberculoventral = populations.Tuberculoventral(species=species)
+            self.bushy = populations.Bushy(species=species)
             self.target = self.bushy
 
             self.sgc.connect(self.bushy, self.dstellate, self.tuberculoventral, self.tstellate)
@@ -139,9 +142,9 @@ class CNSoundStim(Protocol):
             self.recording_pops = [self.bushy, self.dstellate, self.tstellate, self.tuberculoventral]
 
         elif celltype == "tstellate":
-            self.dstellate = populations.DStellate()
-            self.tuberculoventral = populations.Tuberculoventral()
-            self.tstellate = populations.TStellate()
+            self.dstellate = populations.DStellate(species=species)
+            self.tuberculoventral = populations.Tuberculoventral(species=species)
+            self.tstellate = populations.TStellate(species=species)
             self.target = self.tstellate
 
             self.sgc.connect(self.tstellate, self.dstellate, self.tuberculoventral)
@@ -153,7 +156,7 @@ class CNSoundStim(Protocol):
             self.recording_pops = [self.tstellate, self.dstellate, self.tuberculoventral]
 
         elif celltype == "dstellate":
-            self.dstellate = populations.DStellate()
+            self.dstellate = populations.DStellate(species=species)
             self.target = self.dstellate
 
             self.sgc.connect(self.dstellate)
@@ -163,9 +166,9 @@ class CNSoundStim(Protocol):
             self.recording_pops = [self.dstellate]
 
         elif celltype == "pyramidal":
-            self.dstellate = populations.DStellate()
-            self.tuberculoventral = populations.Tuberculoventral()
-            self.pyramidal = populations.Pyramidal()
+            self.dstellate = populations.DStellate(species=species)
+            self.tuberculoventral = populations.Tuberculoventral(species=species)
+            self.pyramidal = populations.Pyramidal(species=species)
             self.target = self.pyramidal
 
             self.sgc.connect(self.pyramidal, self.dstellate, self.tuberculoventral)
@@ -177,8 +180,8 @@ class CNSoundStim(Protocol):
             self.recording_pops = [self.pyramidal, self.dstellate, self.tuberculoventral]
 
         elif celltype == "tuberculoventral":
-            self.dstellate = populations.DStellate()
-            self.tuberculoventral = populations.Tuberculoventral()
+            self.dstellate = populations.DStellate(species=species)
+            self.tuberculoventral = populations.Tuberculoventral(species=species)
             self.target = self.tuberculoventral
 
             self.sgc.connect(self.tuberculoventral, self.dstellate)
@@ -961,6 +964,12 @@ def main():
         help="Target cell type (default: bushy)",
     )
     parser.add_argument(
+        "--species",
+        choices=["mouse", "guineapig", "rat"],
+        default="mouse",
+        help="Species for cell parameters and connectivity (default: mouse)",
+    )
+    parser.add_argument(
         "--simulator",
         choices=["py3", "matlab"],
         default=None,
@@ -1034,7 +1043,20 @@ def main():
         os.mkdir(cachepath)
 
     seed = 34657845
-    prot = CNSoundStim(seed=seed, synapsetype=syntype, celltype=args.celltype, cf=args.cf)
+    prot = CNSoundStim(seed=seed, synapsetype=syntype, celltype=args.celltype,
+                       cf=args.cf, species=args.species)
+
+    # Show connection configuration dialog before running any simulations.
+    # The user can inspect the convergence table and scale/silence individual
+    # connection types.  Changes are applied live to the network's synapse
+    # gmax values so they take effect when prot.run() is called below.
+    net_dlg = NetworkControlPanel()
+    net_dlg.update_table(args.species)
+    net_dlg.set_network(prot)
+    if net_dlg.exec() != pg.QtWidgets.QDialog.DialogCode.Accepted:
+        print("Simulation cancelled.")
+        return
+    _conn_modified = net_dlg.any_modified()
 
     start_time = timeit.default_timer()
 
@@ -1091,9 +1113,10 @@ def main():
                 "seed=%d_stim=%s_f0=%f_dbspl=%f_syntype=%s_celltype=%s%s_iter=%d.pk"
                 % (seed, sname, f, db, syntype, args.celltype, extra_str, iteration),
             )
-            if args.ignore_cache or not os.path.isfile(cachefile):
+            if args.ignore_cache or _conn_modified or not os.path.isfile(cachefile):
                 result = prot.run(stim, seed=i)
-                pickle.dump(result, open(cachefile, "wb"))
+                if not _conn_modified:  # don't cache non-default configurations
+                    pickle.dump(result, open(cachefile, "wb"))
             else:
                 print("  (Loading cached results)", end="")
                 result = pickle.load(open(cachefile, "rb"))
