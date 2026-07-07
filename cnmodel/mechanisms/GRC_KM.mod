@@ -35,7 +35,7 @@ PARAMETER {
 	V0_ninf = -35 (mV)	:-30
 	B_ninf = 6 (mV)		:6:4 rimesso a 6 dopo calibrazione febbraio 2003	
 	v (mV) 
-	gbar= 0.00025 (mho/cm2) :0.0001
+	gbar= 0.00001 (mho/cm2) :0.0001
 	ek = -84.69 (mV) 
 	celsius = 30 (degC) 
 } 

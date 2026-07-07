@@ -45,7 +45,7 @@ PARAMETER {
 	V0_binf = -78.8 (mV)
 	K_binf = 8.4 (mV)
 	v (mV) 
-	gbar= 0.0032 (mho/cm2) :0.003 
+	gbar= 0.004 (mho/cm2) :0.003 
 	ek = -84.69 (mV) 
 	celsius = 30 (degC) 
 } 

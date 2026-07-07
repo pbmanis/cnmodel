@@ -38,8 +38,7 @@ PARAMETER {
 	Kbeta_c = -11.765 (mV)
 
 	v (mV) 
-	cai (mM)
-	gbar= 0.003 (mho/cm2) 
+	gbar= 0.004 (mho/cm2)   : Match Diwakar 2009/ model dB reference values.
 	ek = -84.69 (mV) 
 	celsius = 30 (degC) 
 } 
@@ -51,6 +50,7 @@ STATE {
 ASSIGNED { 
 	ik (mA/cm2) 
 	ica (mA/cm2)
+	cai (mM)
 
 	c_inf 
 	tau_c (ms) 
@@ -88,9 +88,10 @@ FUNCTION bet_c(v(mV))(/ms) { LOCAL Q10
 } 
  
 PROCEDURE rate(v (mV)) {LOCAL a_c, b_c 
-	TABLE c_inf, tau_c 
-	DEPEND Aalpha_c, Balpha_c, Kalpha_c, 
-	       Abeta_c, Bbeta_c, Kbeta_c, celsius FROM -100 TO 30 WITH 13000 
+	: Since cai changes, the pre-computation might slow down the calculations.
+	: TABLE c_inf, tau_c
+	: DEPEND Aalpha_c, Balpha_c, Kalpha_c, cai,  : add cai to the table dependencies
+	:       Abeta_c, Bbeta_c, Kbeta_c, celsius FROM -100 TO 30 WITH 13000 
 	a_c = alp_c(v)  
 	b_c = bet_c(v) 
 	tau_c = 1/(a_c + b_c) 

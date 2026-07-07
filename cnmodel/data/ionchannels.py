@@ -584,10 +584,10 @@ and voltage shifts, for different compartments of the specified neuron,
 
 soma_GRC_NA_gbar      13.0 [1]   
 soma_GRC_KV_gbar      3.0 [1]   
-soma_GRC_KA_gbar      3.2 [1]   
-soma_GRC_KM_gbar      0.25 [1]   
+soma_GRC_KA_gbar      4.0 [1]   
+soma_GRC_KM_gbar      0.1 [2]   
 soma_GRC_KIR_gbar     0.9 [1] 
-soma_GRC_KCA_gbar     0.03 [1] 
+soma_GRC_KCA_gbar     4.0 [2]   
 soma_GRC_CA_gbar      0.46 [1]   
 soma_GRC_CALC_gbar    0.01 [1]
 soma_GRC_LKG1_gl      0.0568 [1]
@@ -604,7 +604,7 @@ units                 mmho/cm2
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 [1] scaling
-
+[2] Adjusted to match the Diwaker and model db reference values.
 """)
 
 add_table_data('GRC_channels_compartments', row_key='parameter', col_key='compartment', 

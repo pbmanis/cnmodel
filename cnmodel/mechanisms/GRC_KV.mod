@@ -70,12 +70,12 @@ DERIVATIVE states {
 } 
  
 FUNCTION alp_n(v(mV))(/ms) { LOCAL Q10
-	Q10 = 3^((celsius-6.3(degC))/10(degC)) 
+	Q10 = 3^((celsius-30(degC))/10(degC)) 
 	alp_n = Q10*Aalpha_n*linoid(v-V0alpha_n, Kalpha_n)
 } 
  
 FUNCTION bet_n(v(mV))(/ms) { LOCAL Q10
-	Q10 = 3^((celsius-6.3(degC))/10(degC)) 
+	Q10 = 3^((celsius-30(degC))/10(degC)) 
 	bet_n = Q10*Abeta_n*exp((v-V0beta_n)/Kbeta_n) 
 } 
  
