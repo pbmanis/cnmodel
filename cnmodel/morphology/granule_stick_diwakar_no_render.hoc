@@ -1,0 +1,175 @@
+// The granule cell stick model from Diwakar et al., 2009. 
+// Use this to test against their model.
+
+// define cell parts
+objref Soma
+Soma = new SectionList()
+objref Dendrite_proximal
+Dendrite_proximal = new SectionList()
+objref Dendrite_distal
+Dendrite_distal = new SectionList()
+objref Axon_unmyelinated
+Axon_unmyelinated = new SectionList()
+objref Axon_hillock
+Axon_hillock = new SectionList()
+objref Axon_undefined_1
+Axon_undefined_1 = new SectionList()
+
+
+// define # of sections in each region type
+n_hillock = 5
+n_dendrites = 4
+ndend_proximal_compartments = 3
+ndend_distal_compartments = 1
+n_axon = 30
+n_axon_terminus = 4  // for axon-Axon_undefined_1
+
+// for axon undefined...
+objref branch_lengths
+branch_lengths = new Vector(n_dendrites)
+branch_lengths.x[0] = 3
+branch_lengths.x[1] = 5
+branch_lengths.x[2] = 10
+branch_lengths.x[3] = 200
+
+objref branch_diameters
+branch_diameters = new Vector(n_axon_terminus)
+branch_diameters.x[0] = 0.3
+branch_diameters.x[1] = 0.2
+branch_diameters.x[2] = 0.1
+branch_diameters.x[3] = 0.1
+
+objref branch_cm
+branch_cm = new Vector(n_axon_terminus)
+branch_cm.x[0] = 0.5
+branch_cm.x[1] = 0.45
+branch_cm.x[2] = 1.0
+branch_cm.x[3] = 1.0
+
+
+// counters for the dendrites
+// This holds the sections for all 4 dendrites,
+// so watch the array indexing.
+
+objref dend_proximal_sec0
+dend_proximal_sec0 = new Vector(n_dendrites*ndend_proximal_compartments)
+dend_proximal_sec0.fill(-1)
+objref dend_distal_sec0
+dend_distal_sec0 = new Vector(n_dendrites*ndend_distal_compartments)
+dend_distal_sec0.fill(-1)
+
+soma_index = 0
+hillock_index = 0
+axon_index = 0
+axon_terminus_index = 0
+
+scount = 0
+create sections[n_hillock+(ndend_proximal_compartments*n_dendrites)+(ndend_distal_compartments*n_dendrites)+n_axon+n_axon_terminus+1]
+soma_index = scount
+: SectionList.append{} does not propagate access in NEURON 9.x;
+// use explicit access then append() instead.
+access sections[0]
+nseg = 1
+diam = 5.8
+L = 5.8
+cm = 1
+Ra = 100
+celsius = 30
+Soma.append()
+
+scount += 1
+
+// axon hillock
+hillock_index = scount
+for(w1 = 0; w1<n_hillock; w1=w1 + 1) {
+    access sections[scount]
+    nseg = 1
+    diam = 2.3-0.5*w1
+    L = 0.5
+    cm = 1
+    Ra = 100
+    Axon_hillock.append()  
+    if (w1 == 0) {
+        connect sections[scount](1), sections[soma_index](0)
+    } else {
+        connect sections[scount](1), sections[scount-1](0)
+    }
+    scount += 1
+}
+last_hillock_index = scount-1
+
+// axon
+axon_index = scount
+for(w3 = 0; w3<n_axon; w3=w3 + 1) {
+    access sections[scount]
+    nseg = 1
+    diam = 0.3
+    L = 70.0
+    cm = 1
+    Ra = 100
+    Axon_unmyelinated.append()  
+    if (w3 == 0) {
+        connect sections[scount](1), sections[last_hillock_index](0)
+    } else {
+        connect sections[scount](1), sections[scount-1](0)
+    }
+    scount += 1
+}
+last_unmyelinated_index = scount - 1
+
+// "branches" - axon terminus.
+branch_index = scount
+for (bn=0; bn<n_axon_terminus; bn = bn+1) {
+    access sections[scount]
+    nseg = 1
+    diam = branch_diameters.x[bn]
+    L = branch_lengths.x[bn]
+    cm = branch_cm.x[bn]
+    Ra = 100
+    Axon_undefined_1.append()  
+    if (bn == 0) {
+        connect sections[scount](1), sections[last_unmyelinated_index](0)
+    } else {
+        connect sections[scount](1), sections[scount-1](0)
+    }
+    scount += 1
+}
+last_scount = scount
+// Now, for each dendrite:
+for (n_den=0; n_den<n_dendrites; n_den = n_den + 1) {
+    // for each proximal compartment in that dendrite:
+    // dend_proximal_sec0[n_den] = scount
+    for (i_den=0; i_den<ndend_proximal_compartments; i_den = i_den+1) {
+        i_sec = n_den*n_dendrites + i_den + last_scount  // offset for this section in the entire list
+        access sections[scount]
+        nseg = 1
+        diam = 0.75
+        L = 5
+        cm = 1
+        Ra = 100
+        Dendrite_proximal.append()  
+        if (i_den == 0) {  // root of the dendrites
+            connect sections[i_sec](1), sections[soma_index](1)
+        } else {
+            connect sections[i_sec](1), sections[i_sec-1](0)
+        }
+        scount += 1
+    }
+    last_proximal_dendrite_sec = scount - 1
+
+   // dend_distal_sec0[n_den] = scount
+    access sections[scount]
+    nseg = 1
+    diam = 0.75
+    L = 2.5
+    cm = 1
+    Ra = 100
+    Dendrite_distal.append()  
+    // always add the distal dendrite to the tip of the last proximal section of this dendrite
+    connect sections[scount](1), sections[last_proximal_dendrite_sec](0)
+    scount += 1
+}
+topology()
+
+
+
