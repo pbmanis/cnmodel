@@ -15,7 +15,8 @@ It also takes the cellType, a string that directs how conductances should be ins
 import string
 import numpy as np
 import cnmodel.util as nu
-from cnmodel.util import Params
+from cnmodel.util.Params import Params
+from cnmodel.util.nrnutils import Mechanism
 
 class Decorator():
     def __init__(self, cell, parMap=None, verify=False):
@@ -29,7 +30,7 @@ class Decorator():
                               v_init=-80,  # mV
                               pharmManip={'TTX': False, 'ZD': False, 'Cd': False, 'DTX': False, 'TEA': False,
                                           'XE': False},
-                              cellType=cell.status['cellClass'],
+                              cellType=cell.status.get('cellClass', cell.celltype),  #  not all cells set cellClass
                               modelType=cell.status['modelType'],
                               modelName=cell.status['modelName'],
                               distanceMap=cell.hr.distanceMap,
@@ -50,18 +51,29 @@ class Decorator():
         self.gbar_mapper = {'nacn': 'gbar', 'kht': 'gbar', 'klt': 'gbar', 'leak': 'gbar',
                         'ihvcn': 'gbar', 'jsrna': 'gbar', 'nav11': 'gbar', 'nacncoop': 'gbar',
                         'nabu': 'gbar',
-                        'hcnobo': 'gbar'}
+                        'hcnobo': 'gbar',
+                        # GRC_LKG1 uses 'gl' not 'gbar'; the rest use 'gbar'.
+                        # GRC_LKG2 and GRC_CALC are omitted: LKG2 uses 'ggaba' and
+                        # CALC is a Ca-buffer with no conductance parameter.
+                        'GRC_NA': 'gbar', 'GRC_KV': 'gbar', 'GRC_KA': 'gbar',
+                        'GRC_KM': 'gbar', 'GRC_KIR': 'gbar', 'GRC_KCA': 'gbar',
+                        'GRC_CA': 'gbar', 'GRC_LKG1': 'gl',
+                        }
         self.erev_mapper = {'nacn': 'ena', 'kht': 'ek', 'klt': 'ek', 'leak': 'erev', 'nabu': 'ena',
                         'ihvcn': 'eh', 'jsrna': 'ena', 'nav11': 'ena', 'nacncoop': 'ena',
                         'hcnobo': 'eh'}
         self.vshift_mapper = {'nacn': None, 'kht': None, 'klt': None, 'leak': None,
                         'ihvcn': None, 'jsrna': None, 'nav11': 'vshift', 'nacncoop': 'vshift', 'nabu': 'vshift',
-                        'hcnobo': None}
+                        'hcnobo': None,
+                        'GRC_NA': None, 'GRC_KV': None, 'GRC_KA': None,
+                        'GRC_KM': None, 'GRC_KIR': None, 'GRC_KCA': None,
+                        'GRC_CA': None, 'GRC_LKG1': None,
+                        }
         self._biophys(cell, verify=verify)
         print('\033[1;31;40m Decorator: Model Decorated with channels (if this appears more than once per cell, there is a problem)\033[0m')
 
 
-    def _biophys(self, cell, verify=False):
+    def _biophys(self, cell, verify=True):
         """
         Inputs: run parameter structure, model parameter structure
         verify = True to run through the inserted mechanisms and see that they are really there.
@@ -78,10 +90,10 @@ class Decorator():
         converted for Python, 17 Oct 2012 (PB Manis)
         modified to use new hf hoc_reader class to access section types and mechanisms 10-14 Feb 2014 pbmanis
         """
-        # check to see if we already did this
-        # createFlag = False
+
         cellType = self.channelInfo.cellType
         parMap = self.channelInfo.parMap
+        # print("parMap: ", self.channelInfo.parMap)
         dmap = self.channelInfo.distanceMap
         if self.channelInfo is None:
             raise Exception('biophys - no parameters or info passed!')
@@ -94,27 +106,33 @@ class Decorator():
             if cell.hr.sec_groups[s] == set():
                 continue  # no sections of this type in the model, even if it was defined in a hoc file
             if sectype not in cell.channelMap.keys():
-                print(cell.channelMap.keys())
+                print("Decorator: channelMap keys: ",cell.channelMap.keys())
                 raise ValueError(f'Encountered unknown section group type: "{sectype:s}". Cannot complete decoration')
             
-            # here we go through all themechanisms in the ionchannels table for this cell and compartment type
+            # here we go through all the mechanisms in the ionchannels table for this cell and compartment type
             # note that a mechanism may have multiple parameters in the table (gbar, vshft), so we:
             #   a. only insert the mechanism once
             #   b. only adjust the relevant parameter
             for mechname in list(cell.channelMap[sectype].keys()):
-                mech = mechname.split('_')[0] # get the part before the _
-                parameter = mechname.split('_')[1]  # and the part after
+                # split('_')[0] breaks multi-word mechanism
+                # names like 'GRC_NA' (gave 'GRC', thus skipping every GRC channel).
+                # rsplit from the right once gives mech='GRC_NA', param='gbar'.
+                mech = mechname.rsplit('_', 1)[0]  # mechanism name (may contain underscores)
+                parameter = mechname.rsplit('_', 1)[1]  # parameter suffix (gbar, gl, etc.)
                 if mech in self.excludeMechs:
                     continue
                 # print('    *** ', mech, parameter)
 
                 if mech not in self.gbar_mapper.keys():
-                    raise ValueError(f'Mechanism {mech:s} was requested in decorator but is not found?')
+                    # skip parameters whose mechanism is not in gbar_mapper
+                    # (e.g. ka_gbar from RM03_channels when decorating tstellate which has no ka)
+                    print(f'  \n ******* Decorator: skipping unknown mechanism "{mech:s}" (not in gbar_mapper) *****\n')
+                    continue
                 if verify:
                     print(f'Biophys: section group: {s:s}  insert mechanism: {mech:s} at {cell.channelMap[sectype][mech]:.8f}')
                 if mech not in cell.hr.mechanisms:  
                     cell.hr.mechanisms.append(mech)  # just add the mechanism to our list
-                x = nu.Mechanism(mech)
+                x = Mechanism(mech)
  
                 for sec in cell.hr.sec_groups[s]:  # insert into all the sections of this type (group)
                     try:
@@ -126,16 +144,19 @@ class Decorator():
                 
                 gbar_setup = None
                 gbar = 0.
-                if parameter == 'gbar':
+                # Compare against the actual parameter name
+                # for this mechanism (e.g. 'gl' for GRC_LKG1, 'gbar' for all others).
+                if parameter == self.gbar_mapper.get(mech, 'gbar'):
                     gbar = self.gbarAdjust(cell, sectype, mechname, sec)  # map density by location/distance
-                
+
                     gbar_setup = ('%s_%s' % (self.gbar_mapper[mech], mech))  # map name into .mod file name
-                    # if parMap is not None and mech in parMap.keys():  # note, this allows parmap to have elements BESIDES mechanisms
-                    #     if verify:
-                    #         print 'parMap[mech]', mech, parMap[mech], gbar,
-                    #     gbar = gbar * parMap[mech]  # change gbar here...
-                    #     if verify:
-                    # print(f'####### new gbar: ', gbar)
+                    # print("parmap: ", parMap)
+                    if parMap is not None and mech in parMap.keys():  # note, this allows parmap to have elements BESIDES mechanisms
+                        if verify:
+                            print("Mech: ", parMap[mech], mech, parMap[mech], gbar,)
+                        gbar = gbar * parMap[mech]  # change gbar here...
+                    if verify:
+                        print(f'####### new gbar: ', gbar)
                 
                 vshift_setup = None
                 vshift = 0.
@@ -152,7 +173,6 @@ class Decorator():
                     cell.hr.get_section(sec).Ra = self.channelInfo.newRa  # set Ra here
                     if gbar_setup is not None:
                         setattr(cell.hr.get_section(sec), gbar_setup, gbar)  # set conductance magnitude
-                        # print('gbar_setup: %s %s' % (sectype, gbar_setup), gbar)
                     # if m is not 'None':
                     #     print('param, vshift_setup: ', parameter, vshift_setup)
                     #     print('mapper, mech, vshift, sectype: ', self.vshift_mapper[mech], mech, vshift, sectype)
@@ -256,7 +276,7 @@ class Decorator():
                     continue
                 if verify:
                     print('\tSection: %-15ss  found mechanism: %-8ss at %.5f' % (s, mech, cell.channelMap[sectype][mech]))
-                x = nu.Mechanism(mech) # , {gmapper[mech]: self.channelMap[cellType][sectype][mech]})
+                x = Mechanism(mech) # , {gmapper[mech]: self.channelMap[cellType][sectype][mech]})
                 setup = ('%s_%s' % (self.gbar_mapper[mech], mech))
                 for sec in cell.hr.sec_groups[s]:
                     bar = getattr(cell.hr.get_section(sec), setup)
