@@ -50,14 +50,17 @@ class Cell(object):
         self.somaname = "soma"
         for k in [
             "soma",
+            "Soma",
             "maindend",
             "dend",
             "dendrite",
             "primarydendrite",
             "Proximal_Dendrite",
+            "Dendrite_proximal",
             "secdend",
             "secondarydendrite",
             "Distal_Dendrite",
+            "Dendrite_distal",
             "Dendritic_Hub",
             "Dendritic_Swelling",
             "Basal_Dendrite",
@@ -69,10 +72,13 @@ class Cell(object):
             "Myelinated_Axon",
             "myelinatedaxon",
             "Axon_Hillock",
+            "Axon_hillock",
             "hillock",
+            "Axon_unmyelinated",
             "Unmyelinated_Axon",
             "unmyelinatedaxon",
             "Axon_Initial_Segment",
+            "Axon_undefined_1",
             "initialsegment",
             "Axon_Heminode",
             "Axon_Node",
@@ -272,7 +278,7 @@ class Cell(object):
         
         """
         # self.list_sections()
-        # print(self.all_sections)
+        # print("All sections: \n", self.all_sections)
         if not isinstance(sec, list):
             sec = [sec]
 
@@ -786,7 +792,7 @@ class Cell(object):
         if "na" not in self.status.keys():
             raise ValueError("Na channel type must be setbefore adjusting Na Channels")
         nach = self.status["na"]
-        if nach not in ["jsrna", "na", "nacn", "nav11", "nabu", "nacncoop"]:
+        if nach not in ["jsrna", "na", "nacn", "nav11", "nabu", "nacncoop", ""]:
             raise ValueError(f"Na channel type {nach:s} is not recognized")
 
         if self.status["ttx"]:
@@ -876,19 +882,37 @@ class Cell(object):
         try:  # require either capacitance or diameter - convert dia to cap
             cellcap = data.get(dataset, species=species, model_type=modelType,
             field='soma_Cap')
-        except:
-            celldia = data.get(dataset, species=species, model_type=modelType,
-            field='soma_Dia')
-            radius_um = 0.5*celldia*1e-4  # convert to cm
-            cellcap = 1e6*self.c_m*4.0*np.pi*(radius_um**2)
+        except KeyError:
+            try:
+                celldia = data.get(dataset, species=species, model_type=modelType,
+                field='soma_Dia')
+                radius_um = 0.5*celldia*1e-4  # convert to cm
+                cellcap = 1e6*self.c_m*4.0*np.pi*(radius_um**2)
+            except KeyError:
+                # Claude fixed 2026-07-07: surface a clear error instead of cryptic KeyError
+                raise ValueError(
+                    f"Table '{dataset}' has no entry for species='{species}', "
+                    f"model_type='{modelType}'. "
+                    f"Check that this combination is defined in ionchannels.py."
+                )
         try: # sodium channel specification may vary
             chtype = data.get(dataset, species=species, model_type=modelType,
             field='na_type')
-        except:
-            chtype = data.get(dataset, species=species, model_type=modelType,
-            field='soma_na_type')
-        units = data.get(dataset, species=species, model_type=modelType,
-            field="units")
+        except KeyError:
+            try:
+                chtype = data.get(dataset, species=species, model_type=modelType,
+                field='soma_na_type')
+            except KeyError:
+                chtype = 'nacn'  # safe default; logged below
+                print(f"  get_initial_pars: no na_type in '{dataset}' for model_type='{modelType}'; defaulting to 'nacn'")
+        try:
+            units = data.get(dataset, species=species, model_type=modelType,
+                field="units")
+        except KeyError:
+            raise ValueError(
+                f"Table '{dataset}' has no 'units' field for species='{species}', "
+                f"model_type='{modelType}'."
+            )
         pars = Params(cap=cellcap, natype=chtype, units=units)
         return pars
 
@@ -967,14 +991,12 @@ class Cell(object):
         cellpars = self.get_cellpars(
             dataset, species=self.status["species"], modelType=modelType
         )
-        # refarea is the "reference area" for a somatic conductance
-        # units are: pF of cell soma / specific capacitance in uF/cm2 = cm2*1e-6
-        # cellpars.cap is in pF; self.c_m is in uF/cm2
-        # refarea = 1e-3*/uF/cm2 = 1e-3S/cm2 = uS/cm2
-        # g will be computed from nS/refarea, in Mho/cm2; nS comes from the table
-        # refarea then is pF/uF/cm2*1e-3 = 1e-12/1e-6 * 1e-3 = 1e-9 *cm2
-        # nS/(1e-9 * cm2) = Mho/cm2
-        refarea = 1e-3 * cellpars.cap / (self.c_m * 1e-6)
+        # refarea is the soma reference area in cm², used to convert total conductance
+        # (nS) to density (S/cm²): gbar = g_nS * 1e-9 / refarea_cm²
+        # cellpars.cap is in pF; self.c_m is in uF/cm²
+        # cap(pF)*1e-12 / (c_m(uF/cm²)*1e-6) = cap/c_m * 1e-6 cm²
+        # matches set_soma_size_from_Cm: somaarea = totcap * 1e-6 / self.c_m
+        refarea = cellpars.cap * 1e-6 / self.c_m
 
         if self.debug:
             cellpars.show()
@@ -982,6 +1004,13 @@ class Cell(object):
         if len(list(table.keys())) == 0:
             raise ValueError("data table %s lacks keys - does it exist?" % dataset)
         chscale = data._db.get_table_info(decorationmap)
+        # Claude fixed 2026-07-07: when compartments table is absent, fall back to uniform
+        # soma density (scale=1.0) across all morphological compartments so that the
+        # decorator can still insert channels everywhere. Proper tables can be added later.
+        use_uniform = (len(list(chscale.keys())) == 0)
+        if use_uniform:
+            print(f"  channel_manager: '{decorationmap}' not found; "
+                  f"applying uniform soma density to all compartments.")
         pars = {}
         # first find the units of the conductance values
         units = 'nS' # default units
@@ -995,40 +1024,66 @@ class Cell(object):
                     units = x
                 else:
                     raise ValueError('Data table units not recognized: ', x)
-        # rNow etrive the conductances from the data set and scale as needed
+        # Now retrieve the conductances from the data set and scale as needed
         for g in table["field"]:
             x = data._db.get(
                 dataset, species=self.status["species"], model_type=modelType, field=g
             )
             if not isinstance(x, float):
                 continue
-            if "_gbar" in g:   # is this a channel area conductance or total conductance?
-                pars[g] = self.g_convert(x, units, refarea)
+            # GRC_channels fields are prefixed 'soma_'
+            # (e.g. 'soma_GRC_NA_gbar') but the compartments table uses bare names
+            # ('GRC_NA_gbar').  Strip the prefix so they match at lookup time.
+            g_key = g.removeprefix('soma_')
+            if "_gbar" in g_key or "_gl" in g_key:   # conductance: convert units
+                pars[g_key] = self.g_convert(x, units, refarea)
             else:
-                pars[g] = x  # just save the parameters
+                pars[g_key] = x  # just save the parameters
 
         self.channelMap = OrderedDict()
-        for c in chscale["compartment"]:
-            self.channelMap[c] = {}
-            for g in pars.keys():
-                if g not in chscale["parameter"]:
-                    # print ('Parameter %s not found in chscale parameters!' % g)
-                    continue
-                scale = data._db.get(
-                    decorationmap,
-                    species=self.status["species"],
-                    model_type=modelType,
-                    compartment=c,
-                    parameter=g,
-                )
-                if "_gbar" in g:  # scale by multiplication relative to soma
-                    self.channelMap[c][g] = pars[g] * scale
-                elif (
-                    "_vshift" in g or "_vsna" in g
-                ):  # scale by addition  relative to soma
-                    self.channelMap[c][g] = pars[g] + scale
-                else:
-                    self.channelMap[c][g] = pars[g]
+        if use_uniform:
+            # Use compartments present in the loaded morphology; all scale at 1.0
+            compartments = [s for s in self.all_sections.keys()
+                            if len(self.all_sections[s]) > 0]
+            for c in compartments:
+                self.channelMap[c] = {}
+                for g in pars.keys():
+                    if "_gbar" in g or "_gl" in g:
+                        self.channelMap[c][g] = pars[g]          # scale = 1.0
+                    elif "_vshift" in g or "_vsna" in g:
+                        self.channelMap[c][g] = 0.0              # no shift
+        else:
+            for c in chscale["compartment"]:
+                self.channelMap[c] = {}
+                for g in pars.keys():
+                    if g not in chscale["parameter"]:
+                        continue
+                    try:
+                        scale = data._db.get(
+                            decorationmap,
+                            species=self.status["species"],
+                            model_type=modelType,
+                            compartment=c,
+                            parameter=g,
+                        )
+                    except KeyError:
+                        # Claude fixed 2026-07-08: surface a clear error instead of cryptic KeyError
+                        raise ValueError(
+                            f"Compartments table '{decorationmap}' has no entry for "
+                            f"species='{self.status['species']}', model_type='{modelType}', "
+                            f"compartment='{c}', parameter='{g}'. "
+                            f"This combination is not defined in ionchannels.py."
+                        )
+                    # also scale '_gl' conductances (e.g.
+                    # GRC_LKG1_gl) by multiplication, same as '_gbar' parameters.
+                    if "_gbar" in g or "_gl" in g:  # conductance: scale by multiplication
+                        self.channelMap[c][g] = pars[g] * scale
+                    elif (
+                        "_vshift" in g or "_vsna" in g
+                    ):  # scale by addition relative to soma
+                        self.channelMap[c][g] = pars[g] + scale
+                    else:
+                        self.channelMap[c][g] = pars[g]
         if self.debug:
             for k in self.channelMap.keys():
                 print(f"channelmap {k:s}: ", self.channelMap[k])
@@ -1161,6 +1216,25 @@ class Cell(object):
             # self.ix['hcno'] = self.soma().hcno.gh*(V - self.soma().hcno.eh)
         if "hcnobo" in self.mechanisms:
             self.ix["hcnobo"] = self.soma().hcnobo.gh * (V - self.soma().hcnobo.eh)
+
+        # Claude fixed 2026-07-08: GRC (Diwakar granule cell) mechanisms.
+        # Uses NEURON-computed currents from h.fcurrent() rather than re-deriving them.
+        if "GRC_NA" in self.mechanisms:
+            self.ix["GRC_NA"] = self.soma().GRC_NA.ina
+        if "GRC_KV" in self.mechanisms:
+            self.ix["GRC_KV"] = self.soma().GRC_KV.ik
+        if "GRC_KA" in self.mechanisms:
+            self.ix["GRC_KA"] = self.soma().GRC_KA.ik
+        if "GRC_KM" in self.mechanisms:
+            self.ix["GRC_KM"] = self.soma().GRC_KM.ik
+        if "GRC_KIR" in self.mechanisms:
+            self.ix["GRC_KIR"] = self.soma().GRC_KIR.ik
+        if "GRC_KCA" in self.mechanisms:
+            self.ix["GRC_KCA"] = self.soma().GRC_KCA.ik
+        if "GRC_CA" in self.mechanisms:
+            self.ix["GRC_CA"] = self.soma().GRC_CA.ica
+        if "GRC_LKG1" in self.mechanisms:
+            self.ix["GRC_LKG1"] = self.soma().GRC_LKG1.i
 
         if "cap" in self.mechanisms:
             mc = self.soma().cap
