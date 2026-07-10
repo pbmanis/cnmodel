@@ -247,13 +247,16 @@ class HocReader(object):
         self.sections = collections.OrderedDict()
         self.mechanisms = collections.OrderedDict()
         for i, sec in enumerate(self.h.allsec()):
-            self.sections[sec.name()] = sec
-            self.sec_index[sec.name()] = i
-            mechs = set()
-            for seg in sec:
-                for mech in seg:
-                    mechs.add(mech.name())
-            self.mechanisms[sec.name()] = mechs
+            try:
+                name = self.h.secname(sec=sec)
+            except Exception:
+                name = sec.name()
+            self.sections[name] = sec
+            self.sec_index[name] = i
+            # NEURON 9.x removed 'for mech in seg' iterator (segfaults)
+            psect = sec.psection()
+            mechs = set(psect.get('density_mechs', {}).keys())
+            self.mechanisms[name] = mechs
 
     def hoc_namespace(self):
         """
@@ -366,7 +369,8 @@ class HocReader(object):
             names = {name:name for name in names}
         for hoc_name, group_name in names.items():
             var = getattr(self.h, hoc_name)
-            self.add_section_group(group_name, list(var))
+            members = [name for name, sec in self.sections.items() if var.contains(sec)]
+            self.add_section_group(group_name, members)
 
     def get_geometry(self):
         """
@@ -615,3 +619,22 @@ class HocReader(object):
         transform.scale(resolution, resolution, resolution)
         transform.translate(1, 1, 1)
         return scfield, idfield, transform
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Read a hoc file and report its sections and mechanisms.")
+    parser.add_argument('hocfile', type=str, help="The hoc file to read.")
+    args = parser.parse_args()
+    
+    reader = HocReader(args.hocfile)
+    print(dir(reader))
+    exit()
+    
+    print("Sections found:")
+    for sec_name in reader.sections:
+        print(f"  {sec_name}")
+        mechs = reader.get_mechanisms(sec_name)
+        print(f"    Mechanisms: {', '.join(mechs)}")
+
+if __name__ == "__main__":
+    main()
