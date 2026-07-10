@@ -1,0 +1,266 @@
+// granule_stick_diwakar_1.hoc
+// Diwakar et al. (2009) granule cell stick morphology with 3D coordinates.
+//
+// Dendrites splay at SPLAY_DEG (15) degrees from the +y (apical) axis,
+// spread at 90-degree azimuth intervals (N/E/S/W in the XZ plane).
+// The hillock, unmyelinated axon, and axon-terminus branches extend
+// linearly in the -y (basal) direction from the soma.
+//
+// Connectivity convention: connect child(0), parent(1-or-0)
+//   soma(0) = basal pole (y=0)   soma(1) = apical pole (y=soma_diam)
+//   All axonal sections chain 0-end → parent 1-end.
+//   All dendritic sections chain 0-end → parent 1-end (or soma 1-end).
+
+// ---- section lists ----
+objref Soma
+Soma = new SectionList()
+objref Dendrite_proximal
+Dendrite_proximal = new SectionList()
+objref Dendrite_distal
+Dendrite_distal = new SectionList()
+objref Axon_hillock
+Axon_hillock = new SectionList()
+objref Axon_unmyelinated
+Axon_unmyelinated = new SectionList()
+objref Axon_undefined_1
+Axon_undefined_1 = new SectionList()
+
+// ---- model parameters ----
+n_hillock                   = 5
+n_dendrites                 = 4
+ndend_proximal_compartments = 2
+ndend_distal_compartments   = 2
+n_axon                      = 30
+axon_compartment_length     = 20  // microns
+n_axon_terminus             = 4
+
+// ---- axon-terminus (branch) geometry ----
+objref branch_lengths, branch_diameters, branch_cm
+branch_lengths   = new Vector(n_axon_terminus)
+branch_diameters = new Vector(n_axon_terminus)
+branch_cm        = new Vector(n_axon_terminus)
+
+branch_lengths.x[0]   = 3
+branch_lengths.x[1]   = 5
+branch_lengths.x[2]   = 10
+branch_lengths.x[3]   = 200
+
+branch_diameters.x[0] = 0.3
+branch_diameters.x[1] = 0.2
+branch_diameters.x[2] = 0.1
+branch_diameters.x[3] = 0.1
+
+branch_cm.x[0] = 0.5
+branch_cm.x[1] = 0.45
+branch_cm.x[2] = 1.0
+branch_cm.x[3] = 1.0
+
+// ---- dendrite 3D direction vectors ----
+// Each of the 4 dendrites leaves the soma apical pole at SPLAY_DEG from +y,
+// spread at 90-degree azimuth steps so they point N, E, S, W.
+SPLAY_DEG = 15.0
+PI        = 3.14159265358979
+deg2rad   = PI / 180.0
+sin_splay = sin(SPLAY_DEG * deg2rad)   // ~0.2588
+cos_splay = cos(SPLAY_DEG * deg2rad)   // ~0.9659
+
+// Horizontal (x, z) components of the unit direction vector per dendrite.
+// The vertical (y) component is cos_splay for all four.
+objref den_dx, den_dz
+den_dx = new Vector(n_dendrites)
+den_dz = new Vector(n_dendrites)
+
+den_dx.x[0] =  sin_splay    // azimuth   0 deg  (+x)
+den_dz.x[0] =  0
+den_dx.x[1] =  0            // azimuth  90 deg  (+z)
+den_dz.x[1] =  sin_splay
+den_dx.x[2] = -sin_splay    // azimuth 180 deg  (-x)
+den_dz.x[2] =  0
+den_dx.x[3] =  0            // azimuth 270 deg  (-z)
+den_dz.x[3] = -sin_splay
+den_dy = cos_splay
+
+// ---- soma geometry ----
+soma_diam   = 5.8
+soma_base_y = 0.0          // basal  pole: axon exits here
+soma_top_y  = soma_diam    // apical pole: dendrites exit here
+
+// ---- allocate section array ----
+// Total = 1 soma + n_hillock + n_axon + n_axon_terminus
+//       + (ndend_proximal_compartments + ndend_distal_compartments) * n_dendrites
+// = 1 + 5 + 30 + 4 + (3+1)*4 = 56
+
+soma_index          = 0
+hillock_index       = 0
+axon_index          = 0
+axon_terminus_index = 0
+scount = 0
+
+create sections[1 + n_hillock + n_axon + n_axon_terminus + (ndend_proximal_compartments + ndend_distal_compartments) * n_dendrites]
+
+// ============================================================
+// Soma
+// ============================================================
+soma_index = scount
+// SectionList.append{} does not propagate access in NEURON 9.x;
+// use explicit access then append() instead.
+access sections[scount]
+nseg    = 1
+diam    = soma_diam
+L       = soma_diam
+cm      = 1
+Ra      = 100
+celsius = 30
+pt3dadd(0, soma_base_y, 0, soma_diam)
+pt3dadd(0, soma_top_y,  0, soma_diam)
+Soma.append()
+scount += 1
+
+// ============================================================
+// Axon hillock  (straight down from soma base, tapered 2.3 → 0.3 um)
+// ============================================================
+hillock_index = scount
+ax_y = soma_base_y          // running tip of the axonal chain
+
+for (w1 = 0; w1 < n_hillock; w1 = w1 + 1) {
+    hil_d_prox = 2.3 - 0.5 * w1
+    hil_d_dist = 2.3 - 0.5 * (w1 + 1)
+    hil_L      = 0.5
+    ax_y_next  = ax_y - hil_L
+    access sections[scount]
+    nseg = 1
+    diam = hil_d_prox
+    L    = hil_L
+    cm   = 1
+    Ra   = 100
+    pt3dadd(0, ax_y,      0, hil_d_prox)
+    pt3dadd(0, ax_y_next, 0, hil_d_dist)
+    Axon_hillock.append()  
+    if (w1 == 0) {
+        connect sections[scount](0), sections[soma_index](0)
+    } else {
+        connect sections[scount](0), sections[scount-1](1)
+    }
+    ax_y = ax_y_next
+    scount += 1
+}
+last_hillock_index = scount - 1
+
+// ============================================================
+// Axon unmyelinated  (continuing -y, 0.3 um diameter, 20 um/section)
+// ============================================================
+axon_index = scount
+axon_diam  = 0.3
+axon_L     = 20.0
+
+for (w3 = 0; w3 < n_axon; w3 = w3 + 1) {
+    ax_y_next = ax_y - axon_L
+    access sections[scount]
+    nseg = 1
+    diam = axon_diam
+    L    = axon_L
+    cm   = 1
+    Ra   = 100
+    pt3dadd(0, ax_y,      0, axon_diam)
+    pt3dadd(0, ax_y_next, 0, axon_diam)
+    Axon_unmyelinated.append()  
+    if (w3 == 0) {
+        connect sections[scount](0), sections[last_hillock_index](1)
+    } else {
+        connect sections[scount](0), sections[scount-1](1)
+    }
+    ax_y = ax_y_next
+    scount += 1
+}
+last_axon_index = scount - 1
+
+// ============================================================
+// Axon terminus / branches  (4 sections in series, continuing -y)
+// ============================================================
+axon_terminus_index = scount
+
+for (bn = 0; bn < n_axon_terminus; bn = bn + 1) {
+    br_L    = branch_lengths.x[bn]
+    br_diam = branch_diameters.x[bn]
+    br_cmv  = branch_cm.x[bn]
+    ax_y_next = ax_y - br_L
+    access sections[scount]
+    nseg = 1
+    diam = br_diam
+    L    = br_L
+    cm   = br_cmv
+    Ra   = 100
+    pt3dadd(0, ax_y,      0, br_diam)
+    pt3dadd(0, ax_y_next, 0, br_diam)
+    Axon_undefined_1.append()  
+    if (bn == 0) {
+        connect sections[scount](0), sections[last_axon_index](1)
+    } else {
+        connect sections[scount](0), sections[scount-1](1)
+    }
+    ax_y = ax_y_next
+    scount += 1
+}
+
+// ============================================================
+// Dendrites  (from soma apical pole, splayed at SPLAY_DEG)
+// Each dendrite: ndend_proximal_compartments proximal (5 um each)
+//              + 1 distal section (2.5 um)
+// ============================================================
+prox_L    = 5.0
+prox_diam = 0.75
+dist_L    = 2.5
+dist_diam = 0.75
+
+for (n_den = 0; n_den < n_dendrites; n_den = n_den + 1) {
+    // Tip starts at apical pole of soma
+    tip_x  = 0
+    tip_y  = soma_top_y
+    tip_z  = 0
+    dx_dir = den_dx.x[n_den]
+    dz_dir = den_dz.x[n_den]
+
+    // ---- proximal compartments ----
+    for (i_den = 0; i_den < ndend_proximal_compartments; i_den = i_den + 1) {
+        tip_x_next = tip_x + dx_dir * prox_L
+        tip_y_next = tip_y + den_dy  * prox_L
+        tip_z_next = tip_z + dz_dir  * prox_L
+        access sections[scount]
+        nseg = 1
+        diam = prox_diam
+        L    = prox_L
+        cm   = 1
+        Ra   = 100
+        pt3dadd(tip_x, tip_y, tip_z, prox_diam)
+        pt3dadd(tip_x_next, tip_y_next, tip_z_next, prox_diam)
+        Dendrite_proximal.append()  
+        if (i_den == 0) {
+            connect sections[scount](0), sections[soma_index](1)
+        } else {
+            connect sections[scount](0), sections[scount-1](1)
+        }
+        tip_x = tip_x_next
+        tip_y = tip_y_next
+        tip_z = tip_z_next
+        scount += 1
+    }
+    last_prox_sec = scount - 1
+
+    // ---- distal compartment ----
+    tip_x_next = tip_x + dx_dir * dist_L
+    tip_y_next = tip_y + den_dy  * dist_L
+    tip_z_next = tip_z + dz_dir  * dist_L
+    access sections[scount]
+    nseg = 1
+    diam = dist_diam
+    L    = dist_L
+    cm   = 1
+    Ra   = 100
+    pt3dadd(tip_x, tip_y, tip_z, dist_diam)
+    pt3dadd(tip_x_next, tip_y_next, tip_z_next, dist_diam)
+    Dendrite_distal.append()  
+    connect sections[scount](0), sections[last_prox_sec](1)
+    scount += 1
+}
+
+// topology()
