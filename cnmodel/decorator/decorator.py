@@ -52,22 +52,23 @@ class Decorator():
                         'ihvcn': 'gbar', 'jsrna': 'gbar', 'nav11': 'gbar', 'nacncoop': 'gbar',
                         'nabu': 'gbar',
                         'hcnobo': 'gbar',
-                        # GRC_LKG1 uses 'gl' not 'gbar'; the rest use 'gbar'.
+                        # GRC_LKG1 uses 'erev' not 'gbar'; the rest use 'gbar'.
                         # GRC_LKG2 and GRC_CALC are omitted: LKG2 uses 'ggaba' and
                         # CALC is a Ca-buffer with no conductance parameter.
                         'GRC_NA': 'gbar', 'GRC_KV': 'gbar', 'GRC_KA': 'gbar',
                         'GRC_KM': 'gbar', 'GRC_KIR': 'gbar', 'GRC_KCA': 'gbar',
-                        'GRC_CA': 'gbar', 'GRC_LKG1': 'gl',
+                        'GRC_CA': 'gbar', 'GRC_LKG1': 'gl', 'GRC_LKG2': 'ggaba',
                         }
         self.erev_mapper = {'nacn': 'ena', 'kht': 'ek', 'klt': 'ek', 'leak': 'erev', 'nabu': 'ena',
                         'ihvcn': 'eh', 'jsrna': 'ena', 'nav11': 'ena', 'nacncoop': 'ena',
-                        'hcnobo': 'eh'}
+                        'hcnobo': 'eh', 'GRC_LKG1': 'erev', 'GRC_LKG2': 'egaba'}
+        
         self.vshift_mapper = {'nacn': None, 'kht': None, 'klt': None, 'leak': None,
                         'ihvcn': None, 'jsrna': None, 'nav11': 'vshift', 'nacncoop': 'vshift', 'nabu': 'vshift',
                         'hcnobo': None,
                         'GRC_NA': None, 'GRC_KV': None, 'GRC_KA': None,
                         'GRC_KM': None, 'GRC_KIR': None, 'GRC_KCA': None,
-                        'GRC_CA': None, 'GRC_LKG1': None,
+                        'GRC_CA': None, 'GRC_LKG1': None, 'GRC_LKG2': None
                         }
         self._biophys(cell, verify=verify)
         print('\033[1;31;40m Decorator: Model Decorated with channels (if this appears more than once per cell, there is a problem)\033[0m')
