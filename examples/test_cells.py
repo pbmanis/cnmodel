@@ -20,6 +20,7 @@ from neuron import h
 
 import cnmodel
 from cnmodel import cells as cells
+from cnmodel import data as cnmodel_data
 from cnmodel.protocols import IVCurve, VCCurve
 
 debugFlag = True
@@ -45,7 +46,7 @@ cellinfo = {
         "granule",
     ],
     "morphology": ["point", "waxon", "stick"],
-    "nav": ["std", "jsrna", "nav11", "nacncoop"],
+    "nav": ["std", "jsrna", "nav11", "nacncoop", "grc_na"],
     "species": ["guineapig", "cat", "rat", "mouse"],
     "pulse": ["step", "pulse"],
 }
@@ -164,9 +165,11 @@ class Tests:
             cell.add_axon()
 
         elif args.celltype == "bushy" and args.morphology == "stick":
+            # XM13/mouse is the only combo with a compartments table;
+            # RM03/guineapig has no compartments table so the decorator cannot work.
             cell = cells.Bushy.create(
-                model="RM03",
-                species=args.species,
+                model="XM13",
+                species="mouse",
                 modelType=args.type,
                 morphology="cnmodel/morphology/bushy_stick.hoc",
                 decorator=True,
@@ -200,6 +203,7 @@ class Tests:
             )
 
         elif args.celltype == "tstellate" and args.morphology == "stick":
+            # no tstellate compartments table; uniform fallback used.
             cell = cells.TStellate.create(
                 model="RM03",
                 species=args.species,
@@ -222,6 +226,7 @@ class Tests:
         elif (
             args.celltype == "tstellatenav11" and args.morphology == "stick"
         ):  # note this uses a different model...
+            #  no tstellatenav11 compartments table; uniform fallback used.
             cell = cells.TStellateNav11.create(
                 model="Nav11",
                 species=args.species,
@@ -248,12 +253,14 @@ class Tests:
         elif (
             args.celltype == "octopus" and args.morphology == "stick"
         ):  # Go to spencer et al. model
+            # no octopus/Spencer compartments table; uniform fallback used.
+            # Spencer model only supports mouse; nach defaults to 'nacn' if not specified.
             cell = cells.Octopus.create(
                 modelType="Spencer",
-                species=args.species,
+                species="mouse",
                 morphology="cnmodel/morphology/octopus_spencer_stick.hoc",
                 decorator=True,
-                nach=args.nav,
+                nach=args.nav if args.nav is not None else 'nacn',
                 ttx=args.ttx,
                 debug=debugFlag,
             )
@@ -293,6 +300,7 @@ class Tests:
             )
 
         elif args.celltype == "tuberculoventral" and args.morphology == "stick":
+            # no TVmouse compartments table; uniform fallback used.
             cell = cells.Tuberculoventral.create(
                 species="mouse",
                 modelType="TVmouse",
@@ -312,11 +320,13 @@ class Tests:
                 species="mouse", modelType="GRC", ttx=args.ttx, nach=args.nav, debug=debugFlag
             )
 
-        # elif args.celltype == 'granule' and args.morphology == 'stick':
-        #     cell = cells.Granule.create(species='mouse', modelType='GRC',
-        #             morphology='cnmodel/morphology/granule.hoc', decorator=True,
-        #             ttx=args.ttx, debug=debugFlag)
-        #     h.topology()
+        # added decorator=True, because that channel_manager is wired for GRC
+        elif args.celltype == 'granule' and args.morphology == 'stick':
+            cell = cells.Granule.create(species='mouse', modelType='GRC',
+                    morphology='cnmodel/morphology/granule_stick_diwakar.hoc',
+                    decorator=True,
+                    ttx=args.ttx, nach=args.nav, debug=debugFlag)
+            # h.topology()
 
         #
         # DCN cartwheel cell tests
@@ -339,9 +349,16 @@ class Tests:
             )
 
         else:
+            avail = cnmodel_data.report_available_configurations(
+                celltype=args.celltype, species=args.species
+            )
             raise ValueError(
-                "Cell Type %s and configurations nav=%s or config=%s are not available"
-                % (args.celltype, args.nav, args.morphology)
+                f"Cell type '{args.celltype}' with nav='{args.nav}', "
+                f"morphology='{args.morphology}', species='{args.species}' "
+                f"is not a defined configuration.\n"
+                f"Available cell types: "
+                f"{sorted(k for k in cells.__dict__ if not k.startswith('_'))}\n"
+                + avail
             )
 
         print(cell.__doc__)
@@ -413,7 +430,76 @@ class Tests:
             self.vc.show(cell=self.cell)
 
         else:
-            raise ValueError("Nothing to run. Specify one of --cc, --vc, --rmp.")
+            print("No test mode specified (--cc/--vc/--rmp); showing Current Plots button only.")
+
+        self._add_current_plots_button(args, durations)
+
+
+    def _add_current_plots_button(self, args, durations):
+        from cnmodel.util.current_plots import CurrentPlotsWindow
+        iamp_nA = args.iamp / 1000.0
+
+        self._cur_plot_win = None
+        cell = self.cell
+        tests_ref = self
+
+        # Build a horizontal bar: [Level: <combo>] [Current Plots]
+        # Claude fixed 2026-07-09: combo lets the user pick any simulated current level.
+        bar = pg.QtWidgets.QWidget()
+        bar_layout = pg.QtWidgets.QHBoxLayout(bar)
+        bar_layout.setContentsMargins(4, 2, 4, 2)
+
+        combo = None
+        cmd_levels = getattr(getattr(self, 'iv', None), 'current_cmd', None)
+        if cmd_levels is not None:
+            bar_layout.addWidget(pg.QtWidgets.QLabel('Level:'))
+            combo = pg.QtWidgets.QComboBox()
+            for level in cmd_levels:
+                combo.addItem(f'{level * 1000:.1f} pA')
+            # Pre-select the entry closest to the command-line --iamp value.
+            best = int(np.argmin(np.abs(cmd_levels - iamp_nA)))
+            combo.setCurrentIndex(best)
+            bar_layout.addWidget(combo)
+
+        btn = pg.QtWidgets.QPushButton('Current Plots')
+        bar_layout.addWidget(btn)
+
+        def _on_click():
+            if combo is not None and cmd_levels is not None:
+                level = float(cmd_levels[combo.currentIndex()])
+            else:
+                level = iamp_nA
+            tests_ref._cur_plot_win = CurrentPlotsWindow(
+                cell, iamp_nA=level, durations=durations)
+
+        btn.clicked.connect(_on_click)
+
+        # Embed bar in the existing summary window (iv or vc) when available;
+        # otherwise show it as a standalone toolbar.
+        summary_win = None
+        if hasattr(self, 'iv') and hasattr(self.iv, 'win'):
+            summary_win = self.iv.win
+        elif hasattr(self, 'vc') and hasattr(self.vc, 'win'):
+            summary_win = self.vc.win
+
+        if summary_win is not None:
+            win_w = summary_win.width()
+            win_h = summary_win.height()
+            outer = pg.QtWidgets.QWidget()
+            outer.setWindowTitle(summary_win.windowTitle())
+            vbox = pg.QtWidgets.QVBoxLayout(outer)
+            vbox.setContentsMargins(0, 0, 0, 0)
+            vbox.setSpacing(2)
+            vbox.addWidget(summary_win)  # reparents the plot into this container
+            vbox.addWidget(bar)
+            outer.resize(win_w, win_h + 40)
+            outer.show()
+            self._tools_widget = outer
+        else:
+            bar.setWindowTitle('Tools')
+            bar.resize(320, 50)
+            bar.show()
+            self._tools_widget = bar
 
 
 def main():
@@ -458,6 +544,14 @@ def main():
         dest="durations",
         default="[10, 100, 50]",
         help=("Set pulse durations in format '[10, 100, 20]' (as a string)"),
+    )
+    parser.add_argument(
+        "--iamp",
+        action="store",
+        type=float,
+        dest="iamp",
+        default=20.0,
+        help="Current injection amplitude for Current Plots (pA, default 20)",
     )
     clampgroup = parser.add_mutually_exclusive_group()
     clampgroup.add_argument("--vc", action="store_true", help="Run in voltage clamp mode")
