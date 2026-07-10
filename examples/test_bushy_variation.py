@@ -634,7 +634,7 @@ class Variations(Protocol):
             fmod = 40.0
             dmod = 0.0
             stimulus = "tone"
-            # Claude fixed 2026-06-26: enable Qt progress dialog; old bare call commented below
+            # enable Qt progress dialog; old bare call commented below
             with mp.Parallelize(enumerate(tasks), results=results, workers=nworker, progressDialog='Running sound simulations..') as tasker:
             #            with mp.Parallelize(enumerate(tasks), results=results, workers=nworker) as tasker:
                 for i, x in tasker:
@@ -695,7 +695,7 @@ class Variations(Protocol):
                         # set up recordings
                         self["v_post%02d" % j] = post_cell.soma(0.5)._ref_v
                         h.finitialize()  # init and instantiate recordings
-                        # Claude fixed 2026-06-26: progress tracked by mp.Parallelize progressDialog above
+                        # progress tracked by mp.Parallelize progressDialog above
                         # print("running %d" % i)
                         h.t = 0.0
                         _tstop = rundur * 1000.0  # rundur is in seconds.
