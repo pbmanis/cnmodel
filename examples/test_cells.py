@@ -67,7 +67,7 @@ ccivrange = {
             "pulse": [(-0.09, 0.00, 0.09), (0, 0.008, 0.008)]
         },  # , 'prepulse': [(-0.25, -0.25, 0.25)]},
         "tuberculoventral": {"pulse": [(-0.35, 1.0, 0.05), (-0.040, 0.01, 0.005)]},
-        "granule": {"pulse": [(-0.02, 0.02, 0.0005)]},
+        "granule": {"pulse": [(-0.02, 0.02, 0.005)]},
     },
     "guineapig": {
         "bushy": {"pulse": [(-1, 1.2, 0.05)]},
@@ -106,6 +106,15 @@ scale = {
     "octopus": (-1.0, -160.0, 1.0, -40, 0, 40, "offset", 5, "crossing", [0, -60]),
     "mso": (-1.0, -160.0, 1.0, -40, 0, 40, "offset", 5, "crossing", [0, -60]),
 }
+
+
+def _count_iv_steps(ivrange: dict) -> int:
+    """Count total current-command steps from an IVCurve range dict."""
+    total = 0
+    for c in ivrange.get('pulse', []):
+        imin, imax, istep = c
+        total += int(np.floor((imax - imin) / istep) + 1)
+    return total
 
 
 class Tests:
@@ -393,9 +402,9 @@ class Tests:
         if args.cc is True:
             # define the current clamp electrode and default settings
             self.iv = IVCurve()
-            self.iv.run(
-                ccivrange[args.species][args.celltype],
-                self.cell,
+            self._run_cc_with_progress(
+                ivrange=ccivrange[args.species][args.celltype],
+                cell=self.cell,
                 durs=durations,
                 sites=sites,
                 reppulse=ptype,
@@ -434,6 +443,83 @@ class Tests:
 
         self._add_current_plots_button(args, durations)
 
+
+    def _run_cc_with_progress(self, ivrange, cell, durs, sites, reppulse, temp):
+        """
+        Call self.iv.run() while showing a progress bar + Cancel button.
+
+        custom_init() calls h.finitialize() exactly twice per IV step, so
+        h.FInitializeHandler fires twice per step.  We count every 2nd call
+        as one completed step.
+
+        Cancel sets h.stoprun=1, which causes h.batch_run() (called inside
+        run_one) to return immediately for the current and all subsequent steps.
+        The remaining steps still run their warmup but complete near-instantly.
+        """
+        app = pg.QtWidgets.QApplication.instance()
+        nsteps = _count_iv_steps(ivrange)
+
+        # Build the progress panel.
+        panel = pg.QtWidgets.QWidget()
+        panel.setWindowTitle("Running IV curve")
+        vlayout = pg.QtWidgets.QVBoxLayout(panel)
+        vlayout.setSpacing(8)
+        vlayout.setContentsMargins(16, 12, 16, 12)
+
+        hdr = pg.QtWidgets.QLabel(f"Running {nsteps} current-clamp steps…")
+        vlayout.addWidget(hdr)
+
+        pbar = pg.QtWidgets.QProgressBar()
+        pbar.setRange(0, nsteps)
+        pbar.setValue(0)
+        vlayout.addWidget(pbar)
+
+        step_lbl = pg.QtWidgets.QLabel(f"Step 0 of {nsteps}")
+        vlayout.addWidget(step_lbl)
+
+        cancel_btn = pg.QtWidgets.QPushButton("Cancel")
+        vlayout.addWidget(cancel_btn)
+
+        panel.resize(440, 155)
+        panel.show()
+        if app:
+            app.processEvents()
+
+        state = {'finit_count': 0, 'step': 0, 'cancelled': False}
+
+        def _on_cancel():
+            state['cancelled'] = True
+            h.stoprun = 1
+            cancel_btn.setEnabled(False)
+            cancel_btn.setText("Cancelling…")
+
+        cancel_btn.clicked.connect(_on_cancel)
+
+        # FInitializeHandler fires at each h.finitialize() call.
+        # custom_init() makes exactly 2 per IV step; every 2nd call = 1 step done.
+        def _on_finit():
+            if state['step'] >= nsteps:  # Claude fixed 2026-07-10: ignore extra finitialize() calls after run completes
+                return
+            state['finit_count'] += 1
+            if state['finit_count'] % 2 == 0:
+                state['step'] += 1
+                pbar.setValue(state['step'])
+                step_lbl.setText(f"Step {state['step']} of {nsteps}")
+            if app:
+                app.processEvents()
+            if state['cancelled']:
+                h.stoprun = 1
+
+        fih = h.FInitializeHandler(1, _on_finit)
+
+        try:
+            self.iv.run(
+                ivrange, cell,
+                durs=durs, sites=sites, reppulse=reppulse, temp=temp,
+            )
+        finally:
+            del fih
+            panel.close()
 
     def _add_current_plots_button(self, args, durations):
         from cnmodel.util.current_plots import CurrentPlotsWindow
