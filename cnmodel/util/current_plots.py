@@ -329,13 +329,19 @@ class CurrentPlotsWindow(QtWidgets.QMainWindow):
         gw.addLabel('Vm', row=1, col=0, angle=-90, bold=True, size='11pt')
         ref_p = None      # x-axis root for the whole grid
         ref_vm_p = None   # y-axis root for the Vm row
+        vmin = 200.
+        vmax = -200.
+        self.vm_plots = {}
         for ci, comp_name in enumerate(comp_names):
             col = ci + 1
             pen = pg.mkPen(color=colors[ci], width=1)
             vm_p = gw.addPlot(row=1, col=col)
             vm_p.showGrid(x=False, y=True, alpha=0.3)
             vm_data = self._vm_data.get(comp_name)
+            print(f"compartment: {comp_name}, vm_data: {vm_data[0]} to {vm_data[-1]}")
             if vm_data is not None:
+                if np.min(vm_data) < vmin: vmin = np.min(vm_data)
+                if np.max(vm_data) > vmax: vmax = np.max(vm_data)
                 vm_p.plot(self._t_arr, vm_data, pen=pen)
                 self._vm_plots[comp_name] = vm_p
             if ci == 0:
@@ -348,7 +354,15 @@ class CurrentPlotsWindow(QtWidgets.QMainWindow):
             else:
                 vm_p.hideAxis('left')
                 if ref_p    is not None: vm_p.setXLink(ref_p)
-                if ref_vm_p is not None: vm_p.setYLink(ref_vm_p)
+                # if ref_vm_p is not None: vm_p.setYLink(ref_vm_p)
+
+        # ref_vm_p.setYRange(vmin, vmax, padding=0.05)
+        print("vmin, vmax: ", vmin, vmax)
+        for ci, comp_name in enumerate(comp_names):
+            vm_p = self._vm_plots.get(comp_name)
+            if vm_p is not None:
+                vm_p.setYRange(vmin, vmax, padding=0.05)
+
         self._ref_p    = ref_p
         self._vm_y_root = ref_vm_p
 
@@ -493,8 +507,8 @@ class CurrentPlotsWindow(QtWidgets.QMainWindow):
             if np.isfinite(vmin) and np.isfinite(vmax) and vmin < vmax:
                 pad = 0.05 * (vmax - vmin)
                 lo, hi = vmin - pad, vmax + pad
-                for p in self._vm_plots.values():
-                    p.setYRange(lo, hi, padding=0)
+                # for p in self._vm_plots.values():
+                #     p.setYRange(lo, hi, padding=0)
 
         # X range.
         if self._ref_p is not None:
