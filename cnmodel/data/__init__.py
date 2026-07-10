@@ -10,7 +10,7 @@ provenance documentation.
 
 
 from ._db import get, get_source, add_table_data, report_changes, setval, print_table
-
+from .availability import report_available_configurations
 
 from . import connectivity
 from . import synapses
