@@ -197,6 +197,12 @@ class Tuberculoventral(Tuberculoventral):
         self.do_morphology(morphology)
         self.pars = self.get_cellpars(dataset, species=species, modelType=modelType)
         self.status['na'] = self.pars.natype
+        # species_scaling sets _valid_temperatures and vrange,
+        # but is not called in the decorator path.  Initialize here so check_temperature()
+        # and find_i0() work regardless of which path is taken.
+        self._valid_temperatures = (temp,)
+        self.set_temperature(temp)
+        self.vrange = [-80., -58.]
 
         # decorate the morphology with ion channels
         if decorator is None:   # basic model, only on the soma
