@@ -648,16 +648,18 @@ and voltage shifts, for different compartments of the specified neuron,
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
                       GRC   
 
-soma_GRC_NA_gbar      8.127 [1]   
-soma_GRC_KV_gbar      2.212 [1]   
-soma_GRC_KA_gbar      3.201 [1]   
+soma_GRC_NA_gbar      19.0 [5]   
+soma_GRC_KV_gbar      80.0 [1]   
+soma_GRC_KA_gbar      9.061 [1]   
 soma_GRC_KM_gbar      0.250 [2]   
-soma_GRC_KIR_gbar     0.900 [1] 
-soma_GRC_KCA_gbar     0.669 [2]   
-soma_GRC_CA_gbar      0.102 [1]   
+soma_GRC_KIR_gbar     2.549 [1] 
+soma_GRC_KCA_gbar     36.8 [3]   
+soma_GRC_CA_gbar      5.840 [4]   
 soma_GRC_CALC_gbar    0.0095 [1]
-soma_GRC_LKG1_gl      0.161 [1]
-soma_GRC_LKG2_gl      0.040 [1]
+soma_GRC_LKG1_gl      0.1072 [1]
+soma_GRC_LKG2_ggaba   0.0476 [1]
+soma_GRC_LKG1_erev    -16.5 [1]
+soma_GRC_LKG2_egaba   -65. [1]
 soma_leak_gbar        0.0 [1] 
 soma_leak_erev        -75. [1]
 soma_Dia              5.8
@@ -670,20 +672,13 @@ soma_e_leak           -75.
 units                 mmho/cm2
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] scaling adjusted according to the compartmental model. Surface area of the soma is 
-    26.4 um2. Original values were given in nS as follows:
-    soma_GRC_NA_gbar      8.589 [1]   
-    soma_GRC_KV_gbar      2.338 [1]   
-    soma_GRC_KA_gbar      3.382 [1]   
-    soma_GRC_KM_gbar      0.264 [2]   
-    soma_GRC_KIR_gbar     0.951 [1] 
-    soma_GRC_KCA_gbar     0.707 [2]   
-    soma_GRC_CA_gbar      0.108 [1]   
-    soma_GRC_CALC_gbar    0.01 [1]
-    soma_GRC_LKG1_gl      0.170 [1]
-    soma_GRC_LKG2_gl      0.042 [1]
-
+[1] scaling adjusted according to the compartmental model. 
 [2] Adjusted to match the Diwaker and model db reference values.
+[3] Set to the value printed out in their model from modeldb, for the dendrite... (0 everywhere else)
+[4] Set as the value in the distal dendrite (0 everywhere else)
+[5] gNA in axon is 0.013 mho/cm2, whereas it is 0.19 in the hillock.
+[6] LKG1 in axon has conductance of 5e-9, so needs to be scaled.
+
 """)
 
 add_table_data('GRC_channels_compartments', row_key='parameter', col_key='compartment', 
@@ -691,23 +686,38 @@ add_table_data('GRC_channels_compartments', row_key='parameter', col_key='compar
 
 !!!!!!!!!!!! USAGE OF THIS TABLE SHOULD BE CONSIDERED EXPERIMENTAL !!!!!!!!!!!!!!
 
-This table describes the ion channel densities relative to somatic densities,
-e.g., relative to REFERENCE densities in the standard granule cell model.
+This table describes the ion channel densities *relative* to somatic densities,
+e.g., relative to REFERENCE densities in the standard granule cell model in "GRC_Channels".
 and voltage shifts, for different compartments of the specified neuron,
+
+The axon_hillock and axon_unmyelinated compartments are scaled a special way.
+The original formula calculates a value :
+
+Rappaxon = ((9.76*9.76)/(naxon*Granule[0].axon[0].L*Granule[0].axon[0].diam))
+and:
+SomascArea = Granule[0].soma.L*Granule[0].soma.diam*PI
+RappSomahill=SomascArea/(3.75*PI) 
+and:
+RappAH = 3.75/(naxon*Granule[0].axon[0].L*Granule[0].axon[0].diam)
+Then does an update (proc NaHUpdate, KHUpdate, glUpdate).
+For the Hillock, this is hillock[secno].gnabar_GRC_NA = NagH*gamma*RappSomahill-0.00243
+For the axon, this is axon[secno].gnabar_GRC_NA = NagH*gamma*Rappaxon-0.00243
+The same formula for Kv. 
+gamma is 0.5 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
                  Axon_undefined_1     Axon_unmyelinated     Axon_hillock     Soma           Dendrite_proximal  Dendrite_distal
                                                                                                                         
-GRC_NA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.00 [1]           0.0 [1]       
-GRC_KV_gbar      0.0 [1]              1.0 [1]               1.0 [1]          0.0 [1]        0.0 [1]            0.0 [1]       
+GRC_NA_gbar      0.0 [1]              1.427 [1]             12.57 [1]        0.0 [1]        0.0 [1]            0.0 [1]       
+GRC_KV_gbar      0.0 [1]              1.49  [1]             11.86 [1]        0.0 [1]        0.0 [1]            0.0 [1]       
 GRC_KA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]       
 GRC_KM_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]       
 GRC_KIR_gbar     0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]     
 GRC_KCA_gbar     0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            1.0 [1]     
 GRC_CA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            1.0 [1]     
-GRC_LKG1_gl      1.0 [1]              1.0 [1]               1.0 [1]          1.0 [1]        1.0 [1]            1.0 [1]
-GRC_LKG2_gl      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        1.0 [1]            0.0 [1]
-leak_gbar        1.0 [1]              1.0 [1]               1.0 [1]          1.0 [1]        0.5 [1]            0.5 [1]       
+GRC_LKG1_gl      4.66e-5 [1]          0.0801 [1]            0.897 [1]        1.00 [1]       0.210 [1]          0.201 [1]
+GRC_LKG2_ggaba   0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        1.0 [1]            1.0 [1]
+leak_gbar        0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            0.0 [1]       
 leak_erev        -65. [1]             -65. [1]              -65. [1]         -65. [1]       -65. [1]           -65. [1]      
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
