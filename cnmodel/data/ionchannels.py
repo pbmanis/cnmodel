@@ -428,7 +428,8 @@ to match the data from Kuo and Trussell.
 -----------------------------------------------------------------------------------------------------------------------------------
                      TVmouse
                               
-soma_nacncoop_gbar   5800.0   [2]      
+soma_nacncoop_gbar   5800.0   [2]     
+soma_nacncoop_vshift 0.0      [1] 
 soma_kht_gbar        400.0    [1]
 soma_ihvcn_gbar      2.5      [2]
 soma_ka_gbar         65.0     [1]
@@ -451,6 +452,71 @@ units                nS
     concepts and implementation similar to Oz et al. J.Comp. Neurosci. 39: 63, 2015,
     and Huang et al., PloSOne 7:e37729, 2012.
 
+
+""")
+
+
+add_table_data('TVmouse_channels', row_key='field', col_key='model_type',
+               species='mouse', data=u"""
+
+Decorator-compatible copy of TV_channels for mouse tuberculoventral cell.
+Non-prefixed field names are used by channel_manager/decorator.
+soma_* prefixed copies exist for backward compat with get_cellpars.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+                     TVmouse
+
+nacncoop_gbar        5800.0   [2]
+nacncoop_vshift      0.0      [1]
+kht_gbar             400.0    [1]
+ihvcn_gbar           2.5      [2]
+ka_gbar              65.0     [1]
+leak_gbar            4.5      [1]
+leak_erev            -72.0    [1]
+ihvcn_eh             -43.0    [1]
+soma_nacncoop_gbar   5800.0   [2]
+soma_nacncoop_vshift 0.0      [1]
+soma_kht_gbar        400.0    [1]
+soma_ihvcn_gbar      2.5      [2]
+soma_ka_gbar         65.0     [1]
+soma_ihvcn_eh        -43.0    [1]
+soma_leak_gbar       4.5      [1]
+soma_leak_erev       -72.0    [1]
+soma_e_na            50.      [1]
+soma_e_k             -81.5    [1]
+soma_Cap             35       [1]
+na_type              nacncoop [2]
+units                nS
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+[1] Values from Kuo, Lu and Trussell, J Neurophysiol. 2012 Aug 15; 108(4): 1186-1198.
+[2] Cooperative sodium channel model.
+
+""")
+
+
+add_table_data('TVmouse_channels_compartments', row_key='parameter', col_key='compartment',
+               species='mouse', model_type='TVmouse', data=u"""
+
+Compartment scaling for mouse tuberculoventral stick model (tv_stick.hoc).
+Values are multiplicative scale factors relative to soma density.
+Compartments: soma, axon, dendrite.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+                soma       axon       dendrite
+
+nacncoop_gbar   1.0 [1]    3.0 [1]    0.5 [1]
+nacncoop_vshift 1.0 [1]    1.0 [1]    1.0 [1]
+kht_gbar        1.0 [1]    2.0 [1]    0.5 [1]
+ihvcn_gbar      1.0 [1]    0.0 [1]    0.5 [1]
+ka_gbar         1.0 [1]    0.0 [1]    0.0 [1]
+leak_gbar       1.0 [1]    0.25 [1]   0.5 [1]
+leak_erev       -72.0 [1]  -72.0 [1]  -72.0 [1]
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+[1] Estimates based on general literature; not yet tuned to physiology.
 
 """)
 
@@ -582,15 +648,16 @@ and voltage shifts, for different compartments of the specified neuron,
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
                       GRC   
 
-soma_GRC_NA_gbar      13.0 [1]   
-soma_GRC_KV_gbar      3.0 [1]   
-soma_GRC_KA_gbar      4.0 [1]   
-soma_GRC_KM_gbar      0.1 [2]   
-soma_GRC_KIR_gbar     0.9 [1] 
-soma_GRC_KCA_gbar     4.0 [2]   
-soma_GRC_CA_gbar      0.46 [1]   
-soma_GRC_CALC_gbar    0.01 [1]
-soma_GRC_LKG1_gl      0.0568 [1]
+soma_GRC_NA_gbar      8.127 [1]   
+soma_GRC_KV_gbar      2.212 [1]   
+soma_GRC_KA_gbar      3.201 [1]   
+soma_GRC_KM_gbar      0.250 [2]   
+soma_GRC_KIR_gbar     0.900 [1] 
+soma_GRC_KCA_gbar     0.669 [2]   
+soma_GRC_CA_gbar      0.102 [1]   
+soma_GRC_CALC_gbar    0.0095 [1]
+soma_GRC_LKG1_gl      0.161 [1]
+soma_GRC_LKG2_gl      0.040 [1]
 soma_leak_gbar        0.0 [1] 
 soma_leak_erev        -75. [1]
 soma_Dia              5.8
@@ -603,7 +670,19 @@ soma_e_leak           -75.
 units                 mmho/cm2
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] scaling
+[1] scaling adjusted according to the compartmental model. Surface area of the soma is 
+    26.4 um2. Original values were given in nS as follows:
+    soma_GRC_NA_gbar      8.589 [1]   
+    soma_GRC_KV_gbar      2.338 [1]   
+    soma_GRC_KA_gbar      3.382 [1]   
+    soma_GRC_KM_gbar      0.264 [2]   
+    soma_GRC_KIR_gbar     0.951 [1] 
+    soma_GRC_KCA_gbar     0.707 [2]   
+    soma_GRC_CA_gbar      0.108 [1]   
+    soma_GRC_CALC_gbar    0.01 [1]
+    soma_GRC_LKG1_gl      0.170 [1]
+    soma_GRC_LKG2_gl      0.042 [1]
+
 [2] Adjusted to match the Diwaker and model db reference values.
 """)
 
@@ -617,21 +696,22 @@ e.g., relative to REFERENCE densities in the standard granule cell model.
 and voltage shifts, for different compartments of the specified neuron,
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                 axon           unmyelinatedaxon     myelinatedaxon     initialsegment    hillock     soma        dendrite         primarydendrite    secondarydendrite
-                                                                                                                                                                                                      
-GRC_NA_gbar      3.0 [1]        3.0 [1]              0.0 [1]            5.0 [1]           5.0 [1]     1.0 [1]     0.5 [1]          0.50 [1]           0.25 [1]       
-GRC_KV_gbar      1.0 [1]        2.0 [1]              0.01 [1]           2.0 [1]           2.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.25 [1]       
-GRC_KA_gbar      1.0 [1]        1.0 [1]              0.01 [1]           1.0 [1]           1.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.25 [1]       
-GRC_KM_gbar      0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]       
-GRC_KIR_gbar     0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-GRC_KCA_gbar     0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-GRC_CA_gbar      0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-GRC_CALC_gbar    0.0 [1]        0.0 [1]              0.0 [1]            0.5 [1]           0.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]     
-leak_gbar        1.0 [1]        0.25 [1]             0.25e-3 [1]        1.0 [1]           1.0 [1]     1.0 [1]     0.5 [1]          0.5 [1]            0.5 [1]       
-leak_erev        -65. [1]       -65. [1]             -65. [1]           -65. [1]          -65. [1]    -65. [1]    -65. [1]         -65. [1]           -65. [1]      
+                 Axon_undefined_1     Axon_unmyelinated     Axon_hillock     Soma           Dendrite_proximal  Dendrite_distal
+                                                                                                                        
+GRC_NA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.00 [1]           0.0 [1]       
+GRC_KV_gbar      0.0 [1]              1.0 [1]               1.0 [1]          0.0 [1]        0.0 [1]            0.0 [1]       
+GRC_KA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]       
+GRC_KM_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]       
+GRC_KIR_gbar     0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]     
+GRC_KCA_gbar     0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            1.0 [1]     
+GRC_CA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            1.0 [1]     
+GRC_LKG1_gl      1.0 [1]              1.0 [1]               1.0 [1]          1.0 [1]        1.0 [1]            1.0 [1]
+GRC_LKG2_gl      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        1.0 [1]            0.0 [1]
+leak_gbar        1.0 [1]              1.0 [1]               1.0 [1]          1.0 [1]        0.5 [1]            0.5 [1]       
+leak_erev        -65. [1]             -65. [1]              -65. [1]         -65. [1]       -65. [1]           -65. [1]      
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] Scaling is relative to soma scaling. Numbers are estimates based on general distribution from literature on cortical neurons.
+[1] Scaling is relative to somatic values listed in the first table. Numbers are selected to match the Diwakar 2009 model.
 """)
 
 
