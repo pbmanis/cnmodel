@@ -1035,7 +1035,7 @@ class Cell(object):
             # (e.g. 'soma_GRC_NA_gbar') but the compartments table uses bare names
             # ('GRC_NA_gbar').  Strip the prefix so they match at lookup time.
             g_key = g.removeprefix('soma_')
-            if "_gbar" in g_key or "_gl" in g_key:   # conductance: convert units
+            if "_gbar" in g_key or "_gl" in g_key or "_ggaba" in g_key:   # conductance: convert units  # Claude fixed 2026-07-10: _ggaba (GRC_LKG2) was bypassing unit conversion
                 pars[g_key] = self.g_convert(x, units, refarea)
             else:
                 pars[g_key] = x  # just save the parameters
@@ -1048,7 +1048,7 @@ class Cell(object):
             for c in compartments:
                 self.channelMap[c] = {}
                 for g in pars.keys():
-                    if "_gbar" in g or "_gl" in g:
+                    if "_gbar" in g or "_gl" in g or "_ggaba" in g:  # Claude fixed 2026-07-10: include _ggaba
                         self.channelMap[c][g] = pars[g]          # scale = 1.0
                     elif "_vshift" in g or "_vsna" in g:
                         self.channelMap[c][g] = 0.0              # no shift
@@ -1074,9 +1074,9 @@ class Cell(object):
                             f"compartment='{c}', parameter='{g}'. "
                             f"This combination is not defined in ionchannels.py."
                         )
-                    # also scale '_gl' conductances (e.g.
-                    # GRC_LKG1_gl) by multiplication, same as '_gbar' parameters.
-                    if "_gbar" in g or "_gl" in g:  # conductance: scale by multiplication
+                    # also scale '_gl' and '_ggaba' conductances by multiplication,
+                    # same as '_gbar' parameters.
+                    if "_gbar" in g or "_gl" in g or "_ggaba" in g:  # conductance: scale by multiplication  # Claude fixed 2026-07-10: include _ggaba
                         self.channelMap[c][g] = pars[g] * scale
                     elif (
                         "_vshift" in g or "_vsna" in g

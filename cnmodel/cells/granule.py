@@ -144,7 +144,7 @@ class GranuleDefault(Granule):
         # SectionList name; base class defaults somaname to 'soma'.  Override here
         # so both point and stick paths find the soma in all_sections['Soma'].
         self.somaname = 'Soma'
-        self.i_test_range={'pulse': (-0.02, 0.02, 0.002)}  # note that this might get reset with decorator according to channels
+        self.i_test_range={'pulse': (-0.02, 0.02, 0.005)}  # note that this might get reset with decorator according to channels
                                                     # The default values are set in the species_scaling routine
         if species == 'mouse':
             if modelType == None or modelType == 'GRC':
@@ -229,9 +229,9 @@ class GranuleDefault(Granule):
         for g in ['soma_GRC_NA_gbar', 'soma_GRC_KV_gbar', 'soma_GRC_KM_gbar', 'soma_GRC_KA_gbar',
                   'soma_GRC_KCA_gbar',
                   'soma_GRC_KIR_gbar', 'soma_GRC_CA_gbar',
-                  'soma_GRC_LKG1_gl',  'soma_GRC_LKG2_gl',
+                  'soma_GRC_LKG1_gl',  'soma_GRC_LKG2_ggaba',
                   'soma_e_k', 'soma_e_na', 'soma_e_ca', 'soma_e_leak',
-                  'soma_Dia',
+                  'soma_Dia', 'soma_GRC_LKG1_erev', 'soma_GRC_LKG2_egaba',
                   ]:
             pars.additem(g,  data.get(dataset, species=species, model_type=modelType,
             field=g))
@@ -291,6 +291,7 @@ class GranuleDefault(Granule):
             self.soma().GRC_CA.gbar = self.g_convert(self.pars.soma_GRC_CA_gbar, self.pars.units, self.somaarea)
             self.soma().GRC_KM.gbar = self.g_convert(self.pars.soma_GRC_KM_gbar, self.pars.units, self.somaarea)
             self.soma().GRC_LKG1.gl = self.g_convert(self.pars.soma_GRC_LKG1_gl, self.pars.units, self.somaarea) 
+            self.soma().GRC_LKG2.ggaba = self.g_convert(self.pars.soma_GRC_LKG2_ggaba, self.pars.units, self.somaarea)  # Claude fixed 2026-07-10: GRC_LKG2 param is ggaba not gl
         elif self.pars.units == 'mmho/cm2':
             self.soma().GRC_NA.gbar = self.pars.soma_GRC_NA_gbar
             self.soma().GRC_KV.gbar = self.pars.soma_GRC_KV_gbar
@@ -300,13 +301,15 @@ class GranuleDefault(Granule):
             self.soma().GRC_CA.gbar = self.pars.soma_GRC_CA_gbar
             self.soma().GRC_KM.gbar = self.pars.soma_GRC_KM_gbar
             self.soma().GRC_LKG1.gl = self.pars.soma_GRC_LKG1_gl
+            self.soma().GRC_LKG2.ggaba = self.pars.soma_GRC_LKG2_ggaba  # Claude fixed 2026-07-10: GRC_LKG2 param is ggaba not gl
         else:
             raise ValueError ('Granule,  species: only "nS" or "mmho/cm2" are recognized for units')
       
         self.soma().ena = self.pars.soma_e_na # 50
         self.soma().ek = self.pars.soma_e_k # -80
         self.soma().eca = self.pars.soma_e_ca # 50
-        self.soma().GRC_LKG1.el = self.pars.soma_e_leak
+        self.soma().GRC_LKG1.el = self.pars.soma_GRC_LKG1_erev # -16.5 mV
+        self.soma().GRC_LKG2.egaba = self.pars.soma_GRC_LKG2_egaba # -65 mV
         
         self.check_temperature()
         if not silent:
@@ -437,7 +440,7 @@ class GranuleDefault(Granule):
             for cdata in self.channelMap.values():
                 all_params.update(cdata.keys())
             for param in sorted(all_params):
-                if '_gbar' in param or '_gl' in param:
+                if '_gbar' in param or '_gl' in param or '_ggaba' in param:  # Claude fixed 2026-07-10: include _ggaba for GRC_LKG2
                     mech = param.rsplit('_', 1)[0]
                     if mech not in cond_mechs:
                         cond_mechs.append(mech)
@@ -457,12 +460,12 @@ class GranuleDefault(Granule):
         # --- Formatting helpers ---
         lw = 20    # compartment name column
         aw =  8    # area column
-        cw = 15    # per-mechanism column
+        cw = 22    # per-mechanism column
 
         def _fmt(g_S, area_cm2):
             if g_S is None:
                 return '---'
-            return f"{g_S*1e3:.3f}({g_S*area_cm2*1e9:.2f})"
+            return f"{g_S*1e3:.4f}({g_S*area_cm2*1e9:.4f})"
 
         def _header(title):
             print(f"\n  {title}")
