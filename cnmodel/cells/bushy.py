@@ -19,6 +19,8 @@ class Bushy(Cell):
     def create(cls, model='RM03', **kwds):
         if model == 'RM03':
             return BushyRothman(**kwds)
+        elif model in ['XM13', 'XM13_nacncoop', 'XM13A_nacncoop', 'XM13_nacn', 'XM13_nabu', 'mGBC']:
+            return BushyRothman(modelName=model, **kwds)
         else:
             raise ValueError ('Bushy model %s is unknown', model)
 
