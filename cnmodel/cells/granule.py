@@ -146,7 +146,7 @@ class GranuleDefault(Granule):
         self.somaname = 'Soma'
         self.i_test_range={'pulse': (-0.02, 0.02, 0.005)}  # note that this might get reset with decorator according to channels
                                                     # The default values are set in the species_scaling routine
-        if species == 'mouse':
+        if species == 'mouse' and morphology is not None:
             if modelType == None or modelType == 'GRC':
                 modelName = 'granule'
                 modelType = 'GRC'
@@ -154,12 +154,22 @@ class GranuleDefault(Granule):
                 temp = 34.
 
             else:
-                raise ValueError(f"ModelName {self.status['modelName']:s} not recognized for {self.celltype:s} cells")
+                raise ValueError(f"ModelName {self.status['modelName']:s} not recognized for {self.celltype:s} cells with morphology {morphology:s}")
 
+        elif species == 'mouse' and morphology is None:
+            if modelType == None or modelType == 'GRC':
+                modelName = 'granule'
+                modelType = 'GRC'
+                dataset = 'GRC_channels_singlecompartment'
+                temp = 34.
+
+            else:
+                raise ValueError(f"ModelName {self.status['modelName']:s} not recognized for {self.celltype:s} cells with morphology {morphology:s}")
         else:
             raise ValueError(f"Species {species:s} not recognized for {self.celltype:s} cells")
 
-        # the table name is 'GRC_channels' so modelName must be 'GRC' here.
+        print("Decorator: ", decorator, "Morphology: ", morphology)
+        # the table name is 'GRC_channels' or 'GRC_channels_singlecompartment', so modelName must be 'GRC' here.
         self.status = {self.somaname: True, 'axon': False, 'dendrites': False, 'pumps': False,
                        'na': nach, 'species': species, 'modelType': modelType, 'modelName': 'GRC',
                        'ttx': ttx, 'name': self.celltype,
@@ -220,6 +230,7 @@ class GranuleDefault(Granule):
 
         if debug:
             print("<< Granule: Diwakar et al. model created >>")
+            print("    Using ionchannel table: ", dataset)
             if self.status['decorator'] is not None:
                 self._print_conductance_table()
 

@@ -637,13 +637,60 @@ units              nS
 
 """)
 
-add_table_data('GRC_channels', row_key='field', col_key='model_type', 
+
+add_table_data('GRC_channels_singlecompartment', row_key='field', col_key='model_type', 
                species='mouse', model_type='GRC', data=u"""
 
 This table describes the ion channel densities for a point granule cell model,
 e.g., relative to REFERENCE densities in the standard granule cell model.
 and voltage shifts, for different compartments of the specified neuron,
 
+Na and KV adjusted to get spiking, with all other conductances as in table 1 of Diwaker et al., 2009, J Neurophysiol. 106: 2039-2054.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                      GRC   
+
+soma_GRC_NA_gbar      16.0 [2]   
+soma_GRC_KV_gbar      200.0 [3]   
+soma_GRC_KA_gbar      39.0 [4]   
+soma_GRC_KM_gbar      0.264 [1]   
+soma_GRC_KIR_gbar     0.951 [1] 
+soma_GRC_KCA_gbar     0.707 [1]   
+soma_GRC_CA_gbar      0.108 [1]   
+soma_GRC_CALC_gbar    0.0095 [1]
+soma_GRC_LKG1_gl      0.170 [1]
+soma_GRC_LKG2_ggaba   0.042 [1]
+soma_GRC_LKG1_erev    -46.5 [5]
+soma_GRC_LKG2_egaba   -65. [1]
+soma_leak_gbar        0.0 [1] 
+soma_leak_erev        -75. [1]
+soma_Dia              5.8
+soma_na_type          nagrc
+soma_e_k              -84.69 [1]
+soma_e_na             87.39   [1]
+soma_ih_eh            -43   [1]
+soma_e_ca             129. 
+soma_e_leak           -75.
+units                 nS
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[1] nS for point model from Diwaker et al. 2009.
+[2] gNA adjusted for spike heigh.
+[3] gKV adjusted for spike width and repolarization.
+[4] gKA adjusted for delay to first spike with small depolarizaitons.
+[5] gLKG1 adjusted to get correct resting potential near -68 mV.
+
+
+
+""")
+
+add_table_data('GRC_channels', row_key='field', col_key='model_type', 
+               species='mouse', model_type='GRC', data=u"""
+
+This table describes the ion channel densities for a point granule cell model,
+e.g., relative to REFERENCE densities in the standard granule cell model.
+and voltage shifts, for different compartments of the specified neuron,
+This is for the implementation that uses the compartmental model (see below for scaling table)
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
                       GRC   
