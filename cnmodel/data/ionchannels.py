@@ -753,22 +753,27 @@ The same formula for Kv.
 gamma is 0.5 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                 Axon_undefined_1     Axon_unmyelinated     Axon_hillock     Soma           Dendrite_proximal  Dendrite_distal
-                                                                                                                        
-GRC_NA_gbar      0.0 [1]              1.427 [1]             12.57 [1]        0.0 [1]        0.0 [1]            0.0 [1]       
-GRC_KV_gbar      0.0 [1]              1.49  [1]             11.86 [1]        0.0 [1]        0.0 [1]            0.0 [1]       
-GRC_KA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]       
-GRC_KM_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]       
-GRC_KIR_gbar     0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]            0.0 [1]     
-GRC_KCA_gbar     0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            1.0 [1]     
-GRC_CA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            1.0 [1]     
-GRC_LKG1_gl      4.66e-5 [1]          0.0801 [1]            0.897 [1]        1.00 [1]       0.210 [1]          0.201 [1]
-GRC_LKG2_ggaba   0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        1.0 [1]            1.0 [1]
-leak_gbar        0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]            0.0 [1]       
-leak_erev        -65. [1]             -65. [1]              -65. [1]         -65. [1]       -65. [1]           -65. [1]      
+                 Axon_undefined_1     Axon_unmyelinated     Axon_hillock     Soma           Dendrite_proximal Dendrite_distal   Dendrite_claw   
+                                                                                                                                     
+GRC_NA_gbar      0.0 [1]              1.427 [1]             12.57 [1]        0.0 [1]        0.0 [1]           0.0 [1]            0.0 [1]          
+GRC_KV_gbar      0.0 [1]              1.49  [1]             11.86 [1]        0.0 [1]        0.0 [1]           0.0 [1]            0.0 [1]          
+GRC_KA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]           0.0 [1]            0.0 [1]          
+GRC_KM_gbar      0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]           0.0 [1]            0.0 [1]          
+GRC_KIR_gbar     0.0 [1]              0.0 [1]               0.0 [1]          1.0 [1]        0.0 [1]           0.0 [1]            0.0 [1]        
+GRC_KCA_gbar     0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]           1.0 [1]            1.0 [1]        
+GRC_CA_gbar      0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]           1.0 [1]            1.0 [1]        
+GRC_LKG1_gl      4.66e-5 [1]          0.0801 [1]            0.897 [1]        1.00 [1]       0.210 [1]         0.201 [1]          0.201 [1]       
+GRC_LKG2_ggaba   0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        1.0 [1]           1.0 [1]            1.0 [1]           
+leak_gbar        0.0 [1]              0.0 [1]               0.0 [1]          0.0 [1]        0.0 [1]           0.0 [1]            0.0 [1]       
+leak_erev        -65. [1]             -65. [1]              -65. [1]         -65. [1]       -65. [1]          -65. [1]           -65. [1]      
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[1] Scaling is relative to somatic values listed in the first table. Numbers are selected to match the Diwakar 2009 model.
+[1] Scaling is relative to somatic values listed in the first table. Numbers are selected to match the Diwakar 2009 model,
+based on their source code ModelDB 116835: https://github.com/ModelDBRepository/116835.
+The specific values were obtained by setting up the model and printing out the conductances in each compartment
+prior to an actual simulation run. 
+
+
 """)
 
 
