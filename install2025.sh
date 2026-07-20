@@ -8,12 +8,12 @@ if [ ! -d "PyZBC2014" ]; then
     echo "Cloning PyZBC2014 repository..."
     git clone https://github.com/pbmanis/PyZBC2014.git
 fi
-cd PyZBC2014uv
+cd PyZBC2014
 
 git checkout spike_generator
 
 cd src/pyzbc2014/model
-gcc -fPIC -O3 -shared -o libzbc2014.o complex.c model_IHC.c model_Synapse.c model_spikeGenerator.c
+gcc -fPIC -O3 -shared -o libzbc2014.so complex.c model_IHC.c model_Synapse.c model_SpikeGenerator.c
 cd ../../..
 uv sync
 uv build
