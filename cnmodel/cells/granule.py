@@ -144,7 +144,7 @@ class GranuleDefault(Granule):
         # SectionList name; base class defaults somaname to 'soma'.  Override here
         # so both point and stick paths find the soma in all_sections['Soma'].
         self.somaname = 'Soma'
-        self.i_test_range={'pulse': (-0.02, 0.02, 0.005)}  # note that this might get reset with decorator according to channels
+        self.i_test_range={'pulse': (-0.02, 0.02, 0.002)}  # note that this might get reset with decorator according to channels
                                                     # The default values are set in the species_scaling routine
         if species == 'mouse' and morphology is not None:
             if modelType == None or modelType == 'GRC':
