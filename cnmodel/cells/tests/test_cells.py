@@ -8,6 +8,8 @@ from cnmodel.util.pynrnutilities import reset
 from cnmodel.util.user_tester import UserTester
 from cnmodel.protocols import IVCurve
 
+import pyqtgraph as pg
+
 """
 Cell-type tests
 """
@@ -121,9 +123,9 @@ class CellTester(UserTester):
         iv.run(cell.i_test_range, cell)
         print(dir(iv))
         self.audit = True
-        if self.audit:
-            iv.show(cell, rmponly=False)
-            pg.exec()
+        # if self.audit:
+        #     iv.show(cell, rmponly=False)
+        #     pg.exec()
             
         
         info = dict(
