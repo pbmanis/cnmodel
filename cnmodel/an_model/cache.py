@@ -16,8 +16,8 @@ except ImportError:
     HAVE_COCHLEA = False
 
 try:
-    import pyzbc2014.pyzbc2014
-    zbc = pyzbc2014.pyzbc2014.pyzbc2014()  # create an instance of the model, and load the shared libraries.
+    from pyzbc2014 import pyzbc2014 as PyZBC2014Model
+    zbc = PyZBC2014Model()  # create an instance of the model, and load the shared libraries.
     HAVE_PYZBC2014 = True
 except ImportError:
     HAVE_PYZBC2014 = False

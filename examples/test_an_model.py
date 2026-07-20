@@ -21,9 +21,9 @@ import numpy as np
 import pyqtgraph as pg
 from cnmodel import an_model
 from cnmodel.util import sound
-from pyzbc2014 import pyzbc2014
+from pyzbc2014 import pyzbc2014 as PyZBC2014Model
 
-zbc = pyzbc2014.pyzbc2014()
+zbc = PyZBC2014Model()
 
 def test_an_model(fibertype:str='hsr', cf:float=16e3, dbspl:float=30., noiseType=0, species=1   ):
     assert fibertype in ['hsr', 'msr', 'lsr'], "Invalid fiber type: %s" % fibertype
