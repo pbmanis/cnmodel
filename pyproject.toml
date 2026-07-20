@@ -4,7 +4,7 @@ version = "0.58.23"
 description = "CNModel - a computational framework for modeling and simulating neurons and networks in the auditory system"
 license = "MIT"
 readme = "README.md"
-requires-python = "==3.13.7"
+requires-python = ">=3.13,<3.14"
 authors = [
     { name = "Paul B. Manis", email = "pbmanis@med.unc.edu" },
     { name = "Luke Campagnola", email = "lukecampagnola@gmail.com" }
@@ -75,7 +75,9 @@ artifacts = [
 # cnmodel = ["*.dylib", "*.so", "*.dll", "*.mod"]
 
 [tool.uv.sources]
-pyzbc2014 = { path = "/Users/pbmanis/Desktop/Python/pyzbc2014/dist/pyzbc2014-0.0.3-cp313-cp313-macosx_14_0_arm64.whl" }
+# Build pyzbc2014 from the adjacent sibling checkout for the current platform,
+# rather than pinning a prebuilt, platform-specific wheel (breaks cross-platform).
+pyzbc2014 = { path = "../PyZBC2014", editable = true }
 #[tools.uv.sources]
 #    httpx = {git = "https://github.com/pbmanis/cochlea-1.git", rev = "8152f032e6e619d8632548b6b632fcda5f0638ed"}
 
