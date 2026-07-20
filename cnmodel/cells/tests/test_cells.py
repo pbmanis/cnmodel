@@ -101,7 +101,8 @@ def test_mso():
 
 def test_granule():
     reset(raiseError=False)
-    cell = cells.Granule.create(species='mouse', modelType='GRC')
+    cell = cells.Granule.create(species='mouse', morphology=None, modelType='GRC', decorator=None)
+    cell.audit = True
     CellTester('Granule_cell_GRC', cell)
 
 #
@@ -118,8 +119,12 @@ class CellTester(UserTester):
         iv = IVCurve()
         self.iv = iv
         iv.run(cell.i_test_range, cell)
+        print(dir(iv))
+        self.audit = True
         if self.audit:
-            iv.show(cell)
+            iv.show(cell, rmponly=False)
+            pg.exec()
+            
         
         info = dict(
             temp=iv.temp,
@@ -141,8 +146,8 @@ class CellTester(UserTester):
                 self.iv.win.hide()
  
 if __name__ == "__main__":
+    import pyqtgraph as pg
     test_granule()
-    
 
 #def result_file(key):
     #"""
