@@ -1,5 +1,5 @@
 __author__ = "Paul B. Manis and Luke Campagnola"
-__version__ = "0.58"
+__version__ = "0.60.0"
 from pathlib import Path
 try:
     import faulthandler
