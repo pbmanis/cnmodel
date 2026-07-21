@@ -45,8 +45,7 @@ jobs:
         include:
         - language: actions
           build-mode: none
-        - language: c-cpp
-          build-mode: autobuild
+        # c-cpp removed: an_model/model files are MATLAB MEX C (require mex.h) and cannot be built without MATLAB
         - language: python
           build-mode: none
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
