@@ -1,16 +1,27 @@
 Latest changes
 ==============
-v0.58 (rimrock_cleanup branch):
 
+v0.60 python3 branch
+--------------------
+
+This is the current active branch. 
+
+1. AN model now uses wheels from PyZBC2014 (github.com/pbmanis/PyZBC2014.git). 
+2. More changes for NEURON 9 (mod files, python code).
+3. All tests pass. However, the Matlab version of an_model is not tested.
+4. Added "granule cell" model (Diwakar et al. 2009). Working, not perfect.
+   
+v0.58 (rimrock_cleanup branch - now merged into python3 branch)
+------------------------------
 1. The AN model has been modified to use the Python wrapper scripts from Daniel Guest (and proposed pull from
 Tom Stoll) with some modifications, specifically making a class for the C wrapper,
 and adding the SpikeGenerator back into the code. This wrapper around the original Zilany et al,
 2014 model works with Python 3.13. 
 
-2. The "cochlea" model (Rudnicki and Hemmert) will be deprecated. THe matlab version
+1. The "cochlea" model (Rudnicki and Hemmert) will be deprecated. THe matlab version
 has not been tested, but likely still works.
 
-3. The test_an_model.py example has been modified to show the ISI histogram in addition
+1. The test_an_model.py example has been modified to show the ISI histogram in addition
 to the PSTH.
 
 1. Some changes to .MOD files were be necessary to work with the latest NEURON version (9.0+). 
@@ -18,7 +29,7 @@ The multisite synapse model has already been updated, but some additional cleanu
 GLOBAL variables have been changed to RANGE, and a couple of verbatim blocks have been updated. Vecstim.mod
 was also updated.
 
-The *rimrock_cleanup* branch is the latest branch. 
+NOTE: The *rimrock_cleanup* branch has been removed - the python3 branch is the current active branch.
 -----------------------------------------------
 
 Installation notes
@@ -68,7 +79,7 @@ cnmodel
 -------
 
 The project uses the UV tool. Download the github repo (https://github.com/pbmanis/cnmodel.git),
-and select the right branch (rimrock_cleanup). If this
+and select the right branch (currently, python3). If this
 is the first installation, do a
 
 `uv venv python==3.13`. 
@@ -115,9 +126,8 @@ There are 2 branches in this public repository for CNModel.
 
 The "main" branch is the original branch that goes with Manis and Campagnola, Hear. Res. 2018. This is a Python 2.7 branch.
 
-The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.7.9. Please read the notes on that branch for information on differences and new functionality. This is now the default branch.
+The "python3" branch is new (June, 2019). It has been tested with Python 3.6 through 3.13.7. Please read the notes on that branch for information on differences and new functionality. It includes the changes made in the rimrock_cleanup branch in 2025. This is now the default branch.
 
-A newer branch ("rimrock_cleanup") from 2025 is the latest, and works with Python 3.13 and a different version of the wraper for the Zilany et al. 2014 model. 
 
 Changes
 =======
